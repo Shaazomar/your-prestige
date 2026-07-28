@@ -6,9 +6,10 @@ import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
-  LogOut,
+  LogOut, Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/brand/Logo";
 import { can, type Module } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 import { logoutAction } from "@/app/admin/(dashboard)/actions";
@@ -25,6 +26,7 @@ const nav = [
       { label: "Products", href: "/admin/content/products", icon: Package, module: "products" as Module },
       { label: "Categories", href: "/admin/content/categories", icon: Tags, module: "categories" as Module },
       { label: "Brands", href: "/admin/content/brands", icon: Award, module: "brands" as Module },
+      { label: "Showrooms", href: "/admin/content/showrooms", icon: Store, module: "showrooms" as Module },
       { label: "Portfolio", href: "/admin/content/portfolio", icon: Briefcase, module: "portfolio" as Module },
       { label: "Gallery", href: "/admin/content/gallery", icon: Images, module: "gallery" as Module },
       { label: "Videos", href: "/admin/content/videos", icon: Video, module: "videos" as Module },
@@ -82,13 +84,13 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/8 bg-[#111110] lg:flex">
       {/* Brand */}
-      <div className="flex h-16 items-center border-b border-white/8 px-6">
-        <Link href="/admin" className="block">
-          <span className="text-sm font-bold uppercase tracking-[0.22em] text-ivory">
-            Your <span className="text-gold">Prestige</span>
-          </span>
-          <span className="block text-[0.6rem] uppercase tracking-[0.35em] text-white/30">
-            Command Center
+      <div className="flex h-16 items-center border-b border-white/8 px-5">
+        <Link href="/admin" className="flex items-center gap-2.5" aria-label="Prestige Admin">
+          <Logo size="xs" tone="light" />
+          <span className="border-l border-white/10 pl-2.5 text-[0.55rem] uppercase leading-tight tracking-[0.2em] text-white/30">
+            Command
+            <br />
+            Center
           </span>
         </Link>
       </div>

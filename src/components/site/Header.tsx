@@ -5,12 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useScroll } from "framer-motion";
 import { Phone, ArrowUpRight } from "lucide-react";
-import { mainNav, business } from "@/lib/site-config";
+import { mainNav } from "@/lib/site-config";
 import { Magnetic } from "@/components/motion/MagneticButton";
 import { ButtonLink } from "@/components/ui/Button";
+import { Logo } from "@/components/brand/Logo";
+import { telHref } from "@/lib/business";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+interface HeaderProps {
+  /** CMS-managed business details, passed down from the server layout. */
+  business: { name: string; phone: string; address: string };
+}
+
+export function Header({ business }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -40,24 +47,13 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex h-20 max-w-[110rem] items-center justify-between px-6 md:px-10 lg:px-14">
-          {/* Wordmark */}
-          <Link href="/" className="group relative z-50" aria-label="Your Prestige — Home">
-            <span
-              className={cn(
-                "block text-lg font-bold tracking-[0.22em] uppercase transition-colors duration-500",
-                overDark || menuOpen ? "text-ivory" : "text-ink"
-              )}
-            >
-              Your <span className="text-gold">Prestige</span>
-            </span>
-            <span
-              className={cn(
-                "block text-[0.6rem] tracking-[0.42em] uppercase transition-colors duration-500",
-                overDark || menuOpen ? "text-ivory/50" : "text-stone-400"
-              )}
-            >
-              Tiles · Sanitary
-            </span>
+          {/* Official brand lockup */}
+          <Link
+            href="/"
+            className="group relative z-50"
+            aria-label={`${business.name} — Home`}
+          >
+            <Logo size="sm" tone={overDark || menuOpen ? "light" : "dark"} />
           </Link>
 
           {/* Desktop nav */}
@@ -80,7 +76,7 @@ export function Header() {
           {/* Actions */}
           <div className="flex items-center gap-3">
             <a
-              href={`tel:${business.phone.replace(/\s/g, "")}`}
+              href={telHref(business.phone)}
               className={cn(
                 "hidden h-11 w-11 items-center justify-center rounded-full border transition-all duration-500 md:flex",
                 overDark
@@ -182,9 +178,7 @@ export function Header() {
                 <ButtonLink href="/book-visit" variant="gold" size="lg" className="w-full">
                   Book a Showroom Visit
                 </ButtonLink>
-                <p className="text-center text-sm text-ivory/40">
-                  {business.address.city} · {business.phone}
-                </p>
+                <p className="text-center text-sm text-ivory/40">{business.phone}</p>
               </motion.div>
             </div>
           </motion.div>

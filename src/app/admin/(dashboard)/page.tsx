@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Users2, CalendarClock, Sparkles, TrendingUp, ArrowUpRight, Package, Tags, Award,
-  Images, Video, PenSquare, MessageSquareQuote, BadgePercent, BarChart3, Activity,
+  Images, Video, PenSquare, MessageSquareQuote, BadgePercent, BarChart3, Activity, Store,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { LeadsChart } from "@/components/admin/LeadsChart";
@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
   const [
     totalLeads, newLeads, wonLeads, recentLeads, chartLeads,
     productCount, brandCount, categoryCount, galleryCount, videoCount,
-    blogCount, testimonialCount, offerCount, pendingBookings, recentLogs,
+    blogCount, testimonialCount, offerCount, pendingBookings, recentLogs, showroomCount,
   ] = await Promise.all([
     prisma.lead.count({ where: { deletedAt: null } }),
     prisma.lead.count({ where: { status: "NEW", deletedAt: null } }),
@@ -43,6 +43,7 @@ export default async function AdminDashboard() {
     prisma.offer.count({ where: { deletedAt: null } }),
     prisma.booking.count({ where: { status: "PENDING", deletedAt: null } }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { user: { select: { name: true } } } }),
+    prisma.showroom.count({ where: { deletedAt: null } }),
   ]);
 
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -65,6 +66,7 @@ export default async function AdminDashboard() {
   ];
 
   const contentStats = [
+    { label: "Showrooms", value: showroomCount, icon: Store, href: "/admin/content/showrooms" },
     { label: "Products", value: productCount, icon: Package, href: "/admin/content/products" },
     { label: "Brands", value: brandCount, icon: Award, href: "/admin/content/brands" },
     { label: "Categories", value: categoryCount, icon: Tags, href: "/admin/content/categories" },

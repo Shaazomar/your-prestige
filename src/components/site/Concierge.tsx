@@ -22,7 +22,15 @@ const suggestions = [
  * Currently powered by a lightweight intent engine at /api/concierge;
  * designed to swap to a Claude-backed endpoint without UI changes.
  */
-export function Concierge({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function Concierge({
+  open,
+  onClose,
+  phone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  phone: string;
+}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -69,7 +77,7 @@ export function Concierge({ open, onClose }: { open: boolean; onClose: () => voi
         {
           role: "assistant",
           content:
-            "I'm having a moment — please call us at +91 98765 43210 or tap the WhatsApp button and we'll assist you right away.",
+            `I'm having a moment — please call us at ${phone} or tap the WhatsApp button and we'll assist you right away.`,
         },
       ]);
     } finally {

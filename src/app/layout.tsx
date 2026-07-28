@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Instrument_Serif } from "next/font/google";
 import { business, siteUrl } from "@/lib/site-config";
 import "./globals.css";
@@ -19,32 +19,46 @@ const instrument = Instrument_Serif({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  applicationName: business.name,
   title: {
-    default: `${business.name} — Luxury Tiles & Sanitaryware, Mangaluru`,
+    default: `${business.name} — ${business.tagline}`,
     template: `%s — ${business.name}`,
   },
   description: business.description,
   keywords: [
+    "Prestige Tiles Mangaluru",
     "luxury tiles Mangaluru",
     "premium sanitaryware Mangaluru",
+    "Jaquar dealer Mangaluru",
     "designer bathrooms Karnataka",
     "tile showroom Dakshina Kannada",
-    "Italian marble tiles Mangalore",
+    "tiles Puttur",
+    "sanitaryware Moodbidri",
+    "tile showroom Derlakatte",
   ],
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: siteUrl,
     siteName: business.name,
-    title: `${business.name} — Luxury Tiles & Sanitaryware`,
+    title: `${business.name} — ${business.tagline}`,
     description: business.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${business.name} — Luxury Tiles & Sanitaryware`,
+    title: `${business.name} — ${business.tagline}`,
     description: business.description,
   },
   robots: { index: true, follow: true },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { title: "Prestige", capable: true, statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0a" },
+  ],
 };
 
 export default function RootLayout({

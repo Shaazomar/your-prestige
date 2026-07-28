@@ -1,18 +1,34 @@
 import Link from "next/link";
-import { ArrowUpRight, MapPin, Phone, Mail, Clock } from "lucide-react";
-import { InstagramIcon, FacebookIcon, YoutubeIcon, LinkedinIcon } from "@/components/ui/BrandIcons";
-import { business, footerNav } from "@/lib/site-config";
+import { ArrowUpRight, MapPin, Phone, Mail, Clock, Store } from "lucide-react";
+import { InstagramIcon, FacebookIcon, ThreadsIcon } from "@/components/ui/BrandIcons";
+import { footerNav } from "@/lib/site-config";
 import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/motion/Reveal";
+import { Logo } from "@/components/brand/Logo";
+import { getBusiness, telHref } from "@/lib/business";
+import { prisma } from "@/lib/prisma";
 
-const socials = [
-  { icon: InstagramIcon, href: business.social.instagram, label: "Instagram" },
-  { icon: FacebookIcon, href: business.social.facebook, label: "Facebook" },
-  { icon: YoutubeIcon, href: business.social.youtube, label: "YouTube" },
-  { icon: LinkedinIcon, href: business.social.linkedin, label: "LinkedIn" },
-];
+export async function Footer() {
+  const business = await getBusiness();
 
-export function Footer() {
+  // Showroom list is CMS-driven; degrade gracefully if the DB is unreachable.
+  let showrooms: { slug: string; name: string; locality: string | null; city: string }[] = [];
+  try {
+    showrooms = await prisma.showroom.findMany({
+      where: { published: true, deletedAt: null },
+      orderBy: { sortOrder: "asc" },
+      select: { slug: true, name: true, locality: true, city: true },
+    });
+  } catch {
+    /* no-op */
+  }
+
+  const socials = [
+    { icon: InstagramIcon, href: business.instagram, label: "Instagram" },
+    { icon: FacebookIcon, href: business.facebook, label: "Facebook" },
+    { icon: ThreadsIcon, href: business.threads, label: "Threads" },
+  ].filter((s) => s.href);
+
   return (
     <footer className="bg-ink text-ivory">
       {/* CTA band */}
@@ -20,7 +36,7 @@ export function Footer() {
         <Reveal>
           <div className="flex flex-col items-start justify-between gap-8 py-20 md:flex-row md:items-end md:py-28">
             <div>
-              <p className="text-eyebrow mb-5 text-gold">Visit the Showroom</p>
+              <p className="text-eyebrow mb-5 text-gold">Visit a Showroom</p>
               <h2 className="text-display-lg max-w-3xl">
                 Surfaces worth
                 <span className="serif-accent text-gold"> experiencing </span>
@@ -42,26 +58,26 @@ export function Footer() {
       <Container size="wide" className="py-16 md:py-20">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <p className="text-lg font-bold uppercase tracking-[0.22em]">
-              Your <span className="text-gold">Prestige</span>
-            </p>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-ivory/50">
+            <Logo size="md" tone="light" withTagline />
+            <p className="mt-6 max-w-sm text-sm leading-relaxed text-ivory/50">
               {business.description}
             </p>
-            <div className="mt-8 flex gap-3">
-              {socials.map(({ icon: Icon, href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-ivory/15 text-ivory/70 transition-all duration-500 hover:border-gold hover:bg-gold hover:text-ivory"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
+            {socials.length > 0 && (
+              <div className="mt-8 flex gap-3">
+                {socials.map(({ icon: Icon, href, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-ivory/15 text-ivory/70 transition-all duration-500 hover:border-gold hover:bg-gold hover:text-ivory"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {(
@@ -89,44 +105,75 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Showroom directory */}
+        {showrooms.length > 0 && (
+          <div className="mt-14 border-t hairline-light pt-10">
+            <p className="text-eyebrow mb-6 flex items-center gap-2 text-ivory/40">
+              <Store className="h-3.5 w-3.5" />
+              Our {showrooms.length} Showrooms
+            </p>
+            <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-5">
+              {showrooms.map((s) => (
+                <Link
+                  key={s.slug}
+                  href={`/showrooms/${s.slug}`}
+                  className="group text-sm text-ivory/70 transition-colors hover:text-gold"
+                >
+                  <span className="block font-medium">{s.locality ?? s.city}</span>
+                  <span className="block text-xs text-ivory/35">{s.city}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Contact strip */}
-        <div className="mt-16 grid gap-6 border-t hairline-light pt-10 text-sm text-ivory/60 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-6 border-t hairline-light pt-10 text-sm text-ivory/60 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex items-start gap-3">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-            <span>
-              {business.address.street}, {business.address.locality},<br />
-              {business.address.city} — {business.address.postalCode}
-            </span>
+            <span>{business.address}</span>
           </div>
           <div className="flex items-start gap-3">
             <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-            <a href={`tel:${business.phone.replace(/\s/g, "")}`} className="hover:text-gold">
+            <a href={telHref(business.phone)} className="hover:text-gold">
               {business.phone}
             </a>
           </div>
-          <div className="flex items-start gap-3">
-            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-            <a href={`mailto:${business.email}`} className="hover:text-gold">
-              {business.email}
-            </a>
-          </div>
+          {business.email ? (
+            <div className="flex items-start gap-3">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+              <a href={`mailto:${business.email}`} className="hover:text-gold">
+                {business.email}
+              </a>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <Store className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+              <Link href="/showrooms" className="hover:text-gold">
+                Find your nearest showroom
+              </Link>
+            </div>
+          )}
           <div className="flex items-start gap-3">
             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
             <span>
-              Mon–Sat: {business.hours.weekdays}
+              {business.hoursWeekdays}
               <br />
-              Sun: {business.hours.sunday}
+              {business.hoursSunday}
             </span>
           </div>
         </div>
       </Container>
 
       <div className="border-t hairline-light">
-        <Container size="wide" className="flex flex-col items-center justify-between gap-3 py-6 text-xs text-ivory/35 md:flex-row">
-          <p>© {new Date().getFullYear()} {business.legalName}. All rights reserved.</p>
+        <Container
+          size="wide"
+          className="flex flex-col items-center justify-between gap-3 py-6 text-xs text-ivory/35 md:flex-row"
+        >
           <p>
-            {business.address.city}, {business.address.state} · Crafted with precision
+            © {new Date().getFullYear()} {business.legalName}. All rights reserved.
           </p>
+          <p className="serif-accent">{business.tagline}</p>
         </Container>
       </div>
     </footer>

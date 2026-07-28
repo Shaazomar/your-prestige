@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { upsertCalendarEvent } from "@/lib/google-calendar";
 
 const leadSchema = z.object({
   type: z.enum(["CONTACT", "QUOTE", "VISIT", "CONCIERGE"]).default("CONTACT"),
@@ -16,6 +18,8 @@ const leadSchema = z.object({
   interest: z.string().max(100).optional(),
   budget: z.string().max(50).optional(),
   visitDate: z.string().datetime().optional(),
+  preferredTime: z.string().max(30).optional(),
+  showroomSlug: z.string().max(150).optional(),
   utmSource: z.string().max(100).optional(),
   utmMedium: z.string().max(100).optional(),
   utmCampaign: z.string().max(100).optional(),
@@ -53,16 +57,71 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { visitDate, email, ...rest } = parsed.data;
+  const { visitDate, email, preferredTime, showroomSlug, type, ...rest } = parsed.data;
 
   const lead = await prisma.lead.create({
     data: {
       ...rest,
+      type,
       email: email || null,
       visitDate: visitDate ? new Date(visitDate) : null,
       source: "website",
     },
   });
+
+  // A visit enquiry with a date becomes a real Booking so it lands in the
+  // admin Bookings calendar, not just the leads pipeline.
+  if (type === "VISIT" && visitDate) {
+    const showroom = showroomSlug
+      ? await prisma.showroom.findFirst({
+          where: { slug: showroomSlug, deletedAt: null },
+          select: { id: true, name: true, locality: true, city: true },
+        })
+      : null;
+
+    const booking = await prisma.booking.create({
+      data: {
+        name: lead.name,
+        phone: lead.phone,
+        email: lead.email,
+        requestedDate: new Date(visitDate),
+        preferredTime: preferredTime || null,
+        notes: lead.message,
+        interestedIn: lead.interest ? [lead.interest] : undefined,
+        leadId: lead.id,
+        showroomId: showroom?.id ?? null,
+        status: "PENDING",
+      },
+    });
+
+    // Both integrations are env-gated no-ops until credentials are configured.
+    const eventId = await upsertCalendarEvent(booking).catch(() => null);
+    if (eventId) {
+      await prisma.booking.update({ where: { id: booking.id }, data: { googleEventId: eventId } });
+    }
+
+    if (lead.email) {
+      const where = showroom
+        ? `${showroom.name}, ${showroom.locality ?? showroom.city}`
+        : "our showroom";
+      await sendEmail({
+        to: lead.email,
+        subject: "Your Prestige showroom visit request",
+        html: `<p>Hi ${lead.name},</p>
+<p>Thank you — we've received your request to visit <strong>${where}</strong> on
+<strong>${new Date(visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</strong>${
+          preferredTime ? ` around <strong>${preferredTime}</strong>` : ""
+        }.</p>
+<p>Our team will confirm your slot by phone or WhatsApp shortly.</p>
+<p>— Prestige Tiles &amp; Sanitary</p>`,
+      }).catch(() => null);
+    }
+
+    return NextResponse.json(
+      { ok: true, id: lead.id, bookingId: booking.id },
+      { status: 201 }
+    );
+  }
 
   return NextResponse.json({ ok: true, id: lead.id }, { status: 201 });
 }

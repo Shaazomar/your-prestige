@@ -20,30 +20,53 @@ const formSchema = z.object({
   interest: z.string().optional(),
   budget: z.string().optional(),
   visitDate: z.string().optional(),
+  preferredTime: z.string().optional(),
+  showroomSlug: z.string().optional(),
   message: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+export interface ShowroomOption {
+  slug: string;
+  name: string;
+  locality: string | null;
+  city: string;
+}
 
 interface LeadFormProps {
   type: "CONTACT" | "QUOTE" | "VISIT";
   submitLabel?: string;
   showVisitDate?: boolean;
   showBudget?: boolean;
+  /** Showrooms to choose from — enables the branch + time picker */
+  showrooms?: ShowroomOption[];
+  /** Pre-selected showroom slug (from ?showroom=… on the booking page) */
+  defaultShowroom?: string;
 }
+
+const TIME_SLOTS = [
+  "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM",
+  "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM",
+];
 
 export function LeadForm({
   type,
   submitLabel = "Send Enquiry",
   showVisitDate = false,
   showBudget = false,
+  showrooms,
+  defaultShowroom,
 }: LeadFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(formSchema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { showroomSlug: defaultShowroom ?? "" },
+  });
 
   async function onSubmit(values: FormValues) {
     setStatus("submitting");
@@ -155,6 +178,28 @@ export function LeadForm({
               />
             )}
           </div>
+
+          {showrooms && showrooms.length > 0 && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <SelectField label="Preferred showroom" {...register("showroomSlug")}>
+                <option value="">Any showroom / not sure</option>
+                {showrooms.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.locality ? `${s.locality}, ${s.city}` : s.city} — {s.name}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField label="Preferred time" {...register("preferredTime")}>
+                <option value="">Any time</option>
+                {TIME_SLOTS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+          )}
+
           <TextArea
             label="Tell us about your project"
             placeholder="New villa, bathroom renovation, commercial space…"

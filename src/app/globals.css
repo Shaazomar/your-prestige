@@ -26,6 +26,12 @@
   --color-beige: #e8e1d3;
   --color-silver: #c7cacc;
 
+  /* Official brand yellow (from the Prestige logo mark).
+     Reserved for the logo lockup and brand moments — the muted gold above
+     remains the UI accent so the existing design language is untouched. */
+  --color-brand: #ffd900;
+  --color-brand-deep: #a88a00;
+
   /* Typography */
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), Georgia, serif;

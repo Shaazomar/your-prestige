@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { verifyBypassAction, type BypassState } from "@/app/(site)/maintenance-actions";
 import { business } from "@/lib/site-config";
+import { Logo } from "@/components/brand/Logo";
 
 const initial: BypassState = {};
 
@@ -28,9 +29,7 @@ export function MaintenancePage({ message, countdownUntil }: { message: string; 
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-ink px-6 text-center text-ivory">
-      <p className="text-sm font-bold uppercase tracking-[0.22em]">
-        Your <span className="text-gold">Prestige</span>
-      </p>
+      <Logo size="xl" tone="light" stacked withTagline />
       <h1 className="text-display-sm mt-8 max-w-lg">{message}</h1>
       {timeLeft && (
         <p className="mt-6 font-mono text-lg text-gold">{timeLeft}</p>

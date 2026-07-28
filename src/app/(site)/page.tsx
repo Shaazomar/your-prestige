@@ -5,6 +5,7 @@ import { AboutEditorial } from "@/components/site/home/AboutEditorial";
 import { Stats } from "@/components/site/home/Stats";
 import { GalleryPreview } from "@/components/site/home/GalleryPreview";
 import { Testimonials } from "@/components/site/home/Testimonials";
+import { ShowroomsSection } from "@/components/site/home/ShowroomsSection";
 import { getPublishedHomepageHero, getHomepageDraft } from "@/app/admin/(dashboard)/content/homepage/actions";
 import { auth } from "@/lib/auth";
 
@@ -37,6 +38,7 @@ export default async function HomePage({
       <BrandWall />
       <AboutEditorial />
       <Stats />
+      <ShowroomsSection />
       <GalleryPreview />
       <Testimonials />
     </>

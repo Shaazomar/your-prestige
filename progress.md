@@ -2,7 +2,7 @@
 
 Luxury tiles & sanitaryware showroom website + CMS for **Your Prestige**, Mangaluru, Dakshina Kannada, Karnataka.
 
-Last updated: 2026-07-28 (later same day — admin CMS backend build)
+Last updated: 2026-07-28 (third pass — official branding, Business Settings & Showrooms)
 
 ## Status: Website + fully authenticated, database-backed admin CMS. Not yet deployed to production hosting.
 
@@ -294,6 +294,100 @@ product pages), `robots.txt` disallowing `/admin` and `/api`.
 
 ---
 
+## Branding, Business Settings & Showrooms (third pass)
+
+### Official brand identity
+The supplied logo asset (`logo.png`) is the **"P" monogram only** — brand yellow
+`#FFD900` — with no wordmark or tagline in the file. So the mark is used as-is and
+the `your / PRESTIGE / TILES & SANITARY` lockup plus tagline are typeset around it in
+**`src/components/brand/Logo.tsx`** (props: `size`, `tone`, `stacked`, `markOnly`,
+`withTagline`). That keeps the lockup crisp at any size and lets it adapt to light
+and dark surfaces. `TILES & SANITARY` renders in brand yellow on dark and a darkened
+`#a88a00` on ivory, because pure `#FFD900` is unreadable on a light background.
+
+Generated from the source PNG into `public/brand/` (transparent-background mark,
+192/512 PWA icons, 180px apple-touch-icon, 32px favicon, 1200×630 OG image):
+- Browser tab / PWA: `src/app/icon.png`, `src/app/apple-icon.png`, `src/app/manifest.ts`
+- Social: `src/app/opengraph-image.png`, `src/app/twitter-image.png`
+- In-app: Header, Footer, Admin sidebar, Login, Accept-invite, Reset-password,
+  Maintenance holding page, and a new branded **404** (`src/app/not-found.tsx`)
+- The Next.js scaffold SVGs and default favicon were deleted.
+
+**Colour decision:** the existing muted-gold (`#b3915a`) UI accent is *unchanged* —
+swapping the whole site to brand yellow would have been the redesign the brief ruled
+out. Brand yellow is registered as `--color-brand` and reserved for the logo lockup.
+
+### Business Settings — nothing hardcoded
+`src/lib/business.ts` exposes `getBusiness()`, a React-`cache()`d reader over the
+`Setting` table with `site-config.ts` as fallback. Header, Footer, FloatingActions,
+Concierge, Contact and all JSON-LD now read from it. Seeded values (via
+`scripts/seed.mjs`, which **upserts** so re-running corrects drift):
+
+| Field | Value |
+|---|---|
+| Name | Prestige Tiles & Sanitary |
+| Tagline | Designing Spaces, Crafting Elegance |
+| Phone / WhatsApp | +91 90089 19195 |
+| Email / Website | *(intentionally blank — not supplied)* |
+| Hours | Mon–Sat 9:00 AM – 7:00 PM |
+| Sunday | Jeppinamogaru 9 AM–1 PM · Puttur 9 AM–12 PM · other branches closed |
+| Instagram | instagram.com/prestige_sanitarytiles |
+| Facebook | facebook.com/prestige.sanitarytiles |
+| Threads | threads.com/@prestigeshop.in |
+
+Socials render site-wide (a `ThreadsIcon` was added; YouTube/LinkedIn removed as they
+weren't supplied). The Footer degrades gracefully where email is blank, showing a
+"find your nearest showroom" link instead of an empty mailto.
+
+### Showrooms — new model, CMS module and public pages
+New **`Showroom`** Prisma model + migration `20260728120624_showrooms_and_booking_details`
+(applied to Neon): address, geo, map URL/embed, directions, phone/WhatsApp/email,
+manager, per-branch weekday + Sunday hours, hero image, gallery, video, description,
+brands stocked, amenities, featured product ids, flagship/published/sort. `Booking`
+gained `showroomId`, `preferredTime` and `interestedIn`.
+
+**All five real showrooms seeded** with the supplied addresses, phones and hours:
+Jeppinamogaru (flagship, Jaquar Authorized Dealer) · Pandeshwar · Derlakatte ·
+Puttur (Pro Prestige) · Moodbidri (Accu Prestige).
+
+**Real photography:** 39 genuine showroom interior photos from the supplied images
+folder were optimised to WebP (~4 MB total) into `public/showrooms/` and distributed
+across the five galleries. Four portrait photos of a person in that folder were
+deliberately **excluded** — they're people photos, not showroom interiors, and
+publishing someone's likeness needs their role/consent established first.
+
+- **Admin:** `/admin/content/showrooms` — full CRUD following the established
+  schema/actions/form/manager pattern, with `requirePermission` + `logAudit` on every
+  mutation and `revalidatePath` so public pages update immediately. `showrooms` was
+  registered in the RBAC matrix; the dashboard now counts showrooms.
+- **Public:** `/showrooms` (filterable, opt-in nearest-showroom ranking) and
+  `/showrooms/[slug]` (hero video/image, essentials, map, brands, gallery, featured
+  products, booking CTA, other branches). Both ISR-cached at 5 minutes.
+- **Homepage:** new `ShowroomsSection` reusing the same explorer.
+- **Contact page** rebuilt around all five branches instead of one address.
+- **Nearest-showroom detection** is opt-in only — geolocation is never requested
+  automatically, and coordinates never leave the browser (ranking is client-side).
+
+### Booking, SEO & Concierge
+- **Book a Visit** now takes a preferred showroom and time slot, deep-links from every
+  showroom card (`/book-visit?showroom=slug`), and a dated VISIT enquiry now creates a
+  real **`Booking`** row linked to both the lead and the showroom — so it lands in the
+  admin Bookings calendar, not just the leads pipeline. Confirmation email and Google
+  Calendar sync fire through the existing env-gated helpers.
+- **SEO:** `OrganizationJsonLd` emits an Organization schema plus **one LocalBusiness
+  (HomeGoodsStore) schema per showroom**, each with its own address, geo, map link and
+  parsed opening hours (Sunday omitted when that branch is closed). Showroom URLs added
+  to the sitemap at priority 0.9.
+- **AI Concierge** is now grounded in live CMS content via
+  `src/lib/concierge-knowledge.ts` (products, brands, showrooms, FAQs, blog, business
+  settings; 60s in-process cache). It answers branch questions, per-branch Sunday hours,
+  "do you stock <brand>", and specific product specs from the database — so it cannot
+  invent a showroom or product that doesn't exist. It remains a deterministic
+  retrieval engine, not an LLM; swapping in Claude means replacing `buildReply()` and
+  passing the same knowledge object as grounding context.
+
+---
+
 ## Verified working (2026-07-28, admin CMS build)
 - Postgres migration applied to the real Neon database (`prisma migrate deploy`),
   confirmed all 22 tables exist and are queryable.
@@ -381,6 +475,36 @@ product pages), `robots.txt` disallowing `/admin` and `/api`.
    Postgres instance; it has not been deployed to Vercel or any host.
 10. **Rate limiting on the public `/api/leads` endpoint is still in-memory** — resets on
     server restart, won't work across multiple server instances in production.
+
+## Third-pass gaps (branding / showrooms brief)
+
+1. **Google Maps URLs are search links, not canonical place links.** The brief listed
+   "(User supplied URL)" as a literal placeholder for all five showrooms, so each
+   `mapUrl` is a Maps *search* URL built from the address. They resolve correctly, but
+   should be replaced with real "Share → Copy link" place URLs via Admin → Showrooms.
+2. **Showroom coordinates are approximate locality centroids**, used only to rank
+   nearest-showroom. They should be corrected to exact pins in the admin — the
+   latitude/longitude fields are editable.
+3. **Email and website are blank by design** (not supplied). The Footer and schema
+   omit them cleanly rather than showing placeholders.
+4. **Per-showroom hero videos are empty.** The `video` field is wired end-to-end
+   (detail page plays it over the hero when set) but no footage was supplied — the
+   `vedio/` folder in the images directory contained no video files.
+5. **The "28 New Premium Sections" list is not built.** Tile Finder, Tile Calculator,
+   Material Comparison, Virtual Showroom, Before & After, the three partner programmes
+   (Architect/Builder/Interior Designer), the four studio pages (Kitchen/Bathroom/
+   Outdoor/Sanitary Experience Center), Awards, Meet Our Experts, Design Inspiration
+   and the rest are **not implemented** — that list alone is a multi-month scope. This
+   pass prioritised the concrete, real-data work: branding, business settings,
+   showrooms, booking, SEO and concierge grounding.
+6. **Product experience extras not built:** Recently Viewed and Wishlist persistence
+   (the QuickView heart is still local state only), and Catalog PDF per product.
+7. **Public catalogue still reads from `src/lib/catalog.ts`,** not the Product table —
+   unchanged from the previous pass and still the single biggest remaining gap. The
+   Showrooms module is the reference for how to wire a public page to Postgres.
+8. **Four portrait photos** of a person sit unused in the supplied images folder. They
+   were excluded from showroom galleries deliberately; they'd suit a "Meet Our Experts"
+   section once the person's name, role and consent are confirmed.
 
 ## Suggested next steps, roughly in priority order
 1. Wire the public website pages (Products/Brands/Portfolio/Gallery/Blog/Testimonials/

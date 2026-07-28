@@ -327,25 +327,192 @@ async function seedBookings() {
   console.log("Seeded 1 booking.");
 }
 
+/**
+ * Official business details. These are upserted (not skip-if-exists) so
+ * re-running the seed corrects stale values, while anything an admin has
+ * edited afterwards in Settings can simply be re-edited there.
+ */
 async function seedSettings() {
-  const count = await prisma.setting.count();
-  if (count > 0) return console.log("Settings already seeded, skipping.");
-
   const defaults = {
-    "business.name": "Your Prestige",
-    "business.phone": "+91 98765 43210",
-    "business.email": "hello@yourprestige.in",
-    "business.address": "Prestige Arcade, M.G. Road, Kodialbail, Mangaluru — 575003",
-    "business.mapUrl": "https://maps.google.com/?q=Your+Prestige+Tiles+Mangaluru",
-    "business.hours": "Mon–Sat: 9:30 AM – 8:00 PM · Sun: 10:00 AM – 6:00 PM",
+    "business.name": "Prestige Tiles & Sanitary",
+    "business.legalName": "Prestige Tiles & Sanitary",
+    "business.tagline": "Designing Spaces, Crafting Elegance",
+    "business.description":
+      "Luxury tiles, designer bathrooms and world-class sanitaryware across coastal Karnataka. Five showrooms in Mangaluru, Puttur and Moodbidri.",
+    "business.phone": "+91 90089 19195",
+    "business.whatsapp": "919008919195",
+    // Email and website are intentionally blank — not yet supplied.
+    "business.email": "",
+    "business.website": "",
+    "business.address":
+      "National Highway Road, Near Indian Conventional Hall, Jeppinamogaru, Mangaluru",
+    "business.mapUrl":
+      "https://www.google.com/maps/search/?api=1&query=Prestige+Tiles+%26+Sanitary+Jeppinamogaru+Mangaluru",
+    "business.hoursWeekdays": "Monday–Saturday: 9:00 AM – 7:00 PM",
+    "business.hoursSunday":
+      "Sunday: Jeppinamogaru 9 AM – 1 PM · Puttur 9 AM – 12 PM · other branches closed",
+    "social.instagram": "https://www.instagram.com/prestige_sanitarytiles/",
+    "social.facebook": "https://www.facebook.com/prestige.sanitarytiles",
+    "social.threads": "https://www.threads.com/@prestigeshop.in",
     "theme.accent": "#b3915a",
     "maintenance.enabled": false,
     "maintenance.message": "We're upgrading the showroom experience. Back shortly.",
   };
   for (const [key, value] of Object.entries(defaults)) {
-    await prisma.setting.create({ data: { key, value } });
+    await prisma.setting.upsert({ where: { key }, create: { key, value }, update: { value } });
   }
-  console.log(`Seeded ${Object.keys(defaults).length} settings.`);
+  console.log(`Seeded/updated ${Object.keys(defaults).length} settings.`);
+}
+
+/**
+ * The five real Prestige showrooms.
+ *
+ * NOTE ON COORDINATES: latitude/longitude are approximate locality centroids,
+ * used only to rank "nearest showroom" for visitors who grant location access.
+ * They should be corrected to exact pin positions via Admin → Showrooms.
+ *
+ * NOTE ON MAP URLS: exact Google Maps place links were not supplied, so these
+ * are Maps *search* URLs built from each address — they resolve correctly but
+ * should be replaced with canonical place URLs in the admin.
+ */
+async function seedShowrooms() {
+  const count = await prisma.showroom.count();
+  if (count > 0) return console.log("Showrooms already seeded, skipping.");
+
+  const img = (n) => `/showrooms/showroom-${String(n).padStart(2, "0")}.webp`;
+  const mapsSearch = (q) =>
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+
+  const SAT = "Monday–Saturday: 9:00 AM – 7:00 PM";
+  const CLOSED = "Sunday: Closed";
+
+  const showrooms = [
+    {
+      slug: "jeppinamogaru-mangaluru",
+      name: "Your Prestige Tiles & Sanitary",
+      subtitle: "Jaquar Authorized Dealer",
+      addressLine: "National Highway Road, Near Indian Conventional Hall",
+      locality: "Jeppinamogaru",
+      city: "Mangaluru",
+      postalCode: "575008",
+      latitude: 12.8438,
+      longitude: 74.8619,
+      phone: "+91 90089 19195",
+      whatsapp: "919008919195",
+      hoursWeekdays: SAT,
+      hoursSunday: "Sunday: 9:00 AM – 1:00 PM",
+      isFlagship: true,
+      sortOrder: 1,
+      description:
+        "Our flagship destination on the National Highway — an immersive walk-through of complete bathroom sanctuaries, live shower systems and large-format surfaces. Authorized Jaquar dealer with the widest display in the region.",
+      brands: ["Jaquar", "Kohler", "Grohe", "Essco", "Kajaria", "Somany", "RAK Ceramics"],
+      amenities: ["Customer Parking", "Design Consultation", "Live Shower Displays", "Architect Lounge"],
+      directions:
+        "On the National Highway service road beside Indian Conventional Hall. Ample on-site parking at the front of the building.",
+      heroImage: img(1),
+      gallery: [img(2), img(3), img(4), img(5), img(6), img(7), img(8), img(9)],
+    },
+    {
+      slug: "pandeshwar-mangaluru",
+      name: "Prestige Enterprises",
+      subtitle: "Tiles & Sanitaryware",
+      addressLine: "Pandeshwar",
+      locality: "Pandeshwar",
+      city: "Mangaluru",
+      latitude: 12.8654,
+      longitude: 74.839,
+      phone: "+91 90089 19195",
+      whatsapp: "919008919195",
+      hoursWeekdays: SAT,
+      hoursSunday: CLOSED,
+      sortOrder: 2,
+      description:
+        "Our city-centre showroom in Pandeshwar — a curated selection of sanitaryware, fittings and everyday premium tiles, convenient for central Mangaluru projects.",
+      brands: ["Jaquar", "Essco", "Hindware", "Cera", "Kajaria"],
+      amenities: ["Design Consultation", "Trade Counter"],
+      heroImage: img(10),
+      gallery: [img(11), img(12), img(13), img(14), img(15), img(16)],
+    },
+    {
+      slug: "derlakatte-mangaluru",
+      name: "Prestige Enterprises",
+      subtitle: "Prestige View Building",
+      addressLine: "Prestige View Building, University Road, Belma",
+      locality: "Derlakatte",
+      city: "Mangaluru",
+      latitude: 12.813,
+      longitude: 74.872,
+      phone: "+91 90089 19195",
+      whatsapp: "919008919195",
+      hoursWeekdays: SAT,
+      hoursSunday: CLOSED,
+      sortOrder: 3,
+      description:
+        "On University Road at Belma, Derlakatte — serving the fast-growing southern corridor with a full sanitaryware and tile display across two levels.",
+      brands: ["Jaquar", "Kohler", "Essco", "Somany", "Simpolo"],
+      amenities: ["Customer Parking", "Design Consultation"],
+      directions: "Prestige View Building on University Road, Belma — near Derlakatte junction.",
+      heroImage: img(17),
+      gallery: [img(18), img(19), img(20), img(21), img(22), img(23)],
+    },
+    {
+      slug: "puttur",
+      name: "Pro Prestige",
+      subtitle: "Tiles & Sanitaryware",
+      addressLine: "Yelmudi Bridge",
+      locality: "Yelmudi",
+      city: "Puttur",
+      latitude: 12.7594,
+      longitude: 75.201,
+      phone: "+91 70199 63812",
+      whatsapp: "917019963812",
+      hoursWeekdays: SAT,
+      hoursSunday: "Sunday: 9:00 AM – 12:00 PM",
+      sortOrder: 4,
+      description:
+        "Our Puttur branch at Yelmudi Bridge brings the full Prestige range inland — tiles, sanitaryware and fittings for homes and projects across the taluk.",
+      brands: ["Jaquar", "Essco", "Kajaria", "Hindware"],
+      amenities: ["Customer Parking", "Sunday Hours"],
+      directions: "Beside Yelmudi Bridge on the main Puttur road.",
+      heroImage: img(24),
+      gallery: [img(25), img(26), img(27), img(28), img(29), img(30)],
+    },
+    {
+      slug: "moodbidri",
+      name: "Accu Prestige",
+      subtitle: "Tiles & Sanitaryware",
+      addressLine: "Solapur–Mangaluru Highway, Alangar",
+      locality: "Alangar",
+      city: "Moodbidri",
+      latitude: 13.068,
+      longitude: 74.996,
+      phone: "+91 99809 96939",
+      whatsapp: "919980996939",
+      hoursWeekdays: SAT,
+      hoursSunday: CLOSED,
+      sortOrder: 5,
+      description:
+        "On the Solapur–Mangaluru Highway at Alangar, Moodbidri — a highway-side showroom with easy access and a broad tile and sanitaryware display.",
+      brands: ["Jaquar", "Essco", "Somany", "Nitco"],
+      amenities: ["Highway Access", "Customer Parking"],
+      directions: "Directly on the Solapur–Mangaluru Highway at Alangar.",
+      heroImage: img(31),
+      gallery: [img(32), img(33), img(34), img(35), img(36), img(37), img(38), img(39)],
+    },
+  ];
+
+  for (const s of showrooms) {
+    await prisma.showroom.create({
+      data: {
+        ...s,
+        mapUrl: mapsSearch(
+          `${s.name} ${s.addressLine} ${s.locality ?? ""} ${s.city} Karnataka`
+        ),
+        published: true,
+      },
+    });
+  }
+  console.log(`Seeded ${showrooms.length} showrooms.`);
 }
 
 async function main() {
@@ -363,6 +530,7 @@ async function main() {
   await seedLeads();
   await seedBookings();
   await seedSettings();
+  await seedShowrooms();
 }
 
 main()

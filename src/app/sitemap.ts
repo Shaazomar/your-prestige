@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-config";
 import { blogPosts } from "@/lib/blog-content";
 import { products } from "@/lib/catalog";
+import { getShowrooms } from "@/lib/showrooms";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
     "",
     "/about",
@@ -12,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/products/sanitary",
     "/products/designer-picks",
     "/brands",
+    "/showrooms",
     "/portfolio",
     "/gallery",
     "/testimonials",
@@ -25,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${siteUrl}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
-    priority: path === "" ? 1 : 0.8,
+    priority: path === "" ? 1 : path === "/showrooms" ? 0.9 : 0.8,
   }));
 
   const posts = blogPosts.map((p) => ({
@@ -42,5 +44,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...posts, ...productPages];
+  // Showroom pages are high-value local-SEO landing pages.
+  const showrooms = await getShowrooms();
+  const showroomPages = showrooms.map((s) => ({
+    url: `${siteUrl}/showrooms/${s.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
+
+  return [...staticPages, ...showroomPages, ...posts, ...productPages];
 }

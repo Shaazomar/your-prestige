@@ -4,11 +4,12 @@ import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { LeadForm } from "@/components/site/LeadForm";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
+import { getShowrooms } from "@/lib/showrooms";
 
 export const metadata: Metadata = {
   title: "Book a Visit",
   description:
-    "Book a private consultation at Your Prestige, Mangaluru — a guided walkthrough of 600+ surfaces and live bathroom suites with a dedicated design consultant.",
+    "Book a private consultation at any Prestige showroom across Mangaluru, Puttur and Moodbidri — a guided walkthrough with a dedicated design consultant.",
 };
 
 const expectations = [
@@ -29,7 +30,14 @@ const expectations = [
   },
 ] as const;
 
-export default function BookVisitPage() {
+export default async function BookVisitPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ showroom?: string }>;
+}) {
+  const [{ showroom }, showrooms] = await Promise.all([searchParams, getShowrooms()]);
+  const preselected = showrooms.find((s) => s.slug === showroom);
+
   return (
     <>
       <PageHero
@@ -71,9 +79,22 @@ export default function BookVisitPage() {
                   Book your visit
                 </h2>
                 <p className="mb-8 mt-2 text-slate-warm">
-                  Pick a date — we&apos;ll confirm your slot by phone or WhatsApp.
+                  {preselected
+                    ? `Booking a visit to our ${preselected.locality ?? preselected.city} showroom — pick a date and we'll confirm by phone or WhatsApp.`
+                    : "Choose a showroom and date — we'll confirm your slot by phone or WhatsApp."}
                 </p>
-                <LeadForm type="VISIT" submitLabel="Reserve My Slot" showVisitDate />
+                <LeadForm
+                  type="VISIT"
+                  submitLabel="Reserve My Slot"
+                  showVisitDate
+                  showrooms={showrooms.map((s) => ({
+                    slug: s.slug,
+                    name: s.name,
+                    locality: s.locality,
+                    city: s.city,
+                  }))}
+                  defaultShowroom={preselected?.slug}
+                />
               </div>
             </Reveal>
           </div>

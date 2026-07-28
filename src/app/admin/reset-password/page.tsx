@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ResetPasswordForm } from "./ResetPasswordForm";
+import { Logo } from "@/components/brand/Logo";
 
 export const metadata: Metadata = { title: "Reset Password", robots: { index: false, follow: false } };
 
@@ -13,11 +14,9 @@ export default async function ResetPasswordPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0c0c0b] px-6 text-white">
       <div className="w-full max-w-sm">
-        <div className="mb-10 text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.22em] text-white">
-            Your <span className="text-gold">Prestige</span>
-          </p>
-          <p className="mt-1 text-[0.65rem] uppercase tracking-[0.35em] text-white/30">Command Center</p>
+        <div className="mb-10 flex flex-col items-center text-center">
+          <Logo size="lg" tone="light" stacked />
+          <p className="mt-4 text-[0.65rem] uppercase tracking-[0.35em] text-white/30">Command Center</p>
         </div>
         <div className="rounded-3xl border border-white/8 bg-[#141413] p-8">
           <h1 className="mb-1 text-xl font-semibold">Reset your password</h1>

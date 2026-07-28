@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
-import { business } from "@/lib/site-config";
 import { Concierge } from "@/components/site/Concierge";
 
 /** Floating WhatsApp + AI Concierge cluster — always one tap from a lead. */
-export function FloatingActions() {
+export function FloatingActions({ whatsapp, phone }: { whatsapp: string; phone: string }) {
   const [conciergeOpen, setConciergeOpen] = useState(false);
 
   return (
@@ -18,8 +17,8 @@ export function FloatingActions() {
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 1.6, type: "spring", damping: 15 }}
-          href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
-            "Hi Your Prestige! I'd like to know more about your collections."
+          href={`https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+            "Hi Prestige! I'd like to know more about your collections."
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -49,7 +48,7 @@ export function FloatingActions() {
         </motion.button>
       </div>
 
-      <Concierge open={conciergeOpen} onClose={() => setConciergeOpen(false)} />
+      <Concierge open={conciergeOpen} onClose={() => setConciergeOpen(false)} phone={phone} />
     </>
   );
 }

@@ -14,6 +14,7 @@ export type Module =
   | "categories"
   | "brands"
   | "portfolio"
+  | "showrooms"
   | "gallery"
   | "videos"
   | "testimonials"
@@ -35,7 +36,7 @@ export type Action = "view" | "create" | "edit" | "delete" | "publish" | "settin
 
 const ALL_MODULES: Module[] = [
   "dashboard", "homepage", "products", "categories", "brands", "portfolio",
-  "gallery", "videos", "testimonials", "blog", "faqs", "offers", "leads",
+  "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "leads",
   "bookings", "conversations", "media", "seo", "users", "settings",
   "maintenance", "analytics", "logs",
 ];
@@ -44,7 +45,7 @@ const ALL_ACTIONS: Action[] = ["view", "create", "edit", "delete", "publish", "s
 
 const CONTENT_MODULES: Module[] = [
   "dashboard", "homepage", "products", "categories", "brands", "portfolio",
-  "gallery", "videos", "testimonials", "blog", "faqs", "offers", "media",
+  "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "media",
 ];
 
 /**

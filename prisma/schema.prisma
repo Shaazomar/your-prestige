@@ -420,14 +420,19 @@ model Booking {
   phone          String
   email          String?
   requestedDate  DateTime
+  preferredTime  String? // e.g. "10:00 AM" — free-text slot preference
   confirmedDate  DateTime?
   status         BookingStatus @default(PENDING)
   notes          String?
+  interestedIn   Json? // string[] of product/category interests
   googleEventId  String? // set once synced to Google Calendar
   reminderSentAt DateTime?
 
   leadId String? @unique
   lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  showroomId String?
+  showroom   Showroom? @relation(fields: [showroomId], references: [id], onDelete: SetNull)
 
   assignedConsultantId String?
   assignedConsultant   User?   @relation("AssignedBookings", fields: [assignedConsultantId], references: [id], onDelete: SetNull)
@@ -437,15 +442,76 @@ model Booking {
   updatedAt DateTime  @updatedAt
 
   @@index([status, requestedDate])
+  @@index([showroomId])
   @@index([deletedAt])
 }
 
+// ————— Showrooms —————
+
+model Showroom {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  /// Short descriptor shown under the name, e.g. "Jaquar Authorized Dealer"
+  subtitle String?
+
+  // Address
+  addressLine String
+  locality    String?
+  city        String
+  state       String  @default("Karnataka")
+  postalCode  String?
+  latitude    Float?
+  longitude   Float?
+  mapUrl      String? // Google Maps link
+  mapEmbedUrl String? // optional iframe embed src
+  directions  String? // free-text landmark/parking guidance
+
+  // Contact
+  phone        String
+  whatsapp     String?
+  email        String?
+  managerName  String?
+  managerPhone String?
+
+  // Hours — weekday line plus a Sunday line, since Sunday differs per branch
+  hoursWeekdays String @default("Monday–Saturday: 9:00 AM – 7:00 PM")
+  hoursSunday   String @default("Sunday: Closed")
+
+  // Media
+  heroImage String?
+  gallery   Json? // string[]
+  video     String?
+
+  description String?
+  brands      Json? // string[] of brand names stocked here
+  amenities   Json? // string[] e.g. "Customer Parking", "Design Consultation"
+
+  featuredProductIds Json? // string[] of Product ids to spotlight
+
+  isFlagship Boolean @default(false)
+  published  Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  bookings Booking[]
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([published, deletedAt])
+  @@index([city])
+}
+
 model Conversation {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   sessionId     String
   messages      Json // [{role, content, at}]
-  leadExtracted Boolean  @default(false)
-  resolved      Boolean  @default(false)
+  leadExtracted Boolean @default(false)
+  resolved      Boolean @default(false)
 
   leadId String? @unique // set when a Lead is manually extracted from this chat
 
