@@ -33,10 +33,21 @@ export function Concierge({ open, onClose }: { open: boolean; onClose: () => voi
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef<string>("");
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
+
+  useEffect(() => {
+    const key = "prestige-concierge-session";
+    let id = typeof window !== "undefined" ? sessionStorage.getItem(key) : null;
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem(key, id);
+    }
+    sessionIdRef.current = id;
+  }, []);
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -48,7 +59,7 @@ export function Concierge({ open, onClose }: { open: boolean; onClose: () => voi
       const res = await fetch("/api/concierge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, sessionId: sessionIdRef.current }),
       });
       const data = await res.json();
       setMessages((m) => [...m, { role: "assistant", content: data.reply }]);

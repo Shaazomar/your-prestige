@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-
-// NOTE: wire NextAuth session + RBAC check here before production.
+import { requirePermission } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const patchSchema = z.object({
   status: z.enum(["NEW", "CONTACTED", "QUALIFIED", "VISITED", "QUOTED", "WON", "LOST"]),
@@ -12,6 +12,16 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
+    await requirePermission("leads", "edit");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Forbidden";
+    return NextResponse.json(
+      { error: message },
+      { status: message === "UNAUTHENTICATED" ? 401 : 403 }
+    );
+  }
+
   const { id } = await params;
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
@@ -20,17 +30,17 @@ export async function PATCH(
   }
 
   try {
+    const before = await prisma.lead.findUniqueOrThrow({ where: { id } });
     const lead = await prisma.lead.update({
       where: { id },
       data: { status: parsed.data.status },
     });
-    await prisma.auditLog.create({
-      data: {
-        action: "lead.status_change",
-        entity: "Lead",
-        entityId: id,
-        meta: JSON.stringify({ to: parsed.data.status }),
-      },
+    await logAudit({
+      action: "lead.status_change",
+      entity: "Lead",
+      entityId: id,
+      oldValue: { status: before.status },
+      newValue: { status: lead.status },
     });
     return NextResponse.json({ ok: true, lead });
   } catch {

@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { business } from "@/lib/site-config";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 const schema = z.object({
   message: z.string().min(1).max(1000),
+  sessionId: z.string().min(8).max(100),
 });
 
 /**
  * Lightweight intent engine for the concierge.
  * Swap this handler for a Claude API call (claude-sonnet-5) when ready —
- * the client contract ({message} → {reply}) stays identical.
+ * the client contract ({message, sessionId} → {reply}) stays identical.
  */
 const intents: { match: RegExp; reply: string }[] = [
   {
@@ -49,6 +52,12 @@ const intents: { match: RegExp; reply: string }[] = [
   },
 ];
 
+interface StoredMessage {
+  role: "user" | "assistant";
+  content: string;
+  at: string;
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
@@ -56,22 +65,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
-  const { message } = parsed.data;
+  const { message, sessionId } = parsed.data;
 
-  // Phone number in the message → treat as a lead handoff
   const phoneMatch = message.match(/(\+?\d[\d\s-]{8,14}\d)/);
-  if (phoneMatch) {
-    return NextResponse.json({
-      reply:
-        "Perfect — I've noted your number and our design team will reach out shortly. If you'd like to fast-track things, you can also pick a slot on the Book a Visit page. It's been a pleasure!",
-      leadCaptured: true,
+  const leadExtracted = !!phoneMatch;
+
+  const reply = leadExtracted
+    ? "Perfect — I've noted your number and our design team will reach out shortly. If you'd like to fast-track things, you can also pick a slot on the Book a Visit page. It's been a pleasure!"
+    : intents.find((i) => i.match.test(message))?.reply ??
+      "I can help with collections, brands, pricing guidance and showroom visits. Could you tell me a little more about your project — is it a new home, a renovation, or a commercial space?";
+
+  const userMsg: StoredMessage = { role: "user", content: message, at: new Date().toISOString() };
+  const assistantMsg: StoredMessage = { role: "assistant", content: reply, at: new Date().toISOString() };
+
+  const existing = await prisma.conversation.findFirst({ where: { sessionId } });
+  if (existing) {
+    const messages = (existing.messages as unknown as StoredMessage[]) ?? [];
+    await prisma.conversation.update({
+      where: { id: existing.id },
+      data: {
+        messages: [...messages, userMsg, assistantMsg] as unknown as Prisma.InputJsonValue,
+        leadExtracted: existing.leadExtracted || leadExtracted,
+      },
+    });
+  } else {
+    await prisma.conversation.create({
+      data: {
+        sessionId,
+        messages: [userMsg, assistantMsg] as unknown as Prisma.InputJsonValue,
+        leadExtracted,
+      },
     });
   }
 
-  const intent = intents.find((i) => i.match.test(message));
-  const reply =
-    intent?.reply ??
-    "I can help with collections, brands, pricing guidance and showroom visits. Could you tell me a little more about your project — is it a new home, a renovation, or a commercial space?";
-
-  return NextResponse.json({ reply });
+  return NextResponse.json({ reply, leadCaptured: leadExtracted });
 }

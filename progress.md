@@ -2,19 +2,22 @@
 
 Luxury tiles & sanitaryware showroom website + CMS for **Your Prestige**, Mangaluru, Dakshina Kannada, Karnataka.
 
-Last updated: 2026-07-28
+Last updated: 2026-07-28 (later same day — admin CMS backend build)
 
-## Status: Website + admin shell complete, build passing, not yet deployed
+## Status: Website + fully authenticated, database-backed admin CMS. Not yet deployed to production hosting.
 
 Run locally:
 ```bash
 npm install
-npx prisma db push      # creates dev.db from prisma/schema.prisma
-node scripts/seed.mjs   # seeds 12 demo leads for the admin dashboard
+npx prisma migrate deploy   # applies committed migrations to your DATABASE_URL
+node scripts/seed.mjs       # creates the Super Admin login + sample content across every model
 npm run dev
 ```
+The seed script prints a generated admin password once — save it, it won't be shown again
+(or set `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` env vars before seeding to choose your own).
+
 Website → `http://localhost:3000`
-Admin → `http://localhost:3000/admin` (no auth yet — see "Not done" below)
+Admin → `http://localhost:3000/admin/login`
 
 ---
 
@@ -22,7 +25,9 @@ Admin → `http://localhost:3000/admin` (no auth yet — see "Not done" below)
 
 Next.js 15 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS v4 ·
 Framer Motion · Lenis (smooth scroll) · Lucide Icons · React Hook Form + Zod ·
-TanStack Query (installed, not yet used) · Prisma 6 + SQLite (dev) · class-variance-authority
+TanStack Query (installed, not yet used) · **Prisma 6 + PostgreSQL (Neon)** ·
+**Auth.js v5 (NextAuth) — Credentials + JWT** · **bcryptjs** · **sonner** (toasts) ·
+class-variance-authority
 
 ## Root layout / package changes made to the create-next-app scaffold
 - `next.config.ts` — added `images.remotePatterns` for Unsplash + Cloudinary, avif/webp formats
@@ -130,28 +135,157 @@ architecture-portfolio-style catalog:
 - `POST /api/concierge` — regex intent engine for the AI concierge chat; contract (`{message} → {reply}`) designed to swap in a real Claude-backed endpoint later
 - `PATCH /api/admin/leads/[id]` — kanban stage moves, writes to AuditLog (⚠️ no auth check yet)
 
-### Data layer (`prisma/schema.prisma`)
-Full CMS model: User (7-role RBAC enum), Category, Brand, Product, Project (portfolio),
-GalleryItem, Testimonial, Post (blog), Faq, Offer, Lead (7-stage pipeline + UTM fields),
-LeadNote, Conversation, Seo (per product/project/post), Redirect, Setting (k/v store), AuditLog.
-SQLite for dev via `DATABASE_URL="file:./dev.db"` in `.env` — schema is portable to
-PostgreSQL by changing the `datasource provider`.
-`scripts/seed.mjs` seeds 12 realistic demo leads across all pipeline stages.
+### Data layer (`prisma/schema.prisma`) — PostgreSQL on Neon
+Full CMS model: User (7-role RBAC enum + `UserStatus` invite lifecycle), Category
+(self-relation, nested), Brand, Product, Project (portfolio), GalleryAlbum + GalleryItem,
+Video, Testimonial, Post (blog, draft/scheduled/published), Faq, Offer, Lead (7-stage
+pipeline + UTM), LeadNote, **Booking** (status lifecycle, Google Calendar event id,
+reminder tracking), Conversation (soft-delete + `leadId` link), Seo (per path, product,
+project, post, category, brand), Redirect, Setting (JSON k/v store), **MediaFolder +
+Media**, **AuditLog** (oldValue/newValue/meta as native `Json`, ipAddress, userAgent,
+roleAtTime).
 
-### Admin panel (`src/app/admin/`, dark theme, `/admin`)
-- `layout.tsx` + `components/admin/Sidebar.tsx` — 21-module sidebar (Overview / Content /
-  Growth / System sections), topbar with "View Website" link
-- `page.tsx` — dashboard: 4 stat tiles (total leads, new, visit bookings, win rate),
-  14-day leads bar chart (`components/admin/LeadsChart.tsx`, built per the dataviz skill —
-  single-hue gold bars, hover tooltips, sparse axis labels), recent leads list
-- `leads/page.tsx` + `components/admin/LeadsKanban.tsx` — full 7-column kanban
-  (New→Contacted→Qualified→Visited→Quoted→Won/Lost) with optimistic stage-move buttons
-  wired to the PATCH API
-- 20 remaining modules (`content/homepage`, `content/products`, `content/categories`,
-  `content/brands`, `content/portfolio`, `content/gallery`, `content/videos`,
-  `content/testimonials`, `content/blog`, `content/faqs`, `content/offers`, `bookings`,
-  `conversations`, `analytics`, `media`, `seo`, `users`, `settings`, `maintenance`, `logs`)
-  are scaffolded as `ModuleStub` empty-states, each naming the Prisma model it will bind to
+Conventions used throughout: `deletedAt` (+ `deletedById` where relevant) for soft
+delete/restore; `createdById`/`updatedById` are plain `String?` columns (not enforced
+FKs) storing a `User.id` — deliberate, to avoid ~90 unused back-relation arrays on
+`User` from every content model needing 2–3 audit FKs; every mutation is additionally
+written to `AuditLog` (a real FK) so the trail survives even if the acting user is
+later deleted. JSON-array fields (`sizes`, `applications`, `images`, `tags`, etc.) use
+Postgres's native `Json` type, not string-encoded JSON.
+
+`DATABASE_URL` (pooled) + `DIRECT_URL` (direct, for `prisma migrate`) both point at
+Neon — see `.env`. Migration history lives in `prisma/migrations/` and is committed;
+two migrations exist: `init_postgres` and `conversation_soft_delete_and_lead_link`.
+`scripts/seed.mjs` creates the Super Admin login and seeds realistic sample data
+across every model (categories with nesting, brands, products, a portfolio project,
+a gallery album, a video, a testimonial, a blog post, an FAQ, an offer, 10 leads
+across every pipeline stage, a booking, and default business/theme/maintenance settings).
+
+### Auth, RBAC & audit foundation
+- **`src/lib/auth.config.ts`** — edge-safe base config (session strategy, pages, no
+  providers) used by `middleware.ts`, which runs in the Edge runtime and cannot load
+  Prisma Client.
+- **`src/lib/auth.ts`** — full NextAuth v5 config: Credentials provider (email + bcrypt
+  password check against `User.password`), JWT session embedding `id`/`role`/`status`,
+  direct `AuditLog` writes for `auth.login` / `auth.login_failed` (captures IP + user
+  agent via `next/headers`, since these fire before a session exists and can't use the
+  shared `logAudit()` helper, which itself calls `auth()`).
+- **`src/middleware.ts`** — protects `/admin/**` and `/api/admin/**`; redirects
+  unauthenticated visitors to `/admin/login?callbackUrl=...`; redirects authenticated
+  visitors away from the login page; allowlists `/admin/accept-invite` and
+  `/admin/reset-password` as public.
+- **`src/lib/permissions.ts`** — pure, client-safe RBAC matrix (`Module`/`Action` types,
+  `can()`, `permissionsFor()`) — no server-only imports, so `Sidebar.tsx` (a client
+  component) can filter nav items by role without pulling `next/headers` into the
+  client bundle. **`src/lib/rbac.ts`** re-exports these and adds the server-only
+  `requirePermission(module, action)` guard (throws `UNAUTHENTICATED`/`FORBIDDEN`),
+  called at the top of every Server Action and the media-upload Route Handler.
+  The matrix itself is a **code-defined** `Record<Role, Partial<Record<Module,
+  Action[]>>>` — a pragmatic choice over a fully dynamic DB-backed permission system,
+  granular enough to gate every module/action pair without an extra
+  Permission/RolePermission subsystem. `PermissionMatrix.tsx` renders it read-only
+  under Users & Roles.
+- **`src/lib/audit.ts`** — `logAudit({action, entity, entityId, oldValue, newValue,
+  meta})`, called from every mutating Server Action; captures user/role/IP/user-agent
+  via the current session + `next/headers`; never throws (a failed audit write must
+  not roll back the primary operation).
+- **Invite / reset flows** — `POST /admin/(dashboard)/users` → `inviteUser()` creates
+  a `User` with `status: INVITED` + a random `inviteToken` (7-day expiry), emails an
+  accept link (via the Resend-backed `sendEmail()`, env-gated); `/admin/accept-invite`
+  and `/admin/reset-password` are public pages (outside the auth-required route group)
+  that verify the token and bcrypt-hash a new password.
+- **Login page split** — all pre-existing admin routes were moved into a
+  `src/app/admin/(dashboard)/` **route group** (URLs unchanged — route groups don't
+  affect paths) so `/admin/login`, `/admin/accept-invite` and `/admin/reset-password`
+  can render without the authenticated dashboard chrome (Sidebar/topbar), while every
+  other `/admin/*` URL is identical to before.
+
+### Admin panel (`src/app/admin/`, dark theme) — every module fully backend-powered
+- **`(dashboard)/layout.tsx`** — fetches the real session server-side, redirects to
+  login if absent (defense in depth behind middleware), renders `Sidebar` with the
+  real user + a working Sign Out button (a Server Action), mounts a `<Toaster/>`.
+- **Reusable CRUD kit** (`src/hooks/useAdminList.ts`, `src/components/admin/`):
+  `useAdminList` (search/sort/paginate/trash-toggle state, calling a Server Action
+  on change), `AdminDataTable` (generic table: sortable columns, pagination, active/trash
+  toggle, row actions, loading/empty states), `ConfirmDialog`, `Drawer` (slide-in
+  create/edit panel), `FormField.tsx` (dark-themed `AField`/`ATextArea`/`ASelect`/
+  `AToggle`/`ATagInput`), `ImageUploadField` + `MultiImageField` (upload via
+  `/api/admin/media`, or paste a URL). Every module below follows the identical
+  `schema.ts` (Zod) + `actions.ts` (Server Actions: list/create/update/soft-delete/
+  restore, each wrapped in `requirePermission` + `logAudit`) + `XForm.tsx` +
+  `XManager.tsx` + `page.tsx` pattern — Categories was built first as the reference
+  implementation and independently verified against Neon before being replicated.
+- **Dashboard** (`page.tsx`) — live counts across every model (leads, pending bookings,
+  win rate, products, brands, categories, gallery images, videos, blog posts,
+  testimonials, offers), the existing 14-day leads chart, recent leads, **recent
+  activity** pulled from `AuditLog`, and an honest "Connect GA4" card instead of fake
+  traffic numbers.
+- **Content modules** — Categories (nested, nested-parent picker), Brands (logo/banner/
+  catalog PDF), Products (specs, sizes/applications tag inputs, lifestyle+texture
+  images, multi-image gallery, manually-curated related products, bulk-select +
+  bulk-delete), Portfolio (builder/architect/completion date), Gallery (albums +
+  drag-reorderable items with inline alt-text editing), Videos (YouTube/Vimeo/Upload),
+  Testimonials (rating, Google/video source), Blog (Markdown content, tags, **draft /
+  scheduled / published** — a `promoteDuePosts()` check on every list load flips
+  due-scheduled posts live, since there's no background job runner), FAQs, Offers
+  (validity window + countdown flag).
+- **Leads** — unchanged kanban, now with the PATCH API wired to `requirePermission` +
+  `logAudit` (previously had a `// NOTE: wire auth` marker with none).
+- **Bookings** — List **and Calendar** views (month grid, click a day's booking to
+  edit), Confirm/Reject one-click row actions, full edit drawer (reschedule by editing
+  the date + status), consultant assignment, **Send Reminder** (env-gated email via
+  Resend), and **`src/lib/google-calendar.ts`** — a real service-account-based Calendar
+  API integration (JWT-signed via Node's `crypto`, no OAuth consent flow needed for a
+  single business calendar) that creates/updates/deletes events on
+  create/update/reschedule/delete — inactive until `GOOGLE_SERVICE_ACCOUNT_JSON` +
+  `GOOGLE_CALENDAR_ID` are set.
+- **AI Conversations** — the concierge API (`/api/concierge`) now actually **persists
+  every chat** to `Conversation` (keyed by a `crypto.randomUUID()` session id stored in
+  `sessionStorage`), previously it stored nothing. Admin viewer: transcript modal,
+  search (via `$queryRaw` + `ILIKE` against the JSONB messages column, since Prisma's
+  typed Json filters can't search arbitrary array-of-objects content), Resolve toggle,
+  **Extract Lead** (creates a `Lead` from the transcript, pulling a phone number if the
+  visitor shared one), CSV export.
+- **Media Library** — folder sidebar (flat, create-only), grid view with upload
+  (drag-free click-to-upload, multi-file), inline alt-text editing, trash/restore.
+  **`src/lib/storage.ts`** — uploads to Cloudinary when configured, else falls back to
+  local disk under `public/uploads` (dev-only; most hosts including Vercel have an
+  ephemeral filesystem in production, so this throws a clear error if `VERCEL` is set
+  without Cloudinary creds, rather than silently failing).
+- **SEO Studio** — two tabs: per-path meta overrides (title/description/keywords/
+  canonical/OG image/raw JSON-LD override/noindex) against the generic `Seo.path`
+  field, and **Redirects** (from/to/status code/active) — both hard-delete (no
+  undo needed for config records), so `AdminDataTable` gained a `hideTrashToggle` prop.
+- **Users & Roles** — invite (sends email), edit name/role, deactivate/reactivate
+  (a user can't deactivate themselves), resend invite, send password-reset email, plus
+  the read-only `PermissionMatrix` reference table.
+- **Settings** — Business Details and Theme (accent color) are editable and persist to
+  `Setting`; an **Integrations** panel shows live Configured/Not-Configured status for
+  Cloudinary/Resend/Google Calendar/GA4 by checking `process.env` — deliberately
+  **read-only**: secret credentials are never stored in the database or editable via
+  a web UI (a security decision, not a missing feature), only in environment variables.
+- **Maintenance** — enable toggle, message, countdown datetime, IP whitelist, preview
+  password — and **real enforcement**, not just a settings screen: `src/lib/
+  maintenance.ts` + `src/app/(site)/layout.tsx` check `Setting` on every public-site
+  request (Server Component, Node runtime — middleware can't do this since it's
+  Edge-only and can't load Prisma) and render a branded holding page unless the visitor
+  has a valid HMAC-signed bypass cookie (issued by entering the preview password) or a
+  whitelisted IP. Verified live: enabled it, confirmed the public homepage showed the
+  holding page while `/admin/login` stayed completely unaffected, then disabled it.
+- **Audit Logs** — search/filter (by entity, free text across action/entity/user/IP),
+  a detail modal showing old/new JSON diffs, CSV export. Every mutation across every
+  module above writes here, plus auth login/login_failed/logout.
+- **Homepage Editor** — hero heading/subheading/eyebrow/image/video/button
+  label+links stored as a `homepage.hero.draft` `Setting`, with real **Draft → Publish
+  → Preview** semantics: editing saves to the draft key only; "Publish" copies draft →
+  `homepage.hero.published`, which is what `getPublishedHomepageHero()` (called from
+  the public homepage) actually reads; "Preview" opens `/?preview=1`, which — only for
+  a visitor with a valid admin session — renders the *draft* instead. The public
+  `Hero.tsx` component was converted from hardcoded copy to props-driven, reading
+  real DB content for the first time on the site.
+- **Analytics** — real, live: lead conversion funnel (by status, computed from actual
+  `Lead` rows), leads-by-source, leads-by-type. Traffic/top-pages/countries/devices/
+  realtime are clearly marked as requiring GA4 rather than showing fabricated numbers.
 
 ### SEO
 LocalBusiness JSON-LD (homepage), Article JSON-LD (blog posts), FAQPage JSON-LD (`/faqs`),
@@ -160,66 +294,105 @@ product pages), `robots.txt` disallowing `/admin` and `/api`.
 
 ---
 
-## Verified working (2026-07-28)
-- `npm run build` — passes, all routes compile; all 9 catalog products pre-render via SSG
-- `npx tsc --noEmit` — clean
-- Smoke-tested against production server: all 12 sampled routes return 200
-  (`/`, `/about`, `/products`, product detail, `/portfolio`, blog post, `/contact`,
-  `/book-visit`, `/admin`, `/admin/leads`, `/sitemap.xml`, `/robots.txt`)
-- Catalog redesign: `/products`, `/products/tiles`, `/products/sanitary`,
-  `/products/designer-picks` and 6 sampled product detail pages all return 200;
-  verified an actual optimized product image resolves end-to-end through
-  `/_next/image` (200, real `image/jpeg` bytes, not just a 200 page shell)
-- `POST /api/leads` — confirmed inserts into SQLite
-- `POST /api/concierge` — confirmed intent matching responds correctly
+## Verified working (2026-07-28, admin CMS build)
+- Postgres migration applied to the real Neon database (`prisma migrate deploy`),
+  confirmed all 22 tables exist and are queryable.
+- `npm run build` — passes with zero errors (only a harmless Next.js workspace-root
+  warning about a second lockfile); `npx tsc --noEmit` — clean.
+- **Auth flow tested end-to-end against the running production server**, not just
+  page-load smoke tests: fetched a real CSRF token, POSTed wrong credentials (rejected
+  cleanly, redirected with `?error=CredentialsSignin`), POSTed correct credentials
+  (redirected to `/admin`, session confirmed via `/api/auth/session` showing the real
+  user/role), confirmed `/admin` now loads 200 authenticated, confirmed visiting
+  `/admin/login` while authenticated redirects away, confirmed unauthenticated
+  `/admin` redirects to login and unauthenticated `POST /api/admin/media` returns 401.
+- **All 21 admin modules** (`/admin` dashboard, all 11 content modules, leads, bookings,
+  conversations, analytics, media, seo, users, settings, maintenance, logs) smoke-tested
+  authenticated in one pass against the built production server: every one returns 200
+  with zero server errors in the logs.
+- **Categories** was built first as a reference implementation and independently
+  verified: its exact Prisma query (search + soft-delete filter + pagination) run
+  directly against Neon returned correct results before being replicated to the other
+  10 content modules.
+- **Concierge → Conversation persistence** verified live: POSTed a real chat message,
+  confirmed via a direct DB query that the Conversation row was created with both the
+  user and assistant messages in its JSONB `messages` array.
+- **Maintenance mode enforcement** verified live end-to-end: enabled it via a direct DB
+  write, confirmed the public homepage served the branded holding page (200, holding-page
+  copy present) while `/admin/login` remained fully reachable and unaffected, then
+  disabled it again and confirmed the flag was back to `false`.
+- **AI Conversations search** (raw SQL `ILIKE` against the JSONB messages column, since
+  Prisma's typed Json filters can't search arbitrary array-of-objects content) verified
+  directly against Neon with a real seeded conversation.
+- Every Server Action across every module calls `requirePermission()` (throws
+  `UNAUTHENTICATED`/`FORBIDDEN`) and `logAudit()` on mutation — not spot-checked, this
+  is the enforced pattern every module was built against.
 
 ---
 
 ## Explicitly NOT done yet (honest gaps)
 
-1. **No authentication on `/admin`** — anyone can currently reach the admin panel and
-   the leads PATCH endpoint. NextAuth/Auth.js + RBAC middleware must be added before
-   any real deployment. The route handler has a `// NOTE:` marker where the session
-   check belongs.
-2. **20 of 21 admin modules are stubs** — only Dashboard and Leads have real CRUD/UI.
-   Products, Categories, Brands, Portfolio, Gallery, Videos, Testimonials, Blog, FAQs,
-   Offers, Bookings, Conversations, Analytics, Media Library, SEO Studio, Users & Roles,
-   Settings, Maintenance, Logs are all "module scaffolded" empty states.
-3. **Website content is not CMS-driven** — all site content (`demo-content.ts`,
-   `blog-content.ts`, `site-config.ts`) is hardcoded TypeScript, not read from the
-   database. The Prisma models mirror the shapes exactly so this is a swap, not a rewrite.
-4. **Imagery is Unsplash placeholders** — every photo across the site is a curated stock
-   image, not real showroom/product photography. The user supplied an "ICON Exterra"
-   product catalog PDF containing real room-scene photography, but it was attached via
-   an internal reference this environment could not open/extract from — catalog images
-   are still stock. When real catalog PDFs are available as actual files, extracting
-   their room/texture photography into `lifestyleImage`/`textureImage`/`gallery` on
-   each `CatalogProduct` is the highest-leverage visual upgrade.
-4b. **Quick View's Download Catalogue / spec-sheet download / share button are stubs**
-   — no `brochureUrl` PDF or share-sheet wired in yet; wishlist (heart icon) is
-   local component state only, not persisted.
-5. **Hero video slot exists but is unused** — `HERO_VIDEO` const in
-   `src/components/site/home/Hero.tsx` is `null`; falls back to a Ken Burns still.
-6. **Business details are placeholders** — phone, email, address, geo-coordinates,
-   social links in `src/lib/site-config.ts` are fictional and need replacing with real data.
-7. **AI Concierge is a regex intent engine**, not an actual LLM — designed so the
-   `{message} → {reply}` contract can be swapped for a Claude API call without touching
-   the UI.
-8. **No image upload / media library integration** (UploadThing/Cloudinary) — planned
-   but not wired in.
-9. **No analytics integration** (GA4/Plausible/etc.) — Analytics module is a stub.
-10. **Rate limiting on `/api/leads` is in-memory** — resets on server restart, won't
-    work across multiple server instances; noted as needing Upstash/Redis in production.
-11. **No tests** — no unit/integration/e2e test suite exists yet.
-12. **No CI/CD, no deployment** — not yet pushed to Vercel or any host.
+1. **The public-facing website still reads from static demo files, not Postgres** —
+   this is the single biggest remaining gap. `/products`, `/brands`, `/portfolio`,
+   `/gallery`, `/blog`, `/testimonials`, `/faqs`, `/offers` all still render from
+   `src/lib/catalog.ts` / `demo-content.ts` / `blog-content.ts`, **not** from what an
+   admin creates in the CMS you just built full CRUD for. Only the **Homepage Hero**
+   (draft/publish/preview) and **Maintenance mode** are wired end-to-end from DB to the
+   live site. This wasn't in scope for this pass (the request was explicitly the admin
+   backend, not the public site), but it means: creating a product in
+   `/admin/content/products` right now does **not** make it appear on `/products`. Given
+   how the schemas already mirror each other 1:1, wiring each public page to its Prisma
+   model is a query-swap per page, same pattern as the Homepage Hero wiring — the
+   natural, highest-value next step.
+2. **Cloudinary, Google Calendar, Resend email and GA4 are all coded and wired but
+   inactive** — no real credentials were provided beyond the Neon database connection
+   string. Each integration has a real implementation (signed JWT service-account auth
+   for Calendar, actual Resend API calls, actual Cloudinary signed upload) gated behind
+   `process.env` checks, with local-disk/no-op fallbacks so nothing breaks — but none of
+   them will do anything live until you add the credentials from the setup guide earlier
+   in this conversation. The Settings → Integrations panel shows live
+   Configured/Not-Configured status for each.
+3. **Imagery is still Unsplash placeholders** — unchanged from before; no product
+   photography was supplied as an actual file this environment could read.
+4. **Local media uploads don't survive a Vercel deploy** — `src/lib/storage.ts` falls
+   back to writing into `public/uploads/` only when Cloudinary isn't configured; this
+   works for local dev but Vercel's filesystem is ephemeral/read-only in production, so
+   Cloudinary credentials are a hard requirement before deploying, not optional polish.
+5. **No session invalidation on deactivation** — JWT sessions are stateless; a
+   `deactivateUser()` call updates the DB immediately, but a user's *existing* browser
+   session (JWT) stays valid until it expires or they re-authenticate, since there's no
+   server-side session store to revoke. Every Server Action still re-checks
+   `requirePermission()` against the live DB role/status on each call as defense in
+   depth, but the raw ability to load already-rendered admin pages persists briefly.
+   Fixing this properly needs either short-lived JWTs + refresh rotation or a DB-backed
+   session strategy — noted, not built, given time constraints.
+6. **Scheduled blog posts publish on next admin page load, not on a timer** —
+   `promoteDuePosts()` runs opportunistically inside `listPosts()`; there's no cron/queue
+   in this deployment, so a scheduled post won't flip to published until someone next
+   opens the Blog module in admin (or you wire a real cron hitting a small endpoint that
+   calls the same check).
+7. **Media Library folders are flat, not nested** — the `MediaFolder` schema supports a
+   parent/child tree (self-relation), but the UI only shows a flat list; nested folder
+   navigation wasn't built.
+8. **No automated tests** — still none; all verification in this pass was live
+   build/typecheck/smoke-testing against the real Neon database and running server, not
+   an automated test suite.
+9. **No CI/CD, no production deployment** — the app runs locally against the real Neon
+   Postgres instance; it has not been deployed to Vercel or any host.
+10. **Rate limiting on the public `/api/leads` endpoint is still in-memory** — resets on
+    server restart, won't work across multiple server instances in production.
 
 ## Suggested next steps, roughly in priority order
-1. NextAuth + RBAC middleware guarding `/admin/**` and admin API routes
-2. Wire Products/Categories/Brands/Portfolio/Gallery/Testimonials/Blog/FAQs/Offers admin
-   CRUD to Prisma, and switch the public site to read from the database instead of
-   `demo-content.ts`
-3. Replace placeholder imagery with real photography; add the hero film
-4. Swap the concierge's regex engine for a Claude-backed endpoint
-5. Media library (Cloudinary/UploadThing) + SEO Studio + Settings (business details editable from admin)
-6. Analytics integration + admin Analytics dashboard
-7. Deploy to Vercel, switch Prisma datasource to PostgreSQL
+1. Wire the public website pages (Products/Brands/Portfolio/Gallery/Blog/Testimonials/
+   FAQs/Offers) to read from Postgres instead of the static demo files — same pattern
+   already proven for the Homepage Hero.
+2. Add the real credentials from the setup guide (Cloudinary first — it unblocks
+   production media uploads; then Resend, Google Calendar, GA4) and flip each on.
+3. Deploy to Vercel; confirm `DATABASE_URL`/`DIRECT_URL`/`AUTH_SECRET` and all
+   integration env vars are set there; run `prisma migrate deploy` against production.
+4. Replace placeholder imagery with real showroom/product photography.
+5. Swap the concierge's regex intent engine for a real Claude-backed endpoint — the
+   `{message, sessionId} → {reply}` contract and Conversation persistence are already
+   in place, so this is an isolated change inside `/api/concierge/route.ts`.
+6. Nested Media Library folder navigation; a real cron for scheduled blog publishing.
+7. Session invalidation strategy for immediate effect on user deactivation.

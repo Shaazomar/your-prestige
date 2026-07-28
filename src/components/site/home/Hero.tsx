@@ -7,14 +7,11 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { Magnetic } from "@/components/motion/MagneticButton";
 import { TextReveal } from "@/components/motion/TextReveal";
+import type { HomepageHeroInput } from "@/app/admin/(dashboard)/content/homepage/schema";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2400&auto=format&fit=crop";
-
-/** Optional cinematic video — set to a hosted mp4 via CMS to replace the still. */
-const HERO_VIDEO: string | null = null;
-
-export function Hero() {
+export function Hero({ data }: { data: HomepageHeroInput }) {
+  const HERO_IMAGE = data.heroImage;
+  const HERO_VIDEO = data.heroVideo || null;
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
@@ -66,12 +63,12 @@ export function Hero() {
             className="text-eyebrow mb-6 flex items-center gap-2 text-gold"
           >
             <MapPin className="h-3.5 w-3.5" />
-            Mangaluru&apos;s Luxury Tile &amp; Sanitary Showroom
+            {data.eyebrow}
           </motion.p>
 
           <TextReveal
             as="h1"
-            text="The Art of Surfaces."
+            text={data.heading}
             className="text-display-xl max-w-5xl text-ivory"
             delay={0.8}
           />
@@ -82,8 +79,7 @@ export function Hero() {
             transition={{ delay: 1.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="mt-7 max-w-xl text-lg leading-relaxed text-ivory/70"
           >
-            Italian marble. Large-format porcelain. Sanctuary bathrooms.
-            Forty of the world&apos;s finest houses — under one immersive roof.
+            {data.subheading}
           </motion.p>
 
           <motion.div
@@ -92,17 +88,21 @@ export function Hero() {
             transition={{ delay: 1.6, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="mt-10 flex flex-wrap items-center gap-4"
           >
-            <Magnetic>
-              <ButtonLink href="/book-visit" variant="gold" size="lg">
-                Book a Private Visit
-                <ArrowUpRight className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </ButtonLink>
-            </Magnetic>
-            <Magnetic>
-              <ButtonLink href="/products" variant="outline-light" size="lg">
-                Explore Collections
-              </ButtonLink>
-            </Magnetic>
+            {data.primaryCtaLabel && (
+              <Magnetic>
+                <ButtonLink href={data.primaryCtaHref || "/book-visit"} variant="gold" size="lg">
+                  {data.primaryCtaLabel}
+                  <ArrowUpRight className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </ButtonLink>
+              </Magnetic>
+            )}
+            {data.secondaryCtaLabel && (
+              <Magnetic>
+                <ButtonLink href={data.secondaryCtaHref || "/products"} variant="outline-light" size="lg">
+                  {data.secondaryCtaLabel}
+                </ButtonLink>
+              </Magnetic>
+            )}
           </motion.div>
         </div>
       </motion.div>
