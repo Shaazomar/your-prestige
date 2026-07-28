@@ -68,15 +68,22 @@ model Product {
   id             String   @id @default(cuid())
   slug           String   @unique
   name           String
+  collection     String? // e.g. "Lumina Marble Collection" — groups related SKUs
   description    String?
   finish         String?
-  size           String?
+  thickness      String?
+  sizes          String? // JSON array: ["600 × 1200 mm", "800 × 1600 mm"]
   material       String?
-  applications   String? // JSON array: ["Flooring","Wall","Outdoor"]
-  images         String? // JSON array of media URLs
+  color          String?
+  texture        String? // short descriptor, e.g. "Book-matched veining"
+  applications   String? // JSON array: ["Living Room","Bathroom","Outdoor",...]
+  lifestyleImage String? // dominant hero/card image — full room scene
+  textureImage   String? // macro material close-up
+  images         String? // JSON array of gallery/angle/installation media URLs
   video          String?
-  brochureUrl    String?
-  tag            String? // "Bestseller" | "New Arrival" | ...
+  brochureUrl    String? // catalog PDF
+  tag            String? // "Bestseller" | "New Arrival" | "Designer Pick" | ...
+  aspect         String? // "portrait" | "square" | "landscape" — masonry rhythm
   featured       Boolean  @default(false)
   designerPick   Boolean  @default(false)
   published      Boolean  @default(true)

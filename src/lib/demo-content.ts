@@ -86,68 +86,8 @@ export const testimonials = [
   },
 ] as const;
 
-export const products = [
-  {
-    slug: "carrara-lumina-slab",
-    name: "Carrara Lumina Slab",
-    category: "tiles",
-    brand: "Kajaria",
-    finish: "Polished Porcelain",
-    size: "1200 × 2400 mm",
-    image: u("photo-1615873968403-89e068629265"),
-    tag: "Bestseller",
-  },
-  {
-    slug: "basalt-noir-matte",
-    name: "Basalt Noir Matte",
-    category: "tiles",
-    brand: "Simpolo",
-    finish: "Matte Porcelain",
-    size: "800 × 1600 mm",
-    image: u("photo-1620641788421-7a1c342ea42e"),
-    tag: "New Arrival",
-  },
-  {
-    slug: "aurum-freestanding-tub",
-    name: "Aurum Freestanding Tub",
-    category: "sanitary",
-    brand: "Kohler",
-    finish: "Gloss Acrylic",
-    size: "1700 mm",
-    image: u("photo-1552321554-5fefe8c9ef14"),
-    tag: "Designer Pick",
-  },
-  {
-    slug: "cascata-rain-system",
-    name: "Cascata Rain System",
-    category: "sanitary",
-    brand: "Grohe",
-    finish: "Brushed Gold",
-    size: "300 mm head",
-    image: u("photo-1631679706909-1844bbd07221"),
-    tag: "Premium",
-  },
-  {
-    slug: "travertine-classico",
-    name: "Travertine Classico",
-    category: "tiles",
-    brand: "RAK Ceramics",
-    finish: "Honed Vitrified",
-    size: "600 × 1200 mm",
-    image: u("photo-1600585154340-be6161a56a0c"),
-    tag: "Bestseller",
-  },
-  {
-    slug: "onda-wall-basin",
-    name: "Onda Wall Basin",
-    category: "sanitary",
-    brand: "Duravit",
-    finish: "Ceramic White",
-    size: "600 mm",
-    image: u("photo-1620626011761-996317b8d101"),
-    tag: "New Arrival",
-  },
-] as const;
+// Product catalog moved to src/lib/catalog.ts — richer model for the
+// luxury catalog experience (collections, sizes[], applications, imagery sets).
 
 export const portfolioProjects = [
   {

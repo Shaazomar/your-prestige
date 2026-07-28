@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHero } from "@/components/site/PageHero";
-import { Container } from "@/components/ui/Container";
-import { ProductCard } from "@/components/site/ProductCard";
-import { products } from "@/lib/demo-content";
-import { RevealStagger, RevealItem } from "@/components/motion/Reveal";
+import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
+import { products, type CatalogProduct } from "@/lib/catalog";
 
 const categories = {
   tiles: {
@@ -53,28 +51,10 @@ export default async function CategoryPage({
   const cat = categories[category as CategoryKey];
   if (!cat) notFound();
 
-  const items =
-    category === "designer-picks"
-      ? products.filter((p) => p.tag === "Designer Pick" || p.tag === "Premium")
-      : products.filter((p) => p.category === category);
-
   return (
     <>
       <PageHero eyebrow={cat.eyebrow} title={cat.title} description={cat.description} />
-      <section className="bg-ivory py-24 md:py-32">
-        <Container size="wide">
-          <RevealStagger
-            className="grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
-            stagger={0.1}
-          >
-            {(items.length ? items : products).map((p) => (
-              <RevealItem key={p.slug}>
-                <ProductCard product={p} />
-              </RevealItem>
-            ))}
-          </RevealStagger>
-        </Container>
-      </section>
+      <CatalogExplorer products={products} lockedCategory={category as CatalogProduct["category"]} />
     </>
   );
 }

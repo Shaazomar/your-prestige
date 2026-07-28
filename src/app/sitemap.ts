@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-config";
 import { blogPosts } from "@/lib/blog-content";
-import { products } from "@/lib/demo-content";
+import { products } from "@/lib/catalog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [

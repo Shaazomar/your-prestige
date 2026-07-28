@@ -2,7 +2,7 @@
 
 Luxury tiles & sanitaryware showroom website + CMS for **Your Prestige**, Mangaluru, Dakshina Kannada, Karnataka.
 
-Last updated: 2026-07-22
+Last updated: 2026-07-28
 
 ## Status: Website + admin shell complete, build passing, not yet deployed
 
@@ -57,7 +57,8 @@ TanStack Query (installed, not yet used) · Prisma 6 + SQLite (dev) · class-var
 - `Footer.tsx` — CTA band, link columns, contact strip, socials
 - `PageHero.tsx` — reusable dark editorial opener for interior pages
 - `LeadForm.tsx` — shared RHF+Zod form (used by contact/book-visit/request-quote, differentiated by `type` prop)
-- `FaqAccordion.tsx`, `PortfolioGrid.tsx` (animated filter), `ProductCard.tsx`, `ReadingProgress.tsx` (blog scroll bar)
+- `FaqAccordion.tsx`, `PortfolioGrid.tsx` (animated filter), `ReadingProgress.tsx` (blog scroll bar)
+- `catalog/` subfolder — the product catalog system, documented in its own section below
 - `JsonLd.tsx` — LocalBusiness structured data
 - `FloatingActions.tsx` + `Concierge.tsx` — WhatsApp button + AI concierge slide-in panel
 
@@ -71,9 +72,58 @@ AboutEditorial (parallax) → Stats (animated counters) → GalleryPreview (maso
 `/contact` `/book-visit` `/request-quote`
 Plus `src/app/sitemap.ts` and `src/app/robots.ts`.
 
-Demo content lives in `src/lib/demo-content.ts` (products, brands, gallery, testimonials,
-portfolio, FAQs) and `src/lib/blog-content.ts` (3 full SEO articles) — structured 1:1 with
-the Prisma models so swapping to live data is a query change, not a refactor.
+Demo content lives in `src/lib/demo-content.ts` (brands, gallery, testimonials,
+portfolio, FAQs, homepage collections) and `src/lib/blog-content.ts` (3 full SEO
+articles) — structured 1:1 with the Prisma models so swapping to live data is a
+query change, not a refactor. Product catalog data lives separately in
+`src/lib/catalog.ts` (see below).
+
+### Product Catalog — luxury redesign (`src/lib/catalog.ts`, `src/components/site/catalog/`)
+The `/products` experience was rebuilt from ordinary ecommerce cards into an
+architecture-portfolio-style catalog:
+- **`src/lib/catalog.ts`** — rich `CatalogProduct` model: `collection`, `brand`,
+  `finish`, `thickness`, `sizes[]`, `applications[]` (11-value room taxonomy),
+  `color`, `texture`, `lifestyleImage` (dominant room scene), `textureImage`
+  (macro material close-up), `gallery[]` (extra angles/installations), `aspect`
+  (portrait/square/landscape — drives masonry rhythm). 9 curated products across
+  tiles/sanitary/designer-picks. `getRelated()` scores by category + collection + brand.
+- **`ProductCard.tsx`** — magazine-cover card: mouse-tracked 3D tilt (framer-motion
+  spring rotateX/rotateY) + a cursor-following radial "lighting" glow, image zoom on
+  hover, always-visible tag/brand/collection/name/finish/size chips, a circular
+  texture-image swatch overlapping the hero image (the "actual tile image" requirement),
+  and a hover-reveal panel with application icons + "View Collection" CTA. Clicking the
+  image opens Quick View (does not navigate away); the product name is a direct link
+  to the full detail page.
+- **`SizeChip.tsx`** — floating pill chips (never raw "600x1200" text), staggered
+  reveal-in. **`ApplicationBadge.tsx`** — icon+label chips for all 11 room types
+  (Living Room → Hospital), icon map exported as `applicationIcons`. **`BrandMark.tsx`**
+  — premium wordmark badge standing in for a real logo asset.
+- **`FilterChip.tsx`** — pill filter control with a shared `layoutId` (scoped per
+  filter group via a `group` prop) for an animated sliding active-state pill.
+- **`CatalogExplorer.tsx`** — the sticky luxury filter bar (search + primary Room
+  chips always visible; an expandable "Filters" panel adds Category/Brand/Finish
+  chip rows) driving **instant client-side filtering** over a CSS-columns masonry
+  grid, with `AnimatePresence`/`layout` enter-exit transitions per card. Used by
+  both `/products` (all) and `/products/[category]` (locked category, hides the
+  redundant category filter row).
+- **`QuickView.tsx`** — fullscreen modal (Esc/arrow-key navigable image slider
+  across lifestyle+texture+gallery images, dot indicators, full specs, size/application
+  chips, brand mark, Request Quote / Visit Showroom / WhatsApp / wishlist(heart,
+  local state only) / share(stub) actions, and a "View Full Details" link to the
+  dedicated product page).
+- **`RelatedProducts.tsx`** — client wrapper giving the product detail page's
+  "Pairs Beautifully With" section its own independent Quick View modal instance.
+- **Product detail page** (`/products/[category]/[slug]`) — rebuilt as: 86vh cinematic
+  hero (lifestyle image, collection/name/brand/tag, Request Quote + Visit Showroom +
+  WhatsApp CTAs) → specs grid (thickness/finish/color/texture icon cards) + size chips
+  + application badges + spec-sheet download (stub) → full-bleed parallax texture
+  close-up with editorial caption → masonry "Interior Inspiration" gallery (lifestyle
+  + gallery images) → dark "Room Visualization" CTA band → related products. Emits
+  `Product` JSON-LD.
+- Prisma `Product` model extended to match: added `collection`, `thickness`, `sizes`
+  (JSON array, replacing the old single `size` string), `color`, `texture`,
+  `lifestyleImage`, `textureImage`, `aspect`; `applications`/`images` JSON fields kept.
+  Old flat product array in `demo-content.ts` removed in favor of `catalog.ts`.
 
 ### APIs (`src/app/api/`)
 - `POST /api/leads` — Zod-validated lead capture (contact/quote/visit), naive in-memory rate limit, UTM capture → Prisma
@@ -110,12 +160,16 @@ product pages), `robots.txt` disallowing `/admin` and `/api`.
 
 ---
 
-## Verified working (2026-07-22)
-- `npm run build` — passes, all routes compile (static/SSG where possible)
+## Verified working (2026-07-28)
+- `npm run build` — passes, all routes compile; all 9 catalog products pre-render via SSG
 - `npx tsc --noEmit` — clean
 - Smoke-tested against production server: all 12 sampled routes return 200
   (`/`, `/about`, `/products`, product detail, `/portfolio`, blog post, `/contact`,
   `/book-visit`, `/admin`, `/admin/leads`, `/sitemap.xml`, `/robots.txt`)
+- Catalog redesign: `/products`, `/products/tiles`, `/products/sanitary`,
+  `/products/designer-picks` and 6 sampled product detail pages all return 200;
+  verified an actual optimized product image resolves end-to-end through
+  `/_next/image` (200, real `image/jpeg` bytes, not just a 200 page shell)
 - `POST /api/leads` — confirmed inserts into SQLite
 - `POST /api/concierge` — confirmed intent matching responds correctly
 
@@ -135,7 +189,15 @@ product pages), `robots.txt` disallowing `/admin` and `/api`.
    `blog-content.ts`, `site-config.ts`) is hardcoded TypeScript, not read from the
    database. The Prisma models mirror the shapes exactly so this is a swap, not a rewrite.
 4. **Imagery is Unsplash placeholders** — every photo across the site is a curated stock
-   image, not real showroom/product photography.
+   image, not real showroom/product photography. The user supplied an "ICON Exterra"
+   product catalog PDF containing real room-scene photography, but it was attached via
+   an internal reference this environment could not open/extract from — catalog images
+   are still stock. When real catalog PDFs are available as actual files, extracting
+   their room/texture photography into `lifestyleImage`/`textureImage`/`gallery` on
+   each `CatalogProduct` is the highest-leverage visual upgrade.
+4b. **Quick View's Download Catalogue / spec-sheet download / share button are stubs**
+   — no `brochureUrl` PDF or share-sheet wired in yet; wishlist (heart icon) is
+   local component state only, not persisted.
 5. **Hero video slot exists but is unused** — `HERO_VIDEO` const in
    `src/components/site/home/Hero.tsx` is `null`; falls back to a Ken Burns still.
 6. **Business details are placeholders** — phone, email, address, geo-coordinates,
