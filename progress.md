@@ -520,3 +520,126 @@ publishing someone's likeness needs their role/consent established first.
    in place, so this is an isolated change inside `/api/concierge/route.ts`.
 6. Nested Media Library folder navigation; a real cron for scheduled blog publishing.
 7. Session invalidation strategy for immediate effect on user deactivation.
+
+---
+
+# Pass 4 — Catalogue import (PIM), search, SEO surface
+
+Turns the CMS into something that can hold a real, imported catalogue rather
+than nine hand-written demo products.
+
+## The problem this pass solved
+
+The public product pages read nine hardcoded products from `src/lib/catalog.ts`.
+The admin's product CRUD wrote to Postgres and had done since pass 2 — but
+nothing an editor created ever appeared on the site. That was flagged in pass 3
+as "the single biggest remaining gap"; it is now closed, and everything else
+here builds on it.
+
+## Decisions taken with the client
+
+- **No AI.** The extraction and enrichment engine is fully deterministic. The
+  `@anthropic-ai/sdk` dependency was removed rather than left unused.
+- **One image master** per extracted photo, letting `next/image` emit AVIF,
+  WebP and responsive sizes on demand, instead of pre-generating eight files.
+- **Root URLs** for the local landing pages (`/tiles-mangaluru`).
+
+## What was built
+
+**Public catalogue on Postgres.** `src/lib/products.ts` adapts Prisma rows into
+the `CatalogProduct` shape the existing components consume, with a real
+fallback for every non-nullable field. Every getter falls back to the bundled
+catalogue, so the site survives an empty or unreachable database — verified
+against a dead connection. `src/lib/applications.ts` normalises free-text room
+words onto the closed `Application` union and preserves unmatched vocabulary in
+`Product.applicationTags`.
+
+**Catalogue PDF import.** Upload a brand PDF → text and *embedded images* are
+extracted → products are staged → an admin reviews and approves → published
+rows appear on the site. Images come from the PDF's own image XObjects via
+pdf.js, not from rasterising pages, with CTM tracking so each image carries its
+real position and printed size. Junk filtering, exact and perceptual dedupe, and
+geometric image-to-product matching. Extraction reads clustered text blocks with
+geometry so a two-up spread doesn't merge one product's caption into another's.
+
+**Execution model.** No queue exists in this project and a catalogue takes
+minutes, so the browser drives a resumable state machine: each slice takes a
+stale-tolerant lock, works ~20s, commits its cursor. Closing the tab pauses the
+import rather than losing it.
+
+**Enrichment.** Descriptions, SEO fields, keywords, FAQs and image alt text are
+composed from extracted facts only — never a claim the catalogue didn't make.
+Sentence templates vary by slug hash so hundreds of products don't read alike.
+
+**Around it:** faceted search with facet counts in Postgres (`CatalogBrowser`,
+a sibling to `CatalogExplorer`, not a replacement); brand catalogue libraries at
+`/brands/[slug]`; media auto-filing under Catalog/Brand/Collection; saved
+selections and recently-viewed; breadcrumbs with schema; CMS-driven SEO
+overrides; per-product OG cards via `next/og`; eight local landing pages; a blog
+draft composer; and Google Business fields with `AggregateRating`.
+
+## Verified
+
+- Full import loop against a generated fixture catalogue: 6/6 products with
+  every field correct, each matched to its own photograph, logo rejected,
+  approve/reject honoured, published products live on the site.
+- All 9 demo products render identically from the database; the site still
+  renders with Postgres unreachable.
+- Filter counts match direct database queries across room, brand and combined
+  filters.
+- 31 public routes return 200; all admin routes redirect to login; admin API
+  returns 401; unknown paths 404.
+- Sitemap carries 48 URLs. Product pages emit Product + BreadcrumbList schema.
+- Build, typecheck and lint clean.
+
+## Bugs found and fixed along the way
+
+- `checkMediaUsage` only checked scalar columns, so every gallery image — all
+  of which live in Json arrays — reported as unused and safe to delete.
+- `getMaintenanceState()` had no error handling despite being read on every
+  public request; a database blip took the whole site down.
+- Moving the blog to Postgres exposed a stub row that cut /blog from three
+  articles to one; `scripts/seed-blog.mjs` restores them.
+
+## Honest limitations
+
+1. **Extraction is heuristic, not AI.** Good on clean, tabular, text-based
+   catalogues; weaker on design-led layouts. This is why nothing auto-publishes
+   and why the review grid sorts least-confident first.
+2. **Descriptions are composed, not written** — varied sentence templates over
+   real specs. Genuinely usable, never placeholder, but not a copywriter.
+3. **The blog composer assembles structure, not prose.** Outline, SEO,
+   internal links and related products; each section carries a TO WRITE prompt
+   and the draft saves unpublished.
+4. **Scanned catalogues can't be split per product.** The pipeline detects them
+   (one image covering >85% of a page) and flags the import rather than
+   silently cropping, which would be the screenshot approach the brief forbade.
+5. **Extracted images are re-encodes**, not the original embedded bytes —
+   pdf.js returns decoded bitmaps, and lossless passthrough needs a raw PDF
+   parser (poppler/qpdf/mutool are all absent here).
+6. **Imports need an open browser tab.** State is durable so it pauses and
+   resumes, but a 100-page catalogue is 15–40 client-driven slices.
+7. **Google Business data is entered by hand.** The Business Profile API needs
+   per-user OAuth, verified location ownership and an approved quota project;
+   the existing service-account credential is Calendar-scoped and can't be
+   reused. The columns are the adapter seam if that changes.
+8. **Wishlist is device-local.** There is no public-facing auth to key a
+   server-side list to; the wishlist page converts a selection into a
+   quotation request, which does persist as a Lead.
+9. **Cloudinary is still required before production deploy.** Local disk
+   uploads are dev-only, and `createImport()` now fails fast at upload time
+   rather than forty pages into a run.
+10. **The import pipeline has been validated against a generated fixture, not
+    a real brand catalogue.** Real PDFs vary enormously in structure; expect to
+    tune the vocabularies in `src/lib/extract/vocabulary.ts` against the first
+    real Somany or Jaquar import. That file is the intended tuning surface.
+
+## Next steps
+
+1. Run a real brand catalogue through the importer and tune
+   `src/lib/extract/vocabulary.ts` from what it gets wrong.
+2. Add Cloudinary credentials — it unblocks production media entirely.
+3. Fill in the Google Business fields per showroom (Place ID, review links,
+   and the real rating/review count).
+4. Write the bodies of any composed blog drafts before publishing them.
+5. Deploy to Vercel; run `prisma migrate deploy` against production.
