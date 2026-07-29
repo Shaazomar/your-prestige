@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
-import { getCatalogProducts } from "@/lib/products";
+import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
+import { getCatalogProducts, CATALOG_CLIENT_LIMIT } from "@/lib/products";
+import { countPublishedProducts, parseFilters, searchCatalog } from "@/lib/catalog-search";
 
 export const metadata: Metadata = {
   title: "The Catalogue",
@@ -12,8 +14,20 @@ export const metadata: Metadata = {
 // Published product changes should surface without a redeploy.
 export const revalidate = 300;
 
-export default async function ProductsPage() {
-  const products = await getCatalogProducts();
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const count = await countPublishedProducts();
+  const hasFilters = Object.keys(sp).some((k) => k !== "page");
+
+  // Below the cap the catalogue ships whole and filters instantly in the
+  // browser, which feels better on a curated range. Past it — or as soon as
+  // someone actually filters — Postgres does the work and the URL holds the
+  // state, so the view is shareable and crawlable.
+  const useServerBrowser = count > CATALOG_CLIENT_LIMIT || hasFilters;
 
   return (
     <>
@@ -22,7 +36,11 @@ export default async function ProductsPage() {
         title="An archive worth exploring."
         description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
       />
-      <CatalogExplorer products={products} />
+      {useServerBrowser ? (
+        <CatalogBrowser result={await searchCatalog(parseFilters(sp))} />
+      ) : (
+        <CatalogExplorer products={await getCatalogProducts()} />
+      )}
     </>
   );
 }

@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
 import type { CatalogProduct } from "@/lib/catalog";
-import { getCatalogProducts } from "@/lib/products";
+import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
+import { getCatalogProducts, CATALOG_CLIENT_LIMIT } from "@/lib/products";
+import { countPublishedProducts, parseFilters, searchCatalog } from "@/lib/catalog-search";
 
 const categories = {
   tiles: {
@@ -47,17 +49,33 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { category } = await params;
   const cat = categories[category as CategoryKey];
   if (!cat) notFound();
 
+  const sp = await searchParams;
+  const count = await countPublishedProducts();
+  const hasFilters = Object.keys(sp).some((k) => k !== "page");
+  const useServerBrowser = count > CATALOG_CLIENT_LIMIT || hasFilters;
+
+  if (useServerBrowser) {
+    const result = await searchCatalog({ ...parseFilters(sp), category });
+    return (
+      <>
+        <PageHero eyebrow={cat.eyebrow} title={cat.title} description={cat.description} />
+        <CatalogBrowser result={result} lockedCategory={category} />
+      </>
+    );
+  }
+
   // Deliberately the full catalogue, not just this category: CatalogExplorer
   // derives its own facet chips from the array it receives, and `lockedCategory`
-  // is what narrows the grid. Pre-filtering here would make the chips
-  // under-count. Phase 7's server-filtered browser is the fix at scale.
+  // is what narrows the grid. Pre-filtering here would make the chips under-count.
   const products = await getCatalogProducts();
 
   return (

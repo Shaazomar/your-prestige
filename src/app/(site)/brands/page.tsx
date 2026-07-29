@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
-import { brands } from "@/lib/demo-content";
+import Link from "next/link";
+import { getBrands } from "@/lib/brands";
 import { RevealStagger, RevealItem, Reveal } from "@/components/motion/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
     "Authorised partners for 40+ premium Indian and international brands — Kajaria, Kohler, Grohe, Jaquar, Duravit, Hansgrohe and more, at Your Prestige, Mangaluru.",
 };
 
-export default function BrandsPage() {
+export const revalidate = 600;
+
+export default async function BrandsPage() {
+  const brands = await getBrands();
+
   return (
     <>
       <PageHero
@@ -29,12 +34,29 @@ export default function BrandsPage() {
             stagger={0.05}
           >
             {brands.map((brand) => (
-              <RevealItem key={brand}>
-                <div className="group flex aspect-[4/3] items-center justify-center bg-ivory transition-colors duration-700 hover:bg-ink">
-                  <span className="text-xl font-semibold tracking-tight text-slate-warm transition-colors duration-700 group-hover:text-ivory md:text-2xl">
-                    {brand}
-                  </span>
-                </div>
+              <RevealItem key={brand.slug}>
+                {/* Brands with published products link to their catalogue
+                    library; the rest stay as plain marks, since a link to an
+                    empty range is worse than no link. */}
+                {brand.productCount > 0 ? (
+                  <Link
+                    href={`/brands/${brand.slug}`}
+                    className="group flex aspect-[4/3] flex-col items-center justify-center gap-1.5 bg-ivory transition-colors duration-700 hover:bg-ink"
+                  >
+                    <span className="text-xl font-semibold tracking-tight text-slate-warm transition-colors duration-700 group-hover:text-ivory md:text-2xl">
+                      {brand.name}
+                    </span>
+                    <span className="text-xs text-ink/35 transition-colors duration-700 group-hover:text-ivory/50">
+                      {brand.productCount} piece{brand.productCount === 1 ? "" : "s"}
+                    </span>
+                  </Link>
+                ) : (
+                  <div className="group flex aspect-[4/3] items-center justify-center bg-ivory transition-colors duration-700 hover:bg-ink">
+                    <span className="text-xl font-semibold tracking-tight text-slate-warm transition-colors duration-700 group-hover:text-ivory md:text-2xl">
+                      {brand.name}
+                    </span>
+                  </div>
+                )}
               </RevealItem>
             ))}
           </RevealStagger>

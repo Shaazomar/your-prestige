@@ -3,6 +3,7 @@ import { siteUrl } from "@/lib/site-config";
 import { blogPosts } from "@/lib/blog-content";
 import { getCatalogProducts } from "@/lib/products";
 import { getShowrooms } from "@/lib/showrooms";
+import { getBrands } from "@/lib/brands";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
@@ -46,6 +47,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Brand catalogue libraries — strong "<brand> dealer Mangaluru" landing pages.
+  const brands = await getBrands();
+  const brandPages = brands
+    .filter((b) => b.productCount > 0)
+    .map((b) => ({
+      url: `${siteUrl}/brands/${b.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
   // Showroom pages are high-value local-SEO landing pages.
   const showrooms = await getShowrooms();
   const showroomPages = showrooms.map((s) => ({
@@ -55,5 +67,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...staticPages, ...showroomPages, ...posts, ...productPages];
+  return [...staticPages, ...showroomPages, ...brandPages, ...posts, ...productPages];
 }

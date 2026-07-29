@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { findMediaUsage, findUnusedMedia } from "@/lib/media/organise";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import type { Prisma, Media, MediaFolder } from "@prisma/client";
 
@@ -52,14 +53,23 @@ export async function updateMediaMeta(id: string, data: { altText?: string; tags
 }
 
 /** Products referencing a URL flag it as "in use" so admins don't delete active media by accident. */
-export async function checkMediaUsage(url: string): Promise<boolean> {
+/**
+ * Where a file is used, if anywhere.
+ *
+ * This previously checked only a few scalar columns, which meant every gallery
+ * image — those all live in `Json` arrays — reported as unused and looked safe
+ * to delete. `findMediaUsage` covers the array columns too and names what
+ * refers to the file, so the warning can say what would break.
+ */
+export async function checkMediaUsage(url: string): Promise<string[]> {
   await requirePermission("media", "view");
-  const [product, brand, category] = await Promise.all([
-    prisma.product.findFirst({ where: { OR: [{ lifestyleImage: url }, { textureImage: url }] } }),
-    prisma.brand.findFirst({ where: { OR: [{ logo: url }, { banner: url }] } }),
-    prisma.category.findFirst({ where: { image: url } }),
-  ]);
-  return !!(product || brand || category);
+  return findMediaUsage(url);
+}
+
+/** Library files nothing references — the cleanup report. */
+export async function listUnusedMedia() {
+  await requirePermission("media", "view");
+  return findUnusedMedia();
 }
 
 export async function softDeleteMedia(id: string) {

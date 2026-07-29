@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { canUploadMedia } from "@/lib/storage";
 import { advanceImport } from "@/lib/import/runner";
+import { registerMedia } from "@/lib/media/organise";
 import { slugify } from "@/lib/extract/enrich";
 import { toApplications } from "@/lib/applications";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
@@ -417,6 +418,28 @@ export async function publishApproved(input: PublishInput): Promise<{ published:
             productId: product.id,
           },
         });
+      }
+
+      // File the kept images into the media library under
+      // Catalog / Brand / Collection, so they're managed like any other asset
+      // from here on. Only images that actually reached the site are added.
+      for (const asset of row.assets) {
+        if (asset.rejected || !asset.url) continue;
+        const mediaId = await registerMedia({
+          url: asset.url,
+          filename: `${asset.seoFilename ?? slug}.webp`,
+          width: asset.width,
+          height: asset.height,
+          bytes: asset.bytes,
+          altText: asset.altText,
+          brand: brandName,
+          collection: row.collectionName,
+          productName: row.name,
+          uploadedById: session.user.id,
+        });
+        if (mediaId) {
+          await prisma.importAsset.update({ where: { id: asset.id }, data: { mediaId } });
+        }
       }
 
       await prisma.extractedProduct.update({
