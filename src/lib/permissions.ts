@@ -11,6 +11,8 @@ export type Module =
   | "dashboard"
   | "homepage"
   | "products"
+  | "catalogImports"
+  | "landingPages"
   | "categories"
   | "brands"
   | "portfolio"
@@ -35,7 +37,8 @@ export type Module =
 export type Action = "view" | "create" | "edit" | "delete" | "publish" | "settings" | "analytics";
 
 const ALL_MODULES: Module[] = [
-  "dashboard", "homepage", "products", "categories", "brands", "portfolio",
+  "dashboard", "homepage", "products", "catalogImports", "landingPages",
+  "categories", "brands", "portfolio",
   "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "leads",
   "bookings", "conversations", "media", "seo", "users", "settings",
   "maintenance", "analytics", "logs",
@@ -44,7 +47,8 @@ const ALL_MODULES: Module[] = [
 const ALL_ACTIONS: Action[] = ["view", "create", "edit", "delete", "publish", "settings", "analytics"];
 
 const CONTENT_MODULES: Module[] = [
-  "dashboard", "homepage", "products", "categories", "brands", "portfolio",
+  "dashboard", "homepage", "products", "catalogImports", "landingPages",
+  "categories", "brands", "portfolio",
   "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "media",
 ];
 
@@ -74,8 +78,13 @@ const MATRIX: Record<Role, Partial<Record<Module, Action[]>>> = {
   SEO: {
     dashboard: ["view"],
     seo: ["view", "create", "edit", "delete", "publish"],
+    // Local landing pages are pure SEO surface — this role owns them outright.
+    landingPages: ["view", "create", "edit", "delete", "publish"],
     blog: ["view", "edit"],
     products: ["view", "edit"],
+    // Read-only on imports: SEO reviews the copy that gets generated, but
+    // running an import and publishing products is a content decision.
+    catalogImports: ["view"],
     analytics: ["view", "analytics"],
   },
   SUPPORT: {

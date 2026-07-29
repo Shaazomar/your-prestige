@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-config";
 import { blogPosts } from "@/lib/blog-content";
-import { products } from "@/lib/catalog";
+import { getCatalogProducts } from "@/lib/products";
 import { getShowrooms } from "@/lib/showrooms";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -37,6 +37,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // The whole published catalogue, not just the client-rendered slice.
+  const products = await getCatalogProducts({ limit: 5000 });
   const productPages = products.map((p) => ({
     url: `${siteUrl}/products/${p.category}/${p.slug}`,
     lastModified: new Date(),

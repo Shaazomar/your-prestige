@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
-  LogOut, Store,
+  LogOut, Store, FileStack, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/Logo";
@@ -24,6 +24,7 @@ const nav = [
     items: [
       { label: "Homepage", href: "/admin/content/homepage", icon: Home, module: "homepage" as Module },
       { label: "Products", href: "/admin/content/products", icon: Package, module: "products" as Module },
+      { label: "Catalog Imports", href: "/admin/content/catalog-imports", icon: FileStack, module: "catalogImports" as Module },
       { label: "Categories", href: "/admin/content/categories", icon: Tags, module: "categories" as Module },
       { label: "Brands", href: "/admin/content/brands", icon: Award, module: "brands" as Module },
       { label: "Showrooms", href: "/admin/content/showrooms", icon: Store, module: "showrooms" as Module },
@@ -34,6 +35,7 @@ const nav = [
       { label: "Blog", href: "/admin/content/blog", icon: PenSquare, module: "blog" as Module },
       { label: "FAQs", href: "/admin/content/faqs", icon: HelpCircle, module: "faqs" as Module },
       { label: "Offers", href: "/admin/content/offers", icon: BadgePercent, module: "offers" as Module },
+      { label: "Landing Pages", href: "/admin/content/landing-pages", icon: MapPin, module: "landingPages" as Module },
     ],
   },
   {

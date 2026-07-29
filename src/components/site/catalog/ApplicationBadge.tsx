@@ -19,6 +19,15 @@ export const applicationIcons: Record<Application, typeof Sofa> = {
   Hospital: Cross,
 };
 
+/**
+ * Icon lookup that tolerates an unknown key. Applications now arrive from
+ * imported catalogues, and while `normaliseApplications()` constrains them to
+ * the union on write, a hand-edited database row shouldn't be able to render
+ * `undefined` as a component.
+ */
+export const iconFor = (application: string) =>
+  applicationIcons[application as Application] ?? Building2;
+
 interface ApplicationBadgeProps {
   application: Application;
   size?: "sm" | "md";
@@ -33,7 +42,7 @@ export function ApplicationBadge({
   dark = false,
   className,
 }: ApplicationBadgeProps) {
-  const Icon = applicationIcons[application];
+  const Icon = iconFor(application);
   return (
     <span
       className={cn(

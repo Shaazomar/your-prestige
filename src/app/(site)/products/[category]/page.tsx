@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
-import { products, type CatalogProduct } from "@/lib/catalog";
+import type { CatalogProduct } from "@/lib/catalog";
+import { getCatalogProducts } from "@/lib/products";
 
 const categories = {
   tiles: {
@@ -27,6 +28,8 @@ const categories = {
 
 type CategoryKey = keyof typeof categories;
 
+export const revalidate = 300;
+
 export function generateStaticParams() {
   return Object.keys(categories).map((category) => ({ category }));
 }
@@ -50,6 +53,12 @@ export default async function CategoryPage({
   const { category } = await params;
   const cat = categories[category as CategoryKey];
   if (!cat) notFound();
+
+  // Deliberately the full catalogue, not just this category: CatalogExplorer
+  // derives its own facet chips from the array it receives, and `lockedCategory`
+  // is what narrows the grid. Pre-filtering here would make the chips
+  // under-count. Phase 7's server-filtered browser is the fix at scale.
+  const products = await getCatalogProducts();
 
   return (
     <>

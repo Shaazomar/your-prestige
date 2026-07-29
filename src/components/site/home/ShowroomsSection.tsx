@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowUpRight, Store } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";

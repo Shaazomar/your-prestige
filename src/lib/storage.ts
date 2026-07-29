@@ -9,11 +9,43 @@ export interface UploadResult {
   height?: number;
 }
 
+export interface UploadOptions {
+  /**
+   * Destination folder, relative to the `prestige` root — e.g.
+   * "catalog/somany/dune-collection". Catalog imports use this to mirror the
+   * Brand / Collection / Product tree into storage. Defaults to the root.
+   */
+  folder?: string;
+  /**
+   * SEO filename (no extension), e.g. "somany-dune-taupe-800x1600-matt".
+   * When omitted the file keeps a random name, which is what the generic
+   * media uploader has always done.
+   */
+  filename?: string;
+}
+
 const cloudinaryConfigured = !!(
   process.env.CLOUDINARY_CLOUD_NAME &&
   process.env.CLOUDINARY_API_KEY &&
   process.env.CLOUDINARY_API_SECRET
 );
+
+const ROOT_FOLDER = "prestige";
+
+/** Strip anything that could escape the uploads dir or upset Cloudinary. */
+function safeSegment(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^[.-]+|[.-]+$/g, "")
+    .slice(0, 80);
+}
+
+function safeFolder(folder?: string): string {
+  if (!folder) return ROOT_FOLDER;
+  const parts = folder.split("/").map(safeSegment).filter(Boolean);
+  return [ROOT_FOLDER, ...parts].join("/");
+}
 
 /**
  * Storage adapter — uploads to Cloudinary when configured (production),
@@ -21,35 +53,46 @@ const cloudinaryConfigured = !!(
  * including Vercel, have an ephemeral/read-only filesystem in production,
  * so Cloudinary credentials are a hard requirement before deploying).
  */
-export async function uploadFile(file: File): Promise<UploadResult> {
+export async function uploadFile(file: File, opts?: UploadOptions): Promise<UploadResult> {
   if (cloudinaryConfigured) {
-    return uploadToCloudinary(file);
+    return uploadToCloudinary(file, opts);
   }
   if (process.env.VERCEL) {
     throw new Error(
       "Media upload requires Cloudinary credentials in production (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) — the local-disk fallback only works in local development."
     );
   }
-  return uploadToLocalDisk(file);
+  return uploadToLocalDisk(file, opts);
 }
 
-async function uploadToCloudinary(file: File): Promise<UploadResult> {
+async function uploadToCloudinary(file: File, opts?: UploadOptions): Promise<UploadResult> {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;
   const apiKey = process.env.CLOUDINARY_API_KEY!;
   const apiSecret = process.env.CLOUDINARY_API_SECRET!;
 
   const timestamp = Math.floor(Date.now() / 1000);
-  // Signed upload — signature is sha1(params sorted + secret)
-  const paramsToSign = `folder=prestige&timestamp=${timestamp}${apiSecret}`;
+
+  // Every signed param must appear in the signature, sorted by key, joined
+  // with & — omitting one (or signing a param you don't send) fails with an
+  // opaque 401 from Cloudinary.
+  const signed: Record<string, string> = {
+    folder: safeFolder(opts?.folder),
+    timestamp: String(timestamp),
+  };
+  if (opts?.filename) signed.public_id = safeSegment(opts.filename);
+
+  const paramsToSign = Object.keys(signed)
+    .sort()
+    .map((k) => `${k}=${signed[k]}`)
+    .join("&");
   const { createHash } = await import("crypto");
-  const signature = createHash("sha1").update(paramsToSign).digest("hex");
+  const signature = createHash("sha1").update(paramsToSign + apiSecret).digest("hex");
 
   const form = new FormData();
   form.append("file", file);
   form.append("api_key", apiKey);
-  form.append("timestamp", String(timestamp));
-  form.append("folder", "prestige");
   form.append("signature", signature);
+  for (const [k, v] of Object.entries(signed)) form.append(k, v);
 
   const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
     method: "POST",
@@ -63,16 +106,39 @@ async function uploadToCloudinary(file: File): Promise<UploadResult> {
   return { url: data.secure_url, publicId: data.public_id, width: data.width, height: data.height };
 }
 
-async function uploadToLocalDisk(file: File): Promise<UploadResult> {
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+async function uploadToLocalDisk(file: File, opts?: UploadOptions): Promise<UploadResult> {
+  // Mirror the Cloudinary tree on disk, minus the `prestige` root namespace —
+  // /public/uploads is already the equivalent of that root.
+  const relFolder = safeFolder(opts?.folder).split("/").slice(1).join("/");
+  const uploadsDir = path.join(process.cwd(), "public", "uploads", relFolder);
   await mkdir(uploadsDir, { recursive: true });
 
   const ext = file.name.split(".").pop() || "bin";
-  const filename = `${randomUUID()}.${ext}`;
+  // A short random suffix keeps SEO filenames unique without a lookup — two
+  // products named "Dune Taupe" in different catalogues can't clobber each other.
+  const filename = opts?.filename
+    ? `${safeSegment(opts.filename)}-${randomUUID().slice(0, 8)}.${ext}`
+    : `${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(uploadsDir, filename), buffer);
 
-  return { url: `/uploads/${filename}` };
+  return { url: `/uploads/${relFolder ? `${relFolder}/` : ""}${filename}` };
 }
 
 export const isCloudinaryConfigured = cloudinaryConfigured;
+
+/**
+ * Can we write media at all right now? Catalog imports call this up front so a
+ * 100-page run fails at upload time with a clear message, rather than 40 pages in.
+ */
+export function canUploadMedia(): { ok: boolean; reason?: string } {
+  if (cloudinaryConfigured) return { ok: true };
+  if (process.env.VERCEL) {
+    return {
+      ok: false,
+      reason:
+        "Media storage is not configured. Catalog imports write hundreds of images, which needs Cloudinary credentials (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) in production.",
+    };
+  }
+  return { ok: true };
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
-import { products } from "@/lib/catalog";
+import { getCatalogProducts } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "The Catalogue",
@@ -9,7 +9,12 @@ export const metadata: Metadata = {
     "Explore Your Prestige's full catalogue — premium tiles, luxury sanitaryware and designer picks from 40+ world-class brands, filterable by room, brand and finish.",
 };
 
-export default function ProductsPage() {
+// Published product changes should surface without a redeploy.
+export const revalidate = 300;
+
+export default async function ProductsPage() {
+  const products = await getCatalogProducts();
+
   return (
     <>
       <PageHero

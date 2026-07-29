@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowUpRight, Download, Ruler, Layers, Palette, Fingerprint, MessageCircle,
 } from "lucide-react";
-import { products, getRelated } from "@/lib/catalog";
+import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { Parallax } from "@/components/motion/Parallax";
@@ -17,8 +17,15 @@ import { BrandMark } from "@/components/site/catalog/BrandMark";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
 import { business, siteUrl } from "@/lib/site-config";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ category: p.category, slug: p.slug }));
+export const revalidate = 3600;
+
+/**
+ * Pre-renders the most prominent products; the long tail renders on demand and
+ * is then cached, since `dynamicParams` defaults to true. Capped so a
+ * thousand-product catalogue doesn't turn every build into a full crawl.
+ */
+export async function generateStaticParams() {
+  return getCatalogParams();
 }
 
 export async function generateMetadata({
@@ -27,7 +34,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await getCatalogProduct(slug);
   if (!product) return {};
   return {
     title: `${product.name} — ${product.collection}`,
@@ -42,10 +49,10 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await getCatalogProduct(slug);
   if (!product) notFound();
 
-  const related = getRelated(product);
+  const related = await getRelatedProducts(product);
   const inspirationGallery = [product.lifestyleImage, ...product.gallery];
 
   const specs = [
