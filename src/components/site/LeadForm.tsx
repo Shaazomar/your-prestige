@@ -43,6 +43,12 @@ interface LeadFormProps {
   showrooms?: ShowroomOption[];
   /** Pre-selected showroom slug (from ?showroom=… on the booking page) */
   defaultShowroom?: string;
+  /**
+   * Product the visitor arrived from (?product=… on a product page CTA).
+   * Seeds the message so the enquiry carries its subject and nobody has to
+   * retype what they were just looking at.
+   */
+  defaultProduct?: string;
 }
 
 const TIME_SLOTS = [
@@ -57,6 +63,7 @@ export function LeadForm({
   showBudget = false,
   showrooms,
   defaultShowroom,
+  defaultProduct,
 }: LeadFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const {
@@ -65,7 +72,10 @@ export function LeadForm({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { showroomSlug: defaultShowroom ?? "" },
+    defaultValues: {
+      showroomSlug: defaultShowroom ?? "",
+      message: defaultProduct ? `I'm interested in ${defaultProduct}.` : "",
+    },
   });
 
   async function onSubmit(values: FormValues) {

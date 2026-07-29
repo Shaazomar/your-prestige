@@ -8,6 +8,7 @@ import { Phone, ArrowUpRight } from "lucide-react";
 import { mainNav } from "@/lib/site-config";
 import { Magnetic } from "@/components/motion/MagneticButton";
 import { ButtonLink } from "@/components/ui/Button";
+import { WishlistLink } from "@/components/site/WishlistLink";
 import { Logo } from "@/components/brand/Logo";
 import { telHref } from "@/lib/business";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,7 @@ export function Header({ business }: HeaderProps) {
             >
               <Phone className="h-4 w-4" />
             </a>
+            <WishlistLink dark={overDark} />
             <Magnetic>
               <ButtonLink
                 href="/book-visit"

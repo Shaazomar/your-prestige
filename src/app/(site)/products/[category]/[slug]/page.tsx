@@ -15,6 +15,9 @@ import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
 import { BrandMark } from "@/components/site/catalog/BrandMark";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
+import { WishlistButton } from "@/components/site/catalog/WishlistButton";
+import { RecentlyViewed } from "@/components/site/catalog/RecentlyViewed";
+import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { business, siteUrl } from "@/lib/site-config";
 
 export const revalidate = 3600;
@@ -54,6 +57,13 @@ export default async function ProductPage({
 
   const related = await getRelatedProducts(product);
   const inspirationGallery = [product.lifestyleImage, ...product.gallery];
+
+  const categoryLabel =
+    product.category === "sanitary"
+      ? "Sanitaryware"
+      : product.category === "designer-picks"
+        ? "Designer Picks"
+        : "Tiles";
 
   const specs = [
     { icon: Ruler, label: "Thickness", value: product.thickness },
@@ -95,7 +105,15 @@ export default async function ProductPage({
         </div>
 
         <Container size="wide" className="relative z-10 pb-16 md:pb-24">
-          <div className="flex flex-wrap items-center gap-3">
+          <Breadcrumbs
+            dark
+            items={[
+              { label: "Catalogue", href: "/products" },
+              { label: categoryLabel, href: `/products/${product.category}` },
+              { label: product.name },
+            ]}
+          />
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             {product.tag && (
               <span className="rounded-full bg-gold px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-ivory">
                 {product.tag}
@@ -114,13 +132,16 @@ export default async function ProductPage({
           </Reveal>
           <Reveal delay={0.45}>
             <div className="mt-9 flex flex-wrap gap-4">
-              <ButtonLink href="/request-quote" variant="gold" size="lg">
+              {/* Both CTAs carry the product through, so the enquiry arrives
+                  already knowing what it's about instead of asking again. */}
+              <ButtonLink href={`/request-quote?product=${product.slug}`} variant="gold" size="lg">
                 Request a Quote
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>
-              <ButtonLink href="/book-visit" variant="outline-light" size="lg">
+              <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline-light" size="lg">
                 Visit Showroom
               </ButtonLink>
+              <WishlistButton slug={product.slug} name={product.name} variant="full" className="border-ivory/25 text-ivory" />
               <a
                 href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
                   `Hi! I'm interested in ${product.name} (${product.collection}).`
@@ -281,6 +302,8 @@ export default async function ProductPage({
           </Container>
         </section>
       )}
+
+      <RecentlyViewed currentSlug={product.slug} currentName={product.name} />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { CalendarCheck2, Coffee, Compass, Users } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { LeadForm } from "@/components/site/LeadForm";
+import { getCatalogProduct } from "@/lib/products";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { getShowrooms } from "@/lib/showrooms";
 
@@ -33,9 +34,13 @@ const expectations = [
 export default async function BookVisitPage({
   searchParams,
 }: {
-  searchParams: Promise<{ showroom?: string }>;
+  searchParams: Promise<{ showroom?: string; product?: string }>;
 }) {
-  const [{ showroom }, showrooms] = await Promise.all([searchParams, getShowrooms()]);
+  const [{ showroom, product: productSlug }, showrooms] = await Promise.all([
+    searchParams,
+    getShowrooms(),
+  ]);
+  const product = productSlug ? await getCatalogProduct(productSlug) : null;
   const preselected = showrooms.find((s) => s.slug === showroom);
 
   return (
@@ -94,6 +99,7 @@ export default async function BookVisitPage({
                     city: s.city,
                   }))}
                   defaultShowroom={preselected?.slug}
+                  defaultProduct={product ? `${product.name} (${product.brand})` : undefined}
                 />
               </div>
             </Reveal>

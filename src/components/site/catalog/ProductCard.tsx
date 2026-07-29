@@ -9,6 +9,7 @@ import type { CatalogProduct } from "@/lib/catalog";
 import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
 import { BrandMark } from "@/components/site/catalog/BrandMark";
+import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { cn } from "@/lib/utils";
 
 const aspectClass: Record<CatalogProduct["aspect"], string> = {
@@ -114,7 +115,10 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
             ) : (
               <span />
             )}
-            <BrandMark brand={product.brand} dark className="glass-dark border-none" />
+            <div className="flex items-center gap-2">
+              <BrandMark brand={product.brand} dark className="glass-dark border-none" />
+              <WishlistButton slug={product.slug} name={product.name} />
+            </div>
           </div>
 
           {/* Texture swatch — the "actual tile image" */}

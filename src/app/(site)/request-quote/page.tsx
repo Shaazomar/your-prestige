@@ -3,6 +3,7 @@ import { FileText, Timer, BadgeCheck } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { LeadForm } from "@/components/site/LeadForm";
+import { getCatalogProduct } from "@/lib/products";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = {
@@ -29,7 +30,16 @@ const promises = [
   },
 ] as const;
 
-export default function RequestQuotePage() {
+export default async function RequestQuotePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ product?: string }>;
+}) {
+  const { product: productSlug } = await searchParams;
+  // Resolve the slug to a real name so the seeded message reads naturally —
+  // and so an invalid slug simply prefills nothing.
+  const product = productSlug ? await getCatalogProduct(productSlug) : null;
+
   return (
     <>
       <PageHero
@@ -69,7 +79,12 @@ export default function RequestQuotePage() {
                 <p className="mb-8 mt-2 text-slate-warm">
                   The more detail you share, the sharper the quote.
                 </p>
-                <LeadForm type="QUOTE" submitLabel="Request Quote" showBudget />
+                <LeadForm
+                  type="QUOTE"
+                  submitLabel="Request Quote"
+                  showBudget
+                  defaultProduct={product ? `${product.name} (${product.brand})` : undefined}
+                />
               </div>
             </Reveal>
           </div>
