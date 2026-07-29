@@ -22,6 +22,8 @@ const empty: ShowroomInput = {
   heroImage: "", gallery: [], video: "",
   description: "", brands: [], amenities: [], featuredProductIds: [],
   isFlagship: false, published: true, sortOrder: 0,
+  googlePlaceId: "", googleReviewUrl: "", googleWriteReviewUrl: "",
+  googleRating: undefined, googleReviewCount: 0, googlePhotos: [],
 };
 
 export function ShowroomForm({
@@ -64,6 +66,12 @@ export function ShowroomForm({
           isFlagship: showroom.isFlagship,
           published: showroom.published,
           sortOrder: showroom.sortOrder,
+          googlePlaceId: showroom.googlePlaceId ?? "",
+          googleReviewUrl: showroom.googleReviewUrl ?? "",
+          googleWriteReviewUrl: showroom.googleWriteReviewUrl ?? "",
+          googleRating: showroom.googleRating ?? undefined,
+          googleReviewCount: showroom.googleReviewCount,
+          googlePhotos: (showroom.googlePhotos as string[]) ?? [],
         }
       : empty
   );
@@ -251,6 +259,24 @@ export function ShowroomForm({
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="space-y-3 border-t border-white/8 pt-6">
+        <p className="text-eyebrow text-gold">Google Business Profile</p>
+        <p className="text-xs text-white/35">
+          Entered by hand. Google&apos;s Business Profile API needs per-user OAuth, verified
+          ownership of the location and an approved quota project — the existing service account is
+          Calendar-only and can&apos;t be reused. The rating and review count below feed
+          AggregateRating schema, so keep them honest and current.
+        </p>
+        <AField label="Google Place ID" value={values.googlePlaceId ?? ""} onChange={(e) => setValues((v) => ({ ...v, googlePlaceId: e.target.value }))} />
+        <AField label="Read reviews URL" value={values.googleReviewUrl ?? ""} onChange={(e) => setValues((v) => ({ ...v, googleReviewUrl: e.target.value }))} />
+        <AField label="Write a review URL" value={values.googleWriteReviewUrl ?? ""} hint="Deep link that opens the review composer" onChange={(e) => setValues((v) => ({ ...v, googleWriteReviewUrl: e.target.value }))} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AField label="Rating" type="number" step="0.1" value={values.googleRating ?? ""} onChange={(e) => setValues((v) => ({ ...v, googleRating: e.target.value === "" ? undefined : Number(e.target.value) }))} />
+          <AField label="Review count" type="number" value={values.googleReviewCount} onChange={(e) => setValues((v) => ({ ...v, googleReviewCount: Number(e.target.value) }))} />
+        </div>
+        <MultiImageField label="Google photos" value={values.googlePhotos} onChange={(googlePhotos) => setValues((v) => ({ ...v, googlePhotos }))} />
       </section>
 
       <section className="space-y-3 border-t border-white/8 pt-6">

@@ -41,6 +41,17 @@ export const showroomSchema = z.object({
   isFlagship: z.boolean().default(false),
   published: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
+
+  // — Google Business Profile —
+  // Maintained by hand: the Business Profile API needs per-user OAuth,
+  // verified location ownership and an approved quota project, none of which
+  // this deployment has. These fields are the seam if that changes.
+  googlePlaceId: z.string().max(120).optional().or(z.literal("")),
+  googleReviewUrl: z.string().max(600).optional().or(z.literal("")),
+  googleWriteReviewUrl: z.string().max(600).optional().or(z.literal("")),
+  googleRating: z.coerce.number().min(0).max(5).optional(),
+  googleReviewCount: z.coerce.number().int().min(0).default(0),
+  googlePhotos: z.array(z.string()).default([]),
 });
 
 export type ShowroomInput = z.infer<typeof showroomSchema>;

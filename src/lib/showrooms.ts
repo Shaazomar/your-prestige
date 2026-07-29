@@ -33,6 +33,13 @@ export interface ShowroomView {
   amenities: string[];
   featuredProductIds: string[];
   isFlagship: boolean;
+  // Google Business Profile, maintained by hand — see the Showroom model.
+  googlePlaceId: string | null;
+  googleReviewUrl: string | null;
+  googleWriteReviewUrl: string | null;
+  googleRating: number | null;
+  googleReviewCount: number;
+  googlePhotos: string[];
 }
 
 const arr = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
@@ -68,6 +75,12 @@ export function toShowroomView(s: Showroom): ShowroomView {
     amenities: arr(s.amenities),
     featuredProductIds: arr(s.featuredProductIds),
     isFlagship: s.isFlagship,
+    googlePlaceId: s.googlePlaceId,
+    googleReviewUrl: s.googleReviewUrl,
+    googleWriteReviewUrl: s.googleWriteReviewUrl,
+    googleRating: s.googleRating,
+    googleReviewCount: s.googleReviewCount,
+    googlePhotos: arr(s.googlePhotos),
   };
 }
 

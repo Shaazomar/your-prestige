@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Container } from "@/components/ui/Container";
+import { GoogleReviews } from "@/components/site/showrooms/GoogleReviews";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
@@ -368,6 +369,8 @@ export default async function ShowroomDetailPage({
           </Container>
         </section>
       )}
+
+      <GoogleReviews showroom={s} />
 
       {/* Booking CTA */}
       <section className="bg-ink py-24 text-ivory md:py-32">

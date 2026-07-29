@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
-  LogOut, Store, FileStack, MapPin,
+  LogOut, Store, FileStack, MapPin, MessageSquarePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/Logo";
@@ -28,6 +28,7 @@ const nav = [
       { label: "Categories", href: "/admin/content/categories", icon: Tags, module: "categories" as Module },
       { label: "Brands", href: "/admin/content/brands", icon: Award, module: "brands" as Module },
       { label: "Showrooms", href: "/admin/content/showrooms", icon: Store, module: "showrooms" as Module },
+      { label: "Google Posts", href: "/admin/content/google-posts", icon: MessageSquarePlus, module: "showrooms" as Module },
       { label: "Portfolio", href: "/admin/content/portfolio", icon: Briefcase, module: "portfolio" as Module },
       { label: "Gallery", href: "/admin/content/gallery", icon: Images, module: "gallery" as Module },
       { label: "Videos", href: "/admin/content/videos", icon: Video, module: "videos" as Module },

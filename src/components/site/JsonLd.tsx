@@ -80,6 +80,20 @@ export function ShowroomJsonLd({ showroom: s }: { showroom: Showroom }) {
     ...(s.email ? { email: s.email } : {}),
     priceRange: "₹₹₹",
     ...(images.length ? { image: images.slice(0, 6) } : {}),
+    // AggregateRating only when there are real numbers behind it. Emitting a
+    // rating with no reviews — or a review count of zero — is invalid markup
+    // and gets the whole record ignored.
+    ...(s.googleRating && s.googleReviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: s.googleRating,
+            reviewCount: s.googleReviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
     parentOrganization: { "@id": `${siteUrl}/#organization` },
     address: {
       "@type": "PostalAddress",
