@@ -4,6 +4,7 @@ import { blogPosts } from "@/lib/blog-content";
 import { getCatalogProducts } from "@/lib/products";
 import { getShowrooms } from "@/lib/showrooms";
 import { getBrands } from "@/lib/brands";
+import { getLandingPages } from "@/lib/landing-pages";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
@@ -67,5 +68,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...staticPages, ...showroomPages, ...brandPages, ...posts, ...productPages];
+  // Local landing pages are the primary organic entry points for "<product>
+  // <town>" searches, so they rank alongside the showroom pages.
+  const landings = await getLandingPages();
+  const landingPages = landings.map((l) => ({
+    url: `${siteUrl}/${l.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+  }));
+
+  return [
+    ...staticPages,
+    ...landingPages,
+    ...showroomPages,
+    ...brandPages,
+    ...posts,
+    ...productPages,
+  ];
 }
