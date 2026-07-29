@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { useAdminList } from "@/hooks/useAdminList";
 import { AdminDataTable, type Column } from "@/components/admin/AdminDataTable";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { Drawer } from "@/components/admin/Drawer";
+import { ComposeDrawer } from "./ComposeDrawer";
 import { PostForm } from "./PostForm";
 import { listPosts, softDeletePost, restorePost, type PostRow } from "./actions";
 
@@ -19,6 +20,7 @@ const statusStyles: Record<PostRow["status"], string> = {
 export function PostsManager({ permissions }: { permissions: { create: boolean; edit: boolean; delete: boolean } }) {
   const list = useAdminList<PostRow>(listPosts);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [editing, setEditing] = useState<PostRow | null>(null);
   const [deleting, setDeleting] = useState<PostRow | null>(null);
 
@@ -107,12 +109,24 @@ export function PostsManager({ permissions }: { permissions: { create: boolean; 
         searchPlaceholder="Search posts…"
         toolbar={
           permissions.create && (
-            <button onClick={() => { setEditing(null); setDrawerOpen(true); }} className="ml-auto flex items-center gap-2 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-gold-deep">
-              <Plus className="h-4 w-4" />
-              New Post
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={() => setComposeOpen(true)} className="flex items-center gap-2 rounded-xl border border-white/12 px-4 py-2.5 text-sm font-medium transition-colors hover:border-gold/40">
+                <Wand2 className="h-4 w-4" />
+                Compose Draft
+              </button>
+              <button onClick={() => { setEditing(null); setDrawerOpen(true); }} className="flex items-center gap-2 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-gold-deep">
+                <Plus className="h-4 w-4" />
+                New Post
+              </button>
+            </div>
           )
         }
+      />
+
+      <ComposeDrawer
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onComposed={() => { setComposeOpen(false); list.refresh(); }}
       />
 
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? "Edit Post" : "New Post"} wide>

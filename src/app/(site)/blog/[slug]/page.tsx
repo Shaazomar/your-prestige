@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
-import { blogPosts } from "@/lib/blog-content";
+import { getBlogPost, getBlogPosts, getRelatedPosts } from "@/lib/posts";
 import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
@@ -11,8 +11,11 @@ import { ReadingProgress } from "@/components/site/ReadingProgress";
 import { ButtonLink } from "@/components/ui/Button";
 import { siteUrl } from "@/lib/site-config";
 
-export function generateStaticParams() {
-  return blogPosts.map((p) => ({ slug: p.slug }));
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const posts = await getBlogPosts();
+  return posts.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
@@ -21,7 +24,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await getBlogPost(slug);
   if (!post) return {};
   return {
     title: post.title,
@@ -36,10 +39,10 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await getBlogPost(slug);
   if (!post) notFound();
 
-  const related = blogPosts.filter((p) => p.slug !== slug).slice(0, 2);
+  const related = await getRelatedPosts(slug);
 
   const jsonLd = {
     "@context": "https://schema.org",

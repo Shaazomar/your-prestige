@@ -1,8 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { composeDraft, linkSection } from "@/lib/blog/compose";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { postSchema, type PostInput } from "./schema";
 import type { Prisma, Post } from "@prisma/client";
@@ -123,4 +125,120 @@ export async function restorePost(id: string) {
   const post = await prisma.post.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
   await logAudit({ action: "post.restore", entity: "Post", entityId: id });
   return post;
+}
+
+// ————— Draft composer —————
+
+/**
+ * Assembles a structured draft — outline, SEO scaffolding, internal links and
+ * related products — and saves it unpublished for a writer to finish.
+ *
+ * It does not write the body copy, and that is deliberate: generated filler
+ * would be thin content, which is a ranking liability, and it would
+ * misrepresent a showroom selling expertise. Each section carries a
+ * "TO WRITE" prompt describing what belongs there.
+ */
+export async function composeBlogDraft(input: {
+  topic: string;
+  angle?: string;
+  keywords?: string[];
+  productSlugs?: string[];
+  city?: string;
+}) {
+  const session = await requirePermission("blog", "create");
+  if (!input.topic?.trim()) throw new Error("Give the draft a topic to build around.");
+
+  const products = input.productSlugs?.length
+    ? await prisma.product.findMany({
+        where: { slug: { in: input.productSlugs }, deletedAt: null },
+        include: { category: { select: { slug: true } }, brand: { select: { name: true } } },
+      })
+    : [];
+
+  const productRefs = products.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    category: p.category?.slug ?? "tiles",
+    brand: p.brand?.name ?? "Prestige",
+    collection: p.collection ?? "",
+  }));
+
+  // Landing pages make the strongest internal links — they're the pages we
+  // most want authority flowing into.
+  const landings = await prisma.landingPage.findMany({
+    where: { published: true, deletedAt: null },
+    select: { slug: true, title: true },
+    take: 4,
+  });
+
+  const draft = composeDraft({
+    topic: input.topic,
+    angle: input.angle,
+    keywords: input.keywords,
+    products: productRefs,
+    city: input.city,
+    internalLinks: landings.map((l) => ({ href: `/${l.slug}`, label: l.title.split("—")[0].trim() })),
+  });
+
+  const links = linkSection(
+    productRefs,
+    landings.map((l) => ({ href: `/${l.slug}`, label: l.title.split("—")[0].trim() }))
+  );
+
+  // Guarantee a free slug rather than failing on a clash.
+  let slug = draft.slug;
+  for (let i = 2; await prisma.post.findUnique({ where: { slug } }); i++) {
+    slug = `${draft.slug}-${i}`;
+    if (i > 30) break;
+  }
+
+  const post = await prisma.post.create({
+    data: {
+      slug,
+      title: draft.title,
+      excerpt: draft.excerpt,
+      content: `${draft.content}\n${links}`,
+      tags: draft.keywords,
+      // Never live. A draft with unwritten sections must not reach the site.
+      published: false,
+      authorId: session.user.id,
+      createdById: session.user.id,
+    },
+  });
+
+  await prisma.seo.create({
+    data: {
+      path: `/blog/${slug}`,
+      title: draft.seoTitle,
+      description: draft.seoDescription,
+      keywords: draft.keywords.join(", "),
+      postId: post.id,
+    },
+  }).catch(() => {
+    // A pre-existing Seo row for this path shouldn't lose the draft.
+  });
+
+  await logAudit({
+    action: "post.compose",
+    entity: "Post",
+    entityId: post.id,
+    newValue: { topic: input.topic, slug, sections: draft.outline.length },
+  });
+
+  revalidatePath("/admin/content/blog");
+  return { id: post.id, slug, title: draft.title, sections: draft.outline.length };
+}
+
+export async function getComposerProductOptions(search?: string) {
+  await requirePermission("blog", "view");
+  return prisma.product.findMany({
+    where: {
+      deletedAt: null,
+      published: true,
+      ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
+    },
+    select: { slug: true, name: true, collection: true },
+    orderBy: [{ featured: "desc" }, { name: "asc" }],
+    take: 40,
+  });
 }

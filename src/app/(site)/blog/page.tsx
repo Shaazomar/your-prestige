@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
-import { blogPosts } from "@/lib/blog-content";
+import { getBlogPosts } from "@/lib/posts";
 import { RevealStagger, RevealItem } from "@/components/motion/Reveal";
 
 export const metadata: Metadata = {
@@ -13,7 +13,11 @@ export const metadata: Metadata = {
     "Design intelligence from Your Prestige — tile guides, bathroom design principles and material wisdom for coastal Karnataka.",
 };
 
-export default function BlogPage() {
+export const revalidate = 300;
+
+export default async function BlogPage() {
+  const blogPosts = await getBlogPosts();
+
   return (
     <>
       <PageHero
