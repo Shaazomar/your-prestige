@@ -18,7 +18,8 @@ import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
 import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { RecentlyViewed } from "@/components/site/catalog/RecentlyViewed";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
-import { business, siteUrl } from "@/lib/site-config";
+import { business } from "@/lib/site-config";
+import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -39,11 +40,20 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getCatalogProduct(slug);
   if (!product) return {};
-  return {
+
+  const path = `/products/${product.category}/${product.slug}`;
+  // No `openGraph.images` here on purpose: setting it would take precedence
+  // over the `opengraph-image.tsx` convention in this folder, and that
+  // generated card carries the name, brand and specs rather than just the
+  // photograph. An editor's Seo row can still override it below.
+  const base: Metadata = {
     title: `${product.name} — ${product.collection}`,
     description: `${product.name} by ${product.brand}. ${product.finish}, available in ${product.sizes.join(", ")}. Experience it at Your Prestige, Mangaluru.`,
-    openGraph: { images: [product.lifestyleImage] },
   };
+
+  // Imports write a Seo row per published product, and editors can refine it
+  // in the SEO module — anything they set wins over the defaults above.
+  return applySeo(base, await getSeoForPath(path), path);
 }
 
 export default async function ProductPage({
@@ -72,16 +82,17 @@ export default async function ProductPage({
     { icon: Fingerprint, label: "Texture", value: product.texture },
   ];
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  const jsonLd = productJsonLd({
     name: product.name,
-    description: product.description,
-    image: [product.lifestyleImage, product.textureImage, ...product.gallery],
-    brand: { "@type": "Brand", name: product.brand },
+    slug: product.slug,
     category: product.category,
-    url: `${siteUrl}/products/${product.category}/${product.slug}`,
-  };
+    description: product.description,
+    brand: product.brand,
+    images: [product.lifestyleImage, product.textureImage, ...product.gallery],
+    color: product.color,
+    material: product.texture,
+    sizes: product.sizes,
+  });
 
   return (
     <>
