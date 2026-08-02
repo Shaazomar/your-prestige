@@ -61,32 +61,57 @@ export const mainNav = [
       { label: "Designer Picks", href: "/products/designer-picks" },
     ],
   },
-  { label: "Brands", href: "/brands" },
-  { label: "Showrooms", href: "/showrooms" },
-  { label: "Portfolio", href: "/portfolio" },
+  { label: "Collections", href: "/collections" },
+  { label: "Applications", href: "/applications" },
+  { label: "Projects", href: "/projects" },
   { label: "Gallery", href: "/gallery" },
+  { label: "Become Dealer", href: "/become-dealer" },
+  { label: "Catalogue", href: "/catalogue" },
+  { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
 export const footerNav = {
-  explore: [
-    { label: "About Us", href: "/about" },
-    { label: "Our Showrooms", href: "/showrooms" },
-    { label: "Portfolio", href: "/portfolio" },
-    { label: "Gallery", href: "/gallery" },
-    { label: "Testimonials", href: "/testimonials" },
-    { label: "Offers", href: "/offers" },
+  company: [
+    { label: "About Prestige", href: "/about" },
+    { label: "Why Choose Us", href: "/about#why-us" },
+    { label: "Our Infrastructure", href: "/about#infrastructure" },
+    { label: "Showrooms", href: "/showrooms" },
+    { label: "Become Dealer", href: "/become-dealer" },
   ],
-  collections: [
+  products: [
+    { label: "All Products", href: "/products" },
     { label: "Premium Tiles", href: "/products/tiles" },
-    { label: "Luxury Bathrooms", href: "/products/sanitary" },
+    { label: "Sanitaryware", href: "/products/sanitary" },
     { label: "Designer Picks", href: "/products/designer-picks" },
     { label: "All Brands", href: "/brands" },
   ],
-  support: [
-    { label: "Book a Visit", href: "/book-visit" },
-    { label: "Request a Quote", href: "/request-quote" },
+  collections: [
+    { label: "Lumina Marble", href: "/products?collection=Lumina+Marble+Collection" },
+    { label: "Volcanica Basalt", href: "/products?collection=Volcanica+Collection" },
+    { label: "Antico Stone", href: "/products?collection=Antico+Stone+Collection" },
+    { label: "Sanctuary Bath", href: "/products?collection=Sanctuary+Bath+Collection" },
+    { label: "Exterra Outdoor", href: "/products?collection=Exterra+Outdoor+Collection" },
+  ],
+  applications: [
+    { label: "Living Room", href: "/applications/living-room" },
+    { label: "Kitchen & Slab", href: "/applications/kitchen" },
+    { label: "Bathroom & Spa", href: "/applications/bathroom" },
+    { label: "Outdoor & Patio", href: "/applications/outdoor" },
+    { label: "Commercial & Office", href: "/applications/commercial" },
+  ],
+  resources: [
+    { label: "Download Catalogue", href: "/catalogue" },
+    { label: "Product Comparison", href: "/compare" },
+    { label: "Project Gallery", href: "/gallery" },
+    { label: "Case Studies", href: "/projects" },
+    { label: "Blog & Insights", href: "/blog" },
     { label: "FAQs", href: "/faqs" },
-    { label: "Blog", href: "/blog" },
+  ],
+  support: [
+    { label: "Book Showroom Visit", href: "/book-visit" },
+    { label: "Request a Quote", href: "/request-quote" },
+    { label: "Contact Sales", href: "/contact" },
   ],
 } as const;
+

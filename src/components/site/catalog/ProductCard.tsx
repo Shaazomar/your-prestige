@@ -4,13 +4,13 @@ import { useRef, useState, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { Layers } from "lucide-react";
 import type { CatalogProduct } from "@/lib/catalog";
 import { SizeChip } from "@/components/site/catalog/SizeChip";
-import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
-import { BrandMark } from "@/components/site/catalog/BrandMark";
 import { WishlistButton } from "@/components/site/catalog/WishlistButton";
+import { useCompare } from "@/hooks/useCompare";
 import { cn } from "@/lib/utils";
+
 
 const aspectClass: Record<CatalogProduct["aspect"], string> = {
   portrait: "aspect-[4/5]",
@@ -20,25 +20,19 @@ const aspectClass: Record<CatalogProduct["aspect"], string> = {
 
 interface ProductCardProps {
   product: CatalogProduct;
-  onQuickView: (product: CatalogProduct) => void;
+  onQuickView?: (product: CatalogProduct) => void;
   className?: string;
 }
 
-/**
- * Luxury magazine-cover product card — mouse-tracked tilt, image zoom,
- * a "lighting" glow that follows the cursor, and a full spec overlay
- * that surfaces on hover without ever feeling like an ecommerce tile.
- */
 export function ProductCard({ product, onQuickView, className }: ProductCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
+  const { has: isComparing, toggle: toggleCompare } = useCompare();
 
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
-  const rotateX = useSpring(useTransform(my, [0, 1], [6, -6]), { damping: 20, stiffness: 200 });
-  const rotateY = useSpring(useTransform(mx, [0, 1], [-6, 6]), { damping: 20, stiffness: 200 });
-  const glowX = useTransform(mx, (v) => `${v * 100}%`);
-  const glowY = useTransform(my, (v) => `${v * 100}%`);
+  const rotateX = useSpring(useTransform(my, [0, 1], [4, -4]), { damping: 20, stiffness: 200 });
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-4, 4]), { damping: 20, stiffness: 200 });
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     const rect = ref.current?.getBoundingClientRect();
@@ -54,6 +48,7 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
   }
 
   const href = `/products/${product.category}/${product.slug}`;
+  const compared = isComparing(product.slug);
 
   return (
     <motion.div
@@ -66,118 +61,103 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
     >
       <motion.div
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="overflow-hidden rounded-[28px] border border-ink/8 bg-white shadow-soft transition-shadow duration-700 group-hover:shadow-float"
+        className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-soft transition-all duration-500 group-hover:shadow-float group-hover:border-accent"
       >
-        {/* Image stage — opens Quick View, doesn't navigate away */}
-        <button
-          type="button"
-          onClick={() => onQuickView(product)}
-          aria-label={`Quick view ${product.name}`}
-          className={cn("relative block w-full overflow-hidden text-left", aspectClass[product.aspect])}
-        >
-          <motion.div
-            animate={{ scale: hovered ? 1.09 : 1 }}
-            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0"
+        {/* Image stage */}
+        <div className={cn("relative block w-full overflow-hidden text-left", aspectClass[product.aspect])}>
+          <button
+            type="button"
+            onClick={() => onQuickView?.(product)}
+            aria-label={`Quick view ${product.name}`}
+            className="absolute inset-0 w-full h-full text-left"
           >
-            <Image
-              src={product.lifestyleImage}
-              alt={`${product.name} styled in a ${product.applications[0]?.toLowerCase() ?? "living"} setting`}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
-            />
-          </motion.div>
+            <motion.div
+              animate={{ scale: hovered ? 1.07 : 1 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={product.lifestyleImage}
+                alt={product.name}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
+              />
+            </motion.div>
 
-          {/* Lighting shift on hover */}
-          <div
-            className="absolute inset-0 bg-ink/0 transition-colors duration-700 group-hover:bg-ink/35"
-            aria-hidden
-          />
-          <motion.div
-            aria-hidden
-            style={{
-              background: useTransform(
-                [glowX, glowY],
-                ([x, y]) =>
-                  `radial-gradient(480px circle at ${x} ${y}, rgb(255 255 255 / 0.16), transparent 62%)`
-              ),
-            }}
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
-          />
+            <div className="absolute inset-0 bg-ink/0 transition-colors duration-500 group-hover:bg-ink/30" />
+          </button>
 
-          {/* Top chips — always visible */}
-          <div className="absolute inset-x-4 top-4 flex items-start justify-between">
+          {/* Top chips */}
+          <div className="absolute inset-x-4 top-4 flex items-start justify-between pointer-events-auto z-10">
             {product.tag ? (
-              <span className="glass-dark rounded-full px-3.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-gold">
+              <span className="rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink shadow-xs">
                 {product.tag}
               </span>
             ) : (
               <span />
             )}
             <div className="flex items-center gap-2">
-              <BrandMark brand={product.brand} dark className="glass-dark border-none" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCompare(product.slug);
+                }}
+                className={cn(
+                  "flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-all shadow-xs",
+                  compared
+                    ? "bg-accent text-ink"
+                    : "bg-black/60 text-white hover:bg-black/80 backdrop-blur-md"
+                )}
+                aria-label="Toggle compare"
+              >
+                <Layers className="h-3.5 w-3.5" />
+                <span>{compared ? "Comparing" : "Compare"}</span>
+              </button>
+
               <WishlistButton slug={product.slug} name={product.name} />
             </div>
           </div>
 
-          {/* Texture swatch — the "actual tile image" */}
-          <div className="absolute bottom-4 left-4 h-14 w-14 overflow-hidden rounded-full border-2 border-ivory/80 shadow-float transition-transform duration-700 group-hover:scale-110">
+          {/* Texture swatch overlap */}
+          <div className="absolute bottom-4 left-4 h-12 w-12 overflow-hidden rounded-full border-2 border-white shadow-float transition-transform duration-500 group-hover:scale-110 z-10">
             <Image
               src={product.textureImage}
-              alt={`${product.name} material close-up`}
+              alt={`${product.name} texture`}
               fill
-              sizes="56px"
+              sizes="48px"
               className="object-cover"
             />
           </div>
+        </div>
 
-          {/* Hover overlay panel */}
-          <motion.div
-            initial={false}
-            animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 16 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-x-0 bottom-0 flex flex-col gap-3 bg-gradient-to-t from-ink/95 via-ink/70 to-transparent px-5 pb-5 pt-14"
-          >
-            <div className="flex flex-wrap gap-1.5">
-              {product.applications.slice(0, 3).map((app) => (
-                <ApplicationBadge key={app} application={app} size="sm" dark />
-              ))}
-            </div>
-            <span className="group/cta flex items-center gap-2 self-start text-sm font-medium text-ivory transition-colors group-hover:text-gold">
-              View Collection
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
-            </span>
-          </motion.div>
-        </button>
-
-        {/* Body — always visible */}
-        <div className="space-y-3 p-6">
-          <div className="flex items-start justify-between gap-3">
+        {/* Card Body */}
+        <div className="p-5 space-y-2">
+          <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-gold">
-                {product.collection}
+              <p className="text-[10px] font-bold uppercase tracking-wider text-accent">
+                {product.brand} • {product.collection}
               </p>
-              <Link href={href}>
-                <h3 className="mt-1 text-xl font-semibold tracking-tight text-ink transition-colors duration-300 hover:text-gold">
+              <Link href={href} className="link-yellow">
+                <h3 className="mt-0.5 text-lg font-bold tracking-tight text-ink group-hover:text-ink">
                   {product.name}
                 </h3>
               </Link>
             </div>
-            <span className="shrink-0 rounded-full border border-ink/10 px-3 py-1 text-[0.65rem] font-medium capitalize text-stone-400">
-              {product.category === "designer-picks" ? "Designer Pick" : product.category}
+            <span className="shrink-0 rounded-full bg-offwhite px-2.5 py-0.5 text-[10px] font-bold text-stone-500 border border-stone-200">
+              {product.thickness}
             </span>
           </div>
 
-          <p className="text-sm text-slate-warm">{product.finish}</p>
+          <p className="text-xs text-slate-warm">{product.finish}</p>
 
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap gap-1.5 pt-2">
             {product.sizes.slice(0, 2).map((size, i) => (
               <SizeChip key={size} size={size} index={i} />
             ))}
             {product.sizes.length > 2 && (
-              <span className="inline-flex items-center rounded-full border border-dashed border-stone-300 px-3 py-1.5 text-xs text-stone-400">
-                +{product.sizes.length - 2} more
+              <span className="inline-flex items-center rounded-full border border-dashed border-stone-300 px-2.5 py-1 text-[10px] text-stone-500">
+                +{product.sizes.length - 2} formats
               </span>
             )}
           </div>
@@ -186,3 +166,4 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
     </motion.div>
   );
 }
+

@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowUpRight, Download, Ruler, Layers, Palette, Fingerprint, MessageCircle,
+  ArrowUpRight, Download, Ruler, Layers, Palette, Fingerprint, MessageCircle, Rotate3D, Box,
 } from "lucide-react";
 import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
-import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { Parallax } from "@/components/motion/Parallax";
-import { TextReveal } from "@/components/motion/TextReveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SizeChip } from "@/components/site/catalog/SizeChip";
@@ -21,13 +20,9 @@ import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { business } from "@/lib/site-config";
 import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
 
+
 export const revalidate = 3600;
 
-/**
- * Pre-renders the most prominent products; the long tail renders on demand and
- * is then cached, since `dynamicParams` defaults to true. Capped so a
- * thousand-product catalogue doesn't turn every build into a full crawl.
- */
 export async function generateStaticParams() {
   return getCatalogParams();
 }
@@ -42,17 +37,11 @@ export async function generateMetadata({
   if (!product) return {};
 
   const path = `/products/${product.category}/${product.slug}`;
-  // No `openGraph.images` here on purpose: setting it would take precedence
-  // over the `opengraph-image.tsx` convention in this folder, and that
-  // generated card carries the name, brand and specs rather than just the
-  // photograph. An editor's Seo row can still override it below.
   const base: Metadata = {
-    title: `${product.name} — ${product.collection}`,
-    description: `${product.name} by ${product.brand}. ${product.finish}, available in ${product.sizes.join(", ")}. Experience it at Your Prestige, Mangaluru.`,
+    title: `${product.name} — ${product.collection} | Prestige Tiles`,
+    description: `${product.name} by ${product.brand}. ${product.finish}, available in ${product.sizes.join(", ")}. Experience it at Prestige Tiles.`,
   };
 
-  // Imports write a Seo row per published product, and editors can refine it
-  // in the SEO module — anything they set wins over the defaults above.
   return applySeo(base, await getSeoForPath(path), path);
 }
 
@@ -76,10 +65,17 @@ export default async function ProductPage({
         : "Tiles";
 
   const specs = [
-    { icon: Ruler, label: "Thickness", value: product.thickness },
-    { icon: Layers, label: "Finish", value: product.finish },
-    { icon: Palette, label: "Color", value: product.color },
-    { icon: Fingerprint, label: "Texture", value: product.texture },
+    { icon: Ruler, label: "Slab Thickness", value: product.thickness },
+    { icon: Layers, label: "Surface Finish", value: product.finish },
+    { icon: Palette, label: "Color Tone", value: product.color },
+    { icon: Fingerprint, label: "Texture Grain", value: product.texture },
+  ];
+
+  const packingDetails = [
+    { label: "Pieces per Box", value: "2 Pcs" },
+    { label: "Coverage per Box", value: "15.5 Sq.Ft (1.44 Sq.M)" },
+    { label: "Average Box Weight", value: "31.5 Kg" },
+    { label: "Water Absorption", value: "< 0.05% (Vitrified)" },
   ];
 
   const jsonLd = productJsonLd({
@@ -101,8 +97,8 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Huge cinematic hero */}
-      <section className="relative flex h-[86vh] min-h-[560px] items-end overflow-hidden bg-ink">
+      {/* Cinematic Hero */}
+      <section className="relative flex h-[86vh] min-h-[580px] items-end overflow-hidden bg-charcoal text-white">
         <div className="absolute inset-0">
           <Image
             src={product.lifestyleImage}
@@ -112,102 +108,119 @@ export default async function ProductPage({
             sizes="100vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 to-ink/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
         </div>
 
         <Container size="wide" className="relative z-10 pb-16 md:pb-24">
           <Breadcrumbs
             dark
             items={[
-              { label: "Catalogue", href: "/products" },
+              { label: "Products", href: "/products" },
               { label: categoryLabel, href: `/products/${product.category}` },
               { label: product.name },
             ]}
           />
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {product.tag && (
-              <span className="rounded-full bg-gold px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-ivory">
+              <span className="rounded-full bg-accent px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-ink shadow-yellow">
                 {product.tag}
               </span>
             )}
+            <span className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-md flex items-center gap-1.5 border border-white/20">
+              <Rotate3D className="h-3.5 w-3.5 text-accent" /> 360° Studio View Ready
+            </span>
             <BrandMark brand={product.brand} dark />
           </div>
-          <Reveal direction="none" duration={0.7}>
-            <p className="text-eyebrow mb-3 mt-6 text-gold">{product.collection}</p>
-          </Reveal>
-          <TextReveal as="h1" text={product.name} className="text-display-lg max-w-4xl text-ivory" />
-          <Reveal delay={0.3}>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-ivory/65">
-              {product.description}
-            </p>
-          </Reveal>
-          <Reveal delay={0.45}>
-            <div className="mt-9 flex flex-wrap gap-4">
-              {/* Both CTAs carry the product through, so the enquiry arrives
-                  already knowing what it's about instead of asking again. */}
-              <ButtonLink href={`/request-quote?product=${product.slug}`} variant="gold" size="lg">
-                Request a Quote
-                <ArrowUpRight className="h-5 w-5" />
-              </ButtonLink>
-              <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline-light" size="lg">
-                Visit Showroom
-              </ButtonLink>
-              <WishlistButton slug={product.slug} name={product.name} variant="full" className="border-ivory/25 text-ivory" />
-              <a
-                href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
-                  `Hi! I'm interested in ${product.name} (${product.collection}).`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Ask on WhatsApp"
-                className="flex h-14 w-14 items-center justify-center rounded-full border border-ivory/30 text-ivory transition-all duration-500 hover:border-[#25D366] hover:bg-[#25D366] hover:text-ivory"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </a>
-            </div>
-          </Reveal>
+
+          <p className="text-eyebrow mt-6 text-accent font-bold">{product.collection}</p>
+          <h1 className="text-hero max-w-4xl text-white font-bold leading-tight mt-1">{product.name}</h1>
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-stone-300">
+            {product.description}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <ButtonLink href={`/request-quote?product=${product.slug}`} variant="gold" size="lg" className="shadow-yellow font-bold">
+              Request Project Quotation
+              <ArrowUpRight className="h-5 w-5" />
+            </ButtonLink>
+            <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline-light" size="lg" className="border-white/30 text-white hover:bg-white hover:text-ink font-bold">
+              Book Showroom Inspection
+            </ButtonLink>
+            <WishlistButton slug={product.slug} name={product.name} variant="full" className="border-white/30 text-white" />
+            <a
+              href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
+                `Hi! I am interested in ${product.name} (${product.collection}). Please send quote details.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ask on WhatsApp"
+              className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 text-white transition-all hover:border-[#25D366] hover:bg-[#25D366] hover:text-white"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </a>
+          </div>
         </Container>
       </section>
 
-      {/* Specs, sizes, applications */}
-      <section className="bg-ivory py-24 md:py-32">
+      {/* Technical Specifications & Packing Grid */}
+      <section className="bg-white py-24 md:py-32 border-b border-stone-200">
         <Container size="wide">
           <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
             <div>
-              <p className="text-eyebrow mb-8 text-gold">Specifications</p>
-              <RevealStagger className="grid grid-cols-2 gap-6" stagger={0.08}>
-                {specs.map((s) => (
-                  <RevealItem key={s.label}>
-                    <div className="rounded-2xl border hairline bg-white p-6 shadow-soft">
-                      <s.icon className="mb-3 h-5 w-5 text-gold" />
-                      <p className="text-xs uppercase tracking-[0.2em] text-stone-400">
-                        {s.label}
-                      </p>
-                      <p className="mt-1.5 font-medium text-ink">{s.value}</p>
-                    </div>
-                  </RevealItem>
-                ))}
-              </RevealStagger>
+              <span className="text-eyebrow text-accent block mb-3 font-bold">Technical Precision</span>
+              <h2 className="text-heading text-ink mb-8">Architectural Specifications</h2>
 
-              <Reveal delay={0.2}>
-                <button className="group mt-8 inline-flex items-center gap-3 rounded-full border border-ink/15 px-7 py-4 text-sm font-medium transition-all duration-500 hover:border-ink hover:bg-ink hover:text-ivory">
-                  <Download className="h-4 w-4" />
-                  Download Specification Sheet
-                </button>
-              </Reveal>
+              <div className="grid grid-cols-2 gap-6">
+                {specs.map((s) => (
+                  <div key={s.label} className="rounded-2xl border border-stone-200 bg-offwhite p-6 shadow-soft hover:border-accent transition-colors">
+                    <s.icon className="mb-3 h-6 w-6 text-accent" />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                      {s.label}
+                    </p>
+                    <p className="mt-1 font-bold text-ink text-base">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Packing specs box */}
+              <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-soft">
+                <div className="flex items-center gap-2 mb-4">
+                  <Box className="h-5 w-5 text-accent" />
+                  <h4 className="text-sm font-bold text-ink">Packaging & Logistics Standards</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  {packingDetails.map((item) => (
+                    <div key={item.label} className="border-b border-stone-100 pb-2">
+                      <span className="text-stone-400 block">{item.label}</span>
+                      <span className="font-bold text-ink">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Link
+                href="/catalogue"
+                className="group mt-8 inline-flex items-center gap-3 rounded-xl bg-ink px-8 py-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-accent hover:text-ink transition-colors shadow-soft"
+              >
+                <Download className="h-4 w-4 text-accent group-hover:text-ink" />
+                Download PDF Specification Sheet
+              </Link>
             </div>
 
             <div>
               <div>
-                <p className="text-eyebrow mb-4 text-gold">Available Sizes</p>
-                <div className="flex flex-wrap gap-2.5">
+                <span className="text-eyebrow text-accent block mb-3 font-bold">Dimensional Scale</span>
+                <h3 className="text-subheading text-ink mb-4 font-bold">Available Sizing Formats</h3>
+                <div className="flex flex-wrap gap-3">
                   {product.sizes.map((size, i) => (
                     <SizeChip key={size} size={size} index={i} />
                   ))}
                 </div>
               </div>
-              <div className="mt-10">
-                <p className="text-eyebrow mb-4 text-gold">Suitable Applications</p>
+
+              <div className="mt-12">
+                <span className="text-eyebrow text-accent block mb-3 font-bold">Application Environments</span>
+                <h3 className="text-subheading text-ink mb-4 font-bold">Tested Application Suitability</h3>
                 <div className="flex flex-wrap gap-2.5">
                   {product.applications.map((app) => (
                     <ApplicationBadge key={app} application={app} />
@@ -219,9 +232,9 @@ export default async function ProductPage({
         </Container>
       </section>
 
-      {/* Texture close-up — the material story */}
-      <section className="relative overflow-hidden bg-charcoal py-2">
-        <Parallax speed={0.1} className="relative h-[70vh] min-h-[420px]">
+      {/* Texture Macro Parallax */}
+      <section className="relative overflow-hidden bg-charcoal py-2 text-white">
+        <Parallax speed={0.1} className="relative h-[65vh] min-h-[400px]">
           <div className="relative h-full w-full">
             <Image
               src={product.textureImage}
@@ -230,83 +243,51 @@ export default async function ProductPage({
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink/75 via-ink/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
           </div>
         </Parallax>
         <Container size="wide" className="pointer-events-none absolute inset-0 z-10 flex items-center">
-          <div className="max-w-md">
-            <p className="text-eyebrow mb-4 text-gold">The Material</p>
-            <p className="serif-accent text-3xl leading-tight text-ivory md:text-4xl">
-              Every grain, every vein — engineered to feel found, not made.
+          <div className="max-w-lg">
+            <span className="text-eyebrow text-accent block mb-2 font-bold">Tactile Surface Depth</span>
+            <p className="serif-accent text-3xl leading-tight text-white md:text-4xl">
+              Authentic Italian vein pattern reproduction — crafted to feel quarried from nature.
             </p>
           </div>
         </Container>
       </section>
 
-      {/* Interior inspiration gallery */}
-      <section className="bg-porcelain py-24 md:py-32">
+      {/* Installation Gallery */}
+      <section className="bg-offwhite py-24 md:py-32 border-b border-stone-200">
         <Container size="wide">
           <SectionHeading
-            eyebrow="Styled &amp; Installed"
-            title="Interior inspiration"
-            description={`See ${product.name} at home in real architectural settings.`}
+            eyebrow="Architectural Installations"
+            title="Gallery & Lifestyle Scenes"
+            description={`Explore how ${product.name} elevates living rooms, luxury hotels, and commercial spaces.`}
             className="mb-16"
           />
-          <RevealStagger
-            className="columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5"
-            stagger={0.08}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {inspirationGallery.map((src, i) => (
-              <RevealItem key={i}>
-                <div className="group relative overflow-hidden rounded-2xl">
-                  <div className={i % 3 === 1 ? "relative aspect-[3/4]" : "relative aspect-[4/3]"}>
-                    <Image
-                      src={src}
-                      alt={`${product.name} installation view ${i + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-108"
-                    />
-                  </div>
-                </div>
-              </RevealItem>
+              <div key={i} className="group relative h-80 overflow-hidden rounded-2xl border border-stone-200 shadow-soft">
+                <Image
+                  src={src}
+                  alt={`${product.name} view ${i + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
             ))}
-          </RevealStagger>
+          </div>
         </Container>
       </section>
 
-      {/* Bring it home CTA */}
-      <section className="bg-ink py-24 text-ivory md:py-32">
-        <Container className="text-center">
-          <p className="text-eyebrow text-gold">Room Visualization</p>
-          <h2 className="text-display-sm mx-auto mt-5 max-w-2xl">
-            The photos are beautiful. Standing in front of it is better.
-          </h2>
-          <p className="mx-auto mt-6 max-w-lg text-ivory/60">
-            Bring your floor plan, a photo of your space, or just your imagination —
-            our consultants will show you exactly how {product.name} transforms it.
-          </p>
-          <Reveal delay={0.2}>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <ButtonLink href="/book-visit" variant="gold" size="lg">
-                Visit Showroom
-                <ArrowUpRight className="h-5 w-5" />
-              </ButtonLink>
-              <ButtonLink href="/request-quote" variant="outline-light" size="lg">
-                Request a Quote
-              </ButtonLink>
-            </div>
-          </Reveal>
-        </Container>
-      </section>
-
-      {/* Related */}
+      {/* Related Products */}
       {related.length > 0 && (
-        <section className="bg-ivory py-24 md:py-32">
+        <section className="bg-white py-24 md:py-32">
           <Container size="wide">
             <SectionHeading
-              eyebrow="Pairs Beautifully With"
-              title="You may also love"
+              eyebrow="Complementary Finishes"
+              title="Pairs Beautifully With"
               className="mb-14"
             />
             <RelatedProducts products={related} />
@@ -318,3 +299,4 @@ export default async function ProductPage({
     </>
   );
 }
+

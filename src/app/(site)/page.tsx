@@ -1,11 +1,14 @@
 import { Hero } from "@/components/site/home/Hero";
 import { Collections } from "@/components/site/home/Collections";
+import { ApplicationsSection } from "@/components/site/home/ApplicationsSection";
 import { BrandWall } from "@/components/site/home/BrandWall";
 import { AboutEditorial } from "@/components/site/home/AboutEditorial";
-import { Stats } from "@/components/site/home/Stats";
+import { WhyChooseUs } from "@/components/site/home/WhyChooseUs";
 import { GalleryPreview } from "@/components/site/home/GalleryPreview";
+import { ClientsSection } from "@/components/site/home/ClientsSection";
 import { Testimonials } from "@/components/site/home/Testimonials";
 import { ShowroomsSection } from "@/components/site/home/ShowroomsSection";
+import { CtaSection } from "@/components/site/home/CtaSection";
 import { getPublishedHomepageHero, getHomepageDraft } from "@/app/admin/(dashboard)/content/homepage/actions";
 import { auth } from "@/lib/auth";
 
@@ -27,20 +30,24 @@ export default async function HomePage({
   }
 
   return (
-    <>
+    <main className="min-h-screen bg-white">
       {preview === "1" && (
-        <div className="fixed inset-x-0 top-0 z-[100] bg-gold py-1.5 text-center text-xs font-medium text-ivory">
+        <div className="fixed inset-x-0 top-0 z-[100] bg-accent py-1.5 text-center text-xs font-bold text-ink">
           Previewing draft homepage — not visible to the public
         </div>
       )}
       <Hero data={hero} />
       <Collections />
+      <ApplicationsSection />
       <BrandWall />
       <AboutEditorial />
-      <Stats />
+      <WhyChooseUs />
       <ShowroomsSection />
       <GalleryPreview />
+      <ClientsSection />
       <Testimonials />
-    </>
+      <CtaSection />
+    </main>
   );
 }
+

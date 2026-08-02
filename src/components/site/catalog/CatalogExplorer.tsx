@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, LayoutGrid, List } from "lucide-react";
 import type { Application, CatalogProduct } from "@/lib/catalog";
 import { ProductCard } from "@/components/site/catalog/ProductCard";
 import { FilterChip } from "@/components/site/catalog/FilterChip";
 import { QuickView } from "@/components/site/catalog/QuickView";
 import { applicationIcons } from "@/components/site/catalog/ApplicationBadge";
 import { cn } from "@/lib/utils";
+
 
 const categoryLabels: Record<CatalogProduct["category"], string> = {
   tiles: "Tiles",
@@ -27,6 +29,8 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
   const [application, setApplication] = useState<Application | null>(null);
   const [brand, setBrand] = useState<string | null>(null);
   const [finish, setFinish] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expanded, setExpanded] = useState(false);
   const [quickView, setQuickView] = useState<CatalogProduct | null>(null);
 
@@ -46,28 +50,31 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
       if (application && !p.applications.includes(application)) return false;
       if (brand && p.brand !== brand) return false;
       if (finish && p.finish !== finish) return false;
+      if (availability === "In Stock" && p.tag !== "Bestseller" && p.tag !== "New Arrival") return false;
+      if (availability === "Sample Available" && p.tag !== "Designer Pick" && p.tag !== "Premium") return false;
       if (q) {
         const haystack = `${p.name} ${p.collection} ${p.brand} ${p.description}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [scoped, category, application, brand, finish, search]);
+  }, [scoped, category, application, brand, finish, availability, search]);
 
-  const activeCount = [category && !lockedCategory, application, brand, finish].filter(Boolean).length;
+  const activeCount = [category && !lockedCategory, application, brand, finish, availability].filter(Boolean).length;
 
   function clearAll() {
     if (!lockedCategory) setCategory(null);
     setApplication(null);
     setBrand(null);
     setFinish(null);
+    setAvailability(null);
     setSearch("");
   }
 
   return (
     <>
       {/* Sticky filter bar */}
-      <div className="sticky top-20 z-30 -mx-6 border-b hairline bg-ivory/90 px-6 py-4 backdrop-blur-xl md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
+      <div className="sticky top-20 z-30 -mx-6 border-b border-stone-200 bg-white/95 px-6 py-4 backdrop-blur-xl md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
         <div className="mx-auto max-w-[110rem]">
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
@@ -78,11 +85,11 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search collections, brands, finishes…"
                 aria-label="Search catalogue"
-                className="w-full rounded-full border border-ink/10 bg-white py-2.5 pl-11 pr-4 text-sm outline-none transition-colors focus:border-gold"
+                className="w-full rounded-full border border-stone-200 bg-offwhite py-2.5 pl-11 pr-4 text-sm font-medium outline-none transition-colors focus:border-accent focus:bg-white"
               />
             </div>
 
-            {/* Room chips — primary, always visible */}
+            {/* Room chips */}
             <div className="flex flex-1 items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none]">
               <FilterChip
                 group="application"
@@ -105,20 +112,44 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
               })}
             </div>
 
+            {/* Grid vs List view toggle */}
+            <div className="hidden sm:flex items-center gap-1 rounded-full border border-stone-200 p-1 bg-offwhite">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-1.5 rounded-full transition-colors",
+                  viewMode === "grid" ? "bg-accent text-ink" : "text-stone-400 hover:text-ink"
+                )}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "p-1.5 rounded-full transition-colors",
+                  viewMode === "list" ? "bg-accent text-ink" : "text-stone-400 hover:text-ink"
+                )}
+                aria-label="List view"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Expand toggle */}
             <button
               onClick={() => setExpanded((v) => !v)}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors duration-300",
+                "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors duration-300",
                 expanded || activeCount > 0
-                  ? "border-ink bg-ink text-ivory"
-                  : "border-ink/12 text-slate-warm hover:border-ink/30"
+                  ? "border-ink bg-ink text-white"
+                  : "border-stone-200 text-slate-warm hover:border-accent"
               )}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-3.5 w-3.5 text-accent" />
               Filters
               {activeCount > 0 && (
-                <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gold text-[0.65rem] font-bold text-ivory">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-ink">
                   {activeCount}
                 </span>
               )}
@@ -132,10 +163,10 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="overflow-hidden"
               >
-                <div className="flex flex-col gap-4 pt-5">
+                <div className="flex flex-col gap-4 pt-5 border-t border-stone-200 mt-4">
                   {!lockedCategory && (
                     <FilterRow label="Category">
                       <FilterChip
@@ -179,6 +210,26 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                       />
                     ))}
                   </FilterRow>
+                  <FilterRow label="Availability">
+                    <FilterChip
+                      group="avail"
+                      label="All Stock"
+                      active={availability === null}
+                      onClick={() => setAvailability(null)}
+                    />
+                    <FilterChip
+                      group="avail"
+                      label="In Stock Slabs"
+                      active={availability === "In Stock"}
+                      onClick={() => setAvailability(availability === "In Stock" ? null : "In Stock")}
+                    />
+                    <FilterChip
+                      group="avail"
+                      label="Sample Box Available"
+                      active={availability === "Sample Available"}
+                      onClick={() => setAvailability(availability === "Sample Available" ? null : "Sample Available")}
+                    />
+                  </FilterRow>
                 </div>
               </motion.div>
             )}
@@ -186,31 +237,37 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
         </div>
       </div>
 
-      {/* Results */}
-      <div className="bg-ivory py-14 md:py-20">
+      {/* Results Grid / List */}
+      <div className="bg-white py-14 md:py-20">
         <div className="mx-auto max-w-[110rem] px-6 md:px-10 lg:px-14">
-          <div className="mb-10 flex items-center justify-between">
-            <p className="text-sm text-stone-400">
-              {filtered.length} {filtered.length === 1 ? "piece" : "pieces"} in the collection
+          <div className="mb-8 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-warm">
+              Showing <span className="text-ink font-bold">{filtered.length}</span> curated luxury pieces
             </p>
             {(activeCount > 0 || search) && (
               <button
                 onClick={clearAll}
-                className="flex items-center gap-1.5 text-sm text-slate-warm transition-colors hover:text-gold"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-warm hover:text-ink transition-colors"
               >
-                <X className="h-3.5 w-3.5" />
-                Clear filters
+                <X className="h-3.5 w-3.5 text-accent" />
+                Clear All Filters
               </button>
             )}
           </div>
 
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center rounded-3xl border border-dashed hairline py-24 text-center">
-              <p className="text-lg font-medium text-ink">No pieces match those filters</p>
-              <p className="mt-2 text-slate-warm">Try clearing a filter or searching something else.</p>
+            <div className="flex flex-col items-center rounded-3xl border border-dashed border-stone-300 bg-offwhite py-24 text-center">
+              <p className="text-xl font-bold text-ink">No matching products found</p>
+              <p className="mt-2 text-sm text-slate-warm">Try resetting filters or searching broad keywords.</p>
+              <button
+                onClick={clearAll}
+                className="mt-6 rounded-xl bg-ink px-6 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-accent hover:text-ink transition-colors"
+              >
+                Reset Catalog Filters
+              </button>
             </div>
-          ) : (
-            <div className="columns-1 gap-6 sm:columns-2 xl:columns-3 [&>*]:mb-6">
+          ) : viewMode === "grid" ? (
+            <div className="columns-1 gap-8 sm:columns-2 xl:columns-3 [&>*]:mb-8">
               <AnimatePresence mode="popLayout">
                 {filtered.map((product) => (
                   <motion.div
@@ -219,13 +276,54 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                     initial={{ opacity: 0, y: 28 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 0.4 }}
                     className="break-inside-avoid"
                   >
                     <ProductCard product={product} onQuickView={setQuickView} />
                   </motion.div>
                 ))}
               </AnimatePresence>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filtered.map((product) => (
+                <div
+                  key={product.slug}
+                  className="flex flex-col md:flex-row items-center gap-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-soft hover:shadow-float hover:border-accent transition-all"
+                >
+                  <div className="relative h-40 w-full md:w-56 shrink-0 overflow-hidden rounded-xl bg-stone-100">
+                    <Image
+                      src={product.lifestyleImage}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-bold uppercase tracking-wider text-accent">
+                      {product.brand} • {product.collection}
+                    </span>
+                    <h3 className="text-xl font-bold text-ink">{product.name}</h3>
+                    <p className="text-xs text-slate-warm mt-1">{product.description}</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="rounded-full bg-offwhite px-3 py-1 text-xs font-medium text-ink border border-stone-200">
+                        Finish: {product.finish}
+                      </span>
+                      <span className="rounded-full bg-offwhite px-3 py-1 text-xs font-medium text-ink border border-stone-200">
+                        Thickness: {product.thickness}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex gap-2 w-full md:w-auto">
+                    <button
+                      onClick={() => setQuickView(product)}
+                      className="flex-1 md:flex-initial rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white hover:bg-accent hover:text-ink transition-colors"
+                    >
+                      Quick View
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -239,10 +337,11 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="mr-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
+      <span className="mr-2 text-xs font-bold uppercase tracking-wider text-stone-400">
         {label}
       </span>
       {children}
     </div>
   );
 }
+

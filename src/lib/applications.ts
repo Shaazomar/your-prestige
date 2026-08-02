@@ -95,3 +95,87 @@ export function toApplications(value: unknown): Application[] {
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+const u = (id: string) => `https://images.unsplash.com/${id}?q=80&w=1200&auto=format&fit=crop`;
+
+export interface ApplicationItem {
+  slug: string;
+  title: string;
+  description: string;
+  image: string;
+  count: string;
+}
+
+export const applicationsData: ApplicationItem[] = [
+  {
+    slug: "living-room",
+    title: "Living Room & Foyer",
+    description: "Grand format book-matched marble slabs & high-gloss vitrified tiles.",
+    image: u("photo-1600585154340-be6161a56a0c"),
+    count: "42 Collections",
+  },
+  {
+    slug: "kitchen",
+    title: "Kitchen & Countertops",
+    description: "Stain-proof 12mm ultra-compact quartz slabs for seamless island waterfalls.",
+    image: u("photo-1600210492486-724fe5c67fb0"),
+    count: "28 Collections",
+  },
+  {
+    slug: "bathroom",
+    title: "Bathroom & Wellness Spa",
+    description: "Anti-bacterial ceramic tiles and freestanding acrylic soaking tubs.",
+    image: u("photo-1600566753190-17f0baa2a6c3"),
+    count: "35 Collections",
+  },
+  {
+    slug: "bedroom",
+    title: "Bedroom & Suite",
+    description: "Soft tactile warm wood-plank porcelain and acoustic acoustic tiles.",
+    image: u("photo-1616594039964-ae9021a400a0"),
+    count: "18 Collections",
+  },
+  {
+    slug: "outdoor",
+    title: "Outdoor & Verandah",
+    description: "20mm heavy-duty anti-slip pavers for pool decks and monsoon walkways.",
+    image: u("photo-1600047509807-ba8f99d2cdde"),
+    count: "24 Collections",
+  },
+  {
+    slug: "commercial",
+    title: "Commercial & Malls",
+    description: "High-traffic wear-resistant vitrified flooring engineered for heavy footfall.",
+    image: u("photo-1541123437800-1bb1317badc2"),
+    count: "30 Collections",
+  },
+  {
+    slug: "hospitality",
+    title: "Hospitality & Resorts",
+    description: "Bespoke luxury surfaces designed for 5-star hotel lobbies and fine dining.",
+    image: u("photo-1566073771259-6a8506099945"),
+    count: "25 Collections",
+  },
+  {
+    slug: "healthcare",
+    title: "Healthcare & Clinics",
+    description: "Hygienic, zero-porosity, chemical-resistant specialized wall cladding.",
+    image: u("photo-1519494026892-80bbd2d6fd0d"),
+    count: "15 Collections",
+  },
+  {
+    slug: "education",
+    title: "Education & Institutional",
+    description: "Durable, low-maintenance surfaces for auditoriums and university campuses.",
+    image: u("photo-1562774053-701939374585"),
+    count: "12 Collections",
+  },
+  {
+    slug: "office",
+    title: "Corporate Offices",
+    description: "Architectural minimal grey basalt and honed concrete look slabs.",
+    image: u("photo-1497366216548-37526070297c"),
+    count: "20 Collections",
+  },
+];
+

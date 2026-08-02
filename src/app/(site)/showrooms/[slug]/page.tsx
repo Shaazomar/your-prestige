@@ -61,16 +61,20 @@ export default async function ShowroomDetailPage({
   const s = await getShowroomBySlug(slug);
   if (!s) notFound();
 
-  const [allShowrooms, featured, dbRow] = await Promise.all([
+  const featuredProducts = s.featuredProductIds.length
+    ? await prisma.product.findMany({
+        where: { id: { in: s.featuredProductIds }, published: true, deletedAt: null },
+        select: { slug: true, name: true, collection: true, lifestyleImage: true, category: { select: { slug: true } } },
+      })
+    : [];
+
+  const [allShowrooms, dbRow] = await Promise.all([
     getShowrooms(),
-    s.featuredProductIds.length
-      ? prisma.product.findMany({
-          where: { id: { in: s.featuredProductIds }, published: true, deletedAt: null },
-          select: { slug: true, name: true, collection: true, lifestyleImage: true, category: { select: { slug: true } } },
-        })
-      : Promise.resolve([]),
-    prisma.showroom.findUnique({ where: { slug } }),
+    prisma.showroom.findFirst({ where: { slug: s.slug } }),
   ]);
+  const featured = featuredProducts;
+
+
 
   const others = allShowrooms.filter((x) => x.slug !== s.slug);
   const waMessage = `Hi! I'd like to enquire about the ${s.locality ?? s.city} showroom.`;
@@ -342,8 +346,9 @@ export default async function ShowroomDetailPage({
               className="mb-14"
             />
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((p) => (
+              {featured.map((p: { slug: string; name: string; collection?: string | null; lifestyleImage?: string | null; category?: { slug: string } | null }) => (
                 <Link
+
                   key={p.slug}
                   href={`/products/${p.category?.slug ?? "tiles"}/${p.slug}`}
                   className="group block"

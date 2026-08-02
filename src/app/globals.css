@@ -1,55 +1,73 @@
 @import "tailwindcss";
 
 /* ————————————————————————————————————————————
-   YOUR PRESTIGE — Luxury Design System
-   Palette: Ivory / Luxury Black / Charcoal / Warm Gray
-   Accents: Muted Gold / Stone Beige / Soft Silver
+   PRESTIGE TILES — Master Luxury Design System
+   Primary Background: #FFFFFF
+   Secondary Background: #F8F8F8
+   Primary Text: #0B0B0B
+   Secondary Text: #555555
+   Border: #E8E8E8
+   Accent: #F6C600
+   Accent Hover: #E5B800
+   Footer: #111111
 ———————————————————————————————————————————— */
 
 @theme {
   /* Core neutrals */
-  --color-ivory: #fbfaf7;
-  --color-porcelain: #f4f2ec;
-  --color-ink: #0b0b0a;
-  --color-charcoal: #1b1b19;
-  --color-graphite: #2b2a27;
-  --color-slate-warm: #55534d;
-  --color-stone-400: #a7a29a;
-  --color-stone-300: #c9c4bb;
-  --color-stone-200: #e4e0d7;
-  --color-stone-100: #efece5;
+  --color-white: #ffffff;
+  --color-offwhite: #f8f8f8;
+  --color-primary-bg: #ffffff;
+  --color-secondary-bg: #f8f8f8;
+  --color-ivory: #ffffff;
+  --color-porcelain: #f8f8f8;
+  
+  --color-ink: #0b0b0b;
+  --color-charcoal: #111111;
+  --color-graphite: #222222;
+  --color-slate-warm: #555555;
+  --color-stone-400: #777777;
+  --color-stone-300: #cccccc;
+  --color-stone-200: #e8e8e8;
+  --color-stone-100: #f8f8f8;
 
   /* Accents */
-  --color-gold: #b3915a;
-  --color-gold-light: #d6bd8d;
-  --color-gold-deep: #8f7240;
-  --color-beige: #e8e1d3;
-  --color-silver: #c7cacc;
+  --color-accent: #f6c600;
+  --color-accent-hover: #e5b800;
+  --color-gold: #f6c600;
+  --color-gold-light: #fbe678;
+  --color-gold-deep: #d4a700;
+  --color-brand: #f6c600;
+  --color-brand-deep: #e5b800;
 
-  /* Official brand yellow (from the Prestige logo mark).
-     Reserved for the logo lockup and brand moments — the muted gold above
-     remains the UI accent so the existing design language is untouched. */
-  --color-brand: #ffd900;
-  --color-brand-deep: #a88a00;
+  /* Status */
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+  --color-warning: #f59e0b;
 
   /* Typography */
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), Georgia, serif;
 
-  /* Display scale */
-  --text-display-xl: clamp(3.5rem, 9vw, 8.5rem);
-  --text-display-lg: clamp(2.75rem, 6.5vw, 6rem);
-  --text-display-md: clamp(2.25rem, 4.5vw, 4rem);
-  --text-display-sm: clamp(1.75rem, 3vw, 2.75rem);
+  /* Display scale strictly following Prestige Master Prompt */
+  --text-hero: clamp(2.75rem, 5.5vw, 4.5rem);      /* 72px desktop */
+  --text-heading: clamp(2.25rem, 4vw, 3.25rem);     /* 52px desktop */
+  --text-subheading: 1.75rem;                       /* 28px desktop */
+  --text-body: 1.125rem;                            /* 18px desktop */
+  --text-button: 1rem;                              /* 16px desktop */
+
+  --text-display-xl: clamp(3rem, 6vw, 4.5rem);
+  --text-display-lg: clamp(2.25rem, 4.5vw, 3.25rem);
+  --text-display-md: clamp(1.75rem, 3vw, 2.25rem);
+  --text-display-sm: clamp(1.25rem, 2vw, 1.75rem);
 
   /* Motion */
   --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* Shadows */
-  --shadow-soft: 0 1px 2px rgb(11 11 10 / 0.04), 0 8px 24px rgb(11 11 10 / 0.06);
-  --shadow-float: 0 2px 6px rgb(11 11 10 / 0.05), 0 24px 64px rgb(11 11 10 / 0.12);
-  --shadow-gold: 0 8px 32px rgb(179 145 90 / 0.25);
+  --shadow-soft: 0 1px 3px rgb(11 11 11 / 0.05), 0 8px 24px rgb(11 11 11 / 0.04);
+  --shadow-float: 0 4px 12px rgb(11 11 11 / 0.06), 0 24px 48px rgb(11 11 11 / 0.1);
+  --shadow-yellow: 0 8px 24px rgb(246 198 0 / 0.25);
 }
 
 /* ——— Base ——— */
@@ -59,8 +77,8 @@ html {
 }
 
 body {
-  background: var(--color-ivory);
-  color: var(--color-ink);
+  background: #ffffff;
+  color: #0b0b0b;
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "cv01";
   -webkit-font-smoothing: antialiased;
@@ -69,73 +87,73 @@ body {
 }
 
 ::selection {
-  background: var(--color-gold);
-  color: var(--color-ivory);
+  background: #f6c600;
+  color: #0b0b0b;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f8f8f8;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-stone-300);
-  border-radius: 8px;
+  background: #cccccc;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-stone-400);
+  background: #555555;
 }
 
 /* ——— Utilities ——— */
 
 @utility glass {
-  background: rgb(251 250 247 / 0.72);
+  background: rgb(255 255 255 / 0.85);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgb(255 255 255 / 0.4);
+  border: 1px solid #e8e8e8;
 }
 
 @utility glass-dark {
-  background: rgb(11 11 10 / 0.6);
+  background: rgb(17 17 17 / 0.85);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border: 1px solid rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.1);
 }
 
-@utility text-display-xl {
-  font-size: var(--text-display-xl);
-  line-height: 0.96;
+@utility text-hero {
+  font-size: var(--text-hero);
+  line-height: 1.05;
   letter-spacing: -0.035em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-@utility text-display-lg {
-  font-size: var(--text-display-lg);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  font-weight: 600;
-}
-
-@utility text-display-md {
-  font-size: var(--text-display-md);
-  line-height: 1.08;
+@utility text-heading {
+  font-size: var(--text-heading);
+  line-height: 1.1;
   letter-spacing: -0.025em;
   font-weight: 600;
 }
 
-@utility text-display-sm {
-  font-size: var(--text-display-sm);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  font-weight: 600;
+@utility text-subheading {
+  font-size: var(--text-subheading);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+}
+
+@utility text-body-lg {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: #555555;
 }
 
 @utility text-eyebrow {
   font-size: 0.75rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  color: #555555;
 }
 
 @utility serif-accent {
@@ -147,51 +165,30 @@ body {
 
 /* Fine hairline borders */
 @utility hairline {
-  border-color: rgb(11 11 10 / 0.08);
+  border-color: #e8e8e8;
 }
 @utility hairline-light {
-  border-color: rgb(251 250 247 / 0.12);
+  border-color: rgb(255 255 255 / 0.15);
 }
 
-/* Subtle film grain for cinematic depth */
-.grain::after {
-  content: "";
-  position: fixed;
-  inset: -50%;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.028;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain-shift 8s steps(10) infinite;
-}
-
-@keyframes grain-shift {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -8%); }
-  30% { transform: translate(3%, -12%); }
-  50% { transform: translate(10%, 6%); }
-  70% { transform: translate(-8%, 4%); }
-  90% { transform: translate(6%, -3%); }
-}
-
-/* Gold shimmer underline for links */
-.link-gold {
+/* Yellow accent underline for links */
+.link-yellow {
   position: relative;
-  transition: color 0.4s var(--ease-luxury);
+  transition: color 0.3s var(--ease-luxury);
 }
-.link-gold::after {
+.link-yellow::after {
   content: "";
   position: absolute;
   left: 0;
   bottom: -3px;
-  height: 1px;
+  height: 2px;
   width: 100%;
-  background: var(--color-gold);
+  background: #f6c600;
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.5s var(--ease-luxury);
+  transition: transform 0.4s var(--ease-luxury);
 }
-.link-gold:hover::after {
+.link-yellow:hover::after {
   transform: scaleX(1);
   transform-origin: left;
 }
@@ -202,7 +199,7 @@ body {
   to { transform: translateX(-50%); }
 }
 .animate-marquee {
-  animation: marquee 40s linear infinite;
+  animation: marquee 35s linear infinite;
 }
 .animate-marquee:hover {
   animation-play-state: paused;
@@ -210,21 +207,21 @@ body {
 
 /* Slow Ken Burns zoom for hero imagery */
 @keyframes kenburns {
-  from { transform: scale(1) translateY(0); }
-  to { transform: scale(1.12) translateY(-2%); }
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
 }
 .animate-kenburns {
-  animation: kenburns 24s var(--ease-cinematic) infinite alternate;
+  animation: kenburns 20s var(--ease-cinematic) infinite alternate;
 }
 
 /* Scroll indicator pulse */
 @keyframes scroll-hint {
   0% { transform: translateY(0); opacity: 1; }
-  70% { transform: translateY(10px); opacity: 0; }
+  70% { transform: translateY(8px); opacity: 0; }
   100% { transform: translateY(0); opacity: 0; }
 }
 .animate-scroll-hint {
-  animation: scroll-hint 2.2s var(--ease-luxury) infinite;
+  animation: scroll-hint 2s var(--ease-luxury) infinite;
 }
 
 /* Reduced motion respect */
@@ -236,3 +233,4 @@ body {
   }
   html { scroll-behavior: auto; }
 }
+

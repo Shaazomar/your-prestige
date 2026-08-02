@@ -17,9 +17,10 @@ export default async function AnalyticsPage() {
     prisma.lead.count({ where: { deletedAt: null } }),
   ]);
 
-  const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count]));
-  const maxStatusCount = Math.max(1, ...byStatus.map((s) => s._count));
+  const statusMap = Object.fromEntries(byStatus.map((s: { status: string; _count: number }) => [s.status, s._count]));
+  const maxStatusCount = Math.max(1, ...byStatus.map((s: { _count: number }) => s._count));
   const ga4Configured = !!(process.env.GA4_PROPERTY_ID && process.env.GOOGLE_ANALYTICS_SERVICE_ACCOUNT_JSON);
+
 
   return (
     <div className="space-y-6">
@@ -55,7 +56,7 @@ export default async function AnalyticsPage() {
           <h2 className="mb-4 font-semibold">Leads by Source</h2>
           <ul className="space-y-2.5">
             {bySource.length === 0 && <p className="text-sm text-white/30">No leads yet.</p>}
-            {bySource.map((s) => (
+            {bySource.map((s: { source: string | null; _count: number }) => (
               <li key={s.source ?? "unknown"} className="flex items-center justify-between text-sm">
                 <span className="capitalize text-white/60">{s.source ?? "Unknown"}</span>
                 <span className="font-medium text-white">{s._count}</span>
@@ -67,7 +68,7 @@ export default async function AnalyticsPage() {
         <div className="rounded-2xl border border-white/8 bg-[#141413] p-6">
           <h2 className="mb-4 font-semibold">Leads by Type</h2>
           <ul className="space-y-2.5">
-            {byType.map((t) => (
+            {byType.map((t: { type: string; _count: number }) => (
               <li key={t.type} className="flex items-center justify-between text-sm">
                 <span className="text-white/60">{t.type}</span>
                 <span className="font-medium text-white">{t._count}</span>
@@ -75,6 +76,7 @@ export default async function AnalyticsPage() {
             ))}
           </ul>
         </div>
+
       </div>
 
       {/* GA4-dependent metrics */}
