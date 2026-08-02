@@ -1,5 +1,7 @@
 import { Hero } from "@/components/site/home/Hero";
 import { Collections } from "@/components/site/home/Collections";
+import { FeaturedProductsSection } from "@/components/site/home/FeaturedProductsSection";
+import { StatsSection } from "@/components/site/home/StatsSection";
 import { ApplicationsSection } from "@/components/site/home/ApplicationsSection";
 import { BrandWall } from "@/components/site/home/BrandWall";
 import { AboutEditorial } from "@/components/site/home/AboutEditorial";
@@ -38,6 +40,8 @@ export default async function HomePage({
       )}
       <Hero data={hero} />
       <Collections />
+      <FeaturedProductsSection />
+      <StatsSection />
       <ApplicationsSection />
       <BrandWall />
       <AboutEditorial />
@@ -50,4 +54,5 @@ export default async function HomePage({
     </main>
   );
 }
+
 
