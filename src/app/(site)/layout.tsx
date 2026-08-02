@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies, headers } from "next/headers";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
@@ -35,9 +36,12 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
       <Header
         business={{ name: business.name, phone: business.phone, address: business.address }}
       />
-      <main>{children}</main>
+      <main>
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer />
       <FloatingActions whatsapp={business.whatsapp} phone={business.phone} />
     </SmoothScroll>
   );
 }
+

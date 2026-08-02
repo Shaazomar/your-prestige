@@ -32,7 +32,17 @@ export type Module =
   | "settings"
   | "maintenance"
   | "analytics"
-  | "logs";
+  | "logs"
+  | "orders"
+  | "customers"
+  | "dealers"
+  | "quotes"
+  | "coupons"
+  | "reviews"
+  | "reports"
+  | "inventory"
+  | "attributes"
+  | "specifications";
 
 export type Action = "view" | "create" | "edit" | "delete" | "publish" | "settings" | "analytics";
 
@@ -42,7 +52,9 @@ const ALL_MODULES: Module[] = [
   "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "leads",
   "bookings", "conversations", "media", "seo", "users", "settings",
   "maintenance", "analytics", "logs",
+  "orders", "customers", "dealers", "quotes", "coupons", "reviews", "reports", "inventory", "attributes", "specifications",
 ];
+
 
 const ALL_ACTIONS: Action[] = ["view", "create", "edit", "delete", "publish", "settings", "analytics"];
 

@@ -5,10 +5,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const directions = {
-  up: { y: 48, x: 0 },
-  down: { y: -48, x: 0 },
-  left: { x: 48, y: 0 },
-  right: { x: -48, y: 0 },
+  up: { y: 40, x: 0 },
+  down: { y: -40, x: 0 },
+  left: { x: 40, y: 0 },
+  right: { x: -40, y: 0 },
+  blur: { y: 20, x: 0, filter: "blur(12px)" },
+  scale: { scale: 0.94, y: 20, filter: "blur(8px)" },
   none: { x: 0, y: 0 },
 } as const;
 
@@ -21,13 +23,13 @@ interface RevealProps {
   once?: boolean;
 }
 
-/** Scroll-triggered reveal with a luxury ease. */
+/** Scroll-triggered reveal with a luxury ease (Apple & Stripe inspired). */
 export function Reveal({
   children,
   className,
   delay = 0,
-  duration = 0.9,
-  direction = "up",
+  duration = 1.0,
+  direction = "blur",
   once = true,
 }: RevealProps) {
   const offset = directions[direction];
@@ -37,22 +39,29 @@ export function Reveal({
       opacity: 1,
       x: 0,
       y: 0,
-      transition: { duration, delay, ease: [0.22, 1, 0.36, 1] },
+      scale: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration,
+        delay,
+        ease: [0.16, 1, 0.3, 1], // Smooth Apple-style cubic-bezier
+      },
     },
   };
 
   return (
     <motion.div
-      className={cn(className)}
+      className={cn("will-change-[transform,opacity,filter]", className)}
       variants={variants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, margin: "-80px" }}
+      viewport={{ once, margin: "-60px" }}
     >
       {children}
     </motion.div>
   );
 }
+
 
 /** Staggered children reveal — wrap a list, each child animates in sequence. */
 export function RevealStagger({
@@ -89,13 +98,14 @@ export function RevealItem({
 }) {
   return (
     <motion.div
-      className={cn(className)}
+      className={cn("will-change-[transform,opacity,filter]", className)}
       variants={{
-        hidden: { opacity: 0, y: 40 },
+        hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
         visible: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+          filter: "blur(0px)",
+          transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
         },
       }}
     >
@@ -103,3 +113,4 @@ export function RevealItem({
     </motion.div>
   );
 }
+

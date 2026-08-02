@@ -6,8 +6,10 @@ import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
-  LogOut, Store, FileStack, MapPin, MessageSquarePlus,
+  Store, FileStack, MapPin, MessageSquarePlus, ShoppingCart, UserCheck, Building2,
+  FileSpreadsheet, Warehouse, Ticket, Star, LineChart, SlidersHorizontal, LogOut,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/Logo";
 import { can, type Module } from "@/lib/permissions";
@@ -17,18 +19,34 @@ import { logoutAction } from "@/app/admin/(dashboard)/actions";
 const nav = [
   {
     section: "Overview",
-    items: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard, module: "dashboard" as Module }],
+    items: [
+      { label: "Dashboard", href: "/admin", icon: LayoutDashboard, module: "dashboard" as Module },
+      { label: "Analytics", href: "/admin/analytics", icon: BarChart3, module: "analytics" as Module },
+      { label: "Reports", href: "/admin/reports", icon: LineChart, module: "reports" as Module },
+    ],
   },
   {
-    section: "Content",
+    section: "E-Commerce",
     items: [
-      { label: "Homepage", href: "/admin/content/homepage", icon: Home, module: "homepage" as Module },
+      { label: "Orders", href: "/admin/orders", icon: ShoppingCart, module: "orders" as Module },
+      { label: "Quotes (B2B)", href: "/admin/quotes", icon: FileSpreadsheet, module: "quotes" as Module },
+      { label: "Dealers", href: "/admin/dealers", icon: Building2, module: "dealers" as Module },
+      { label: "Customers", href: "/admin/customers", icon: UserCheck, module: "customers" as Module },
+      { label: "Inventory", href: "/admin/inventory", icon: Warehouse, module: "inventory" as Module },
+      { label: "Coupons", href: "/admin/coupons", icon: Ticket, module: "coupons" as Module },
+      { label: "Reviews", href: "/admin/reviews", icon: Star, module: "reviews" as Module },
+    ],
+  },
+  {
+    section: "Catalog & PIM",
+    items: [
       { label: "Products", href: "/admin/content/products", icon: Package, module: "products" as Module },
       { label: "Catalog Imports", href: "/admin/content/catalog-imports", icon: FileStack, module: "catalogImports" as Module },
       { label: "Categories", href: "/admin/content/categories", icon: Tags, module: "categories" as Module },
       { label: "Brands", href: "/admin/content/brands", icon: Award, module: "brands" as Module },
+      { label: "Attributes & Specs", href: "/admin/attributes", icon: SlidersHorizontal, module: "attributes" as Module },
       { label: "Showrooms", href: "/admin/content/showrooms", icon: Store, module: "showrooms" as Module },
-      { label: "Google Posts", href: "/admin/content/google-posts", icon: MessageSquarePlus, module: "showrooms" as Module },
+      { label: "Homepage", href: "/admin/content/homepage", icon: Home, module: "homepage" as Module },
       { label: "Portfolio", href: "/admin/content/portfolio", icon: Briefcase, module: "portfolio" as Module },
       { label: "Gallery", href: "/admin/content/gallery", icon: Images, module: "gallery" as Module },
       { label: "Videos", href: "/admin/content/videos", icon: Video, module: "videos" as Module },
@@ -40,19 +58,19 @@ const nav = [
     ],
   },
   {
-    section: "Growth",
+    section: "Growth & CRM",
     items: [
       { label: "Leads", href: "/admin/leads", icon: Users2, module: "leads" as Module },
       { label: "Bookings", href: "/admin/bookings", icon: CalendarClock, module: "bookings" as Module },
       { label: "AI Conversations", href: "/admin/conversations", icon: Bot, module: "conversations" as Module },
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart3, module: "analytics" as Module },
+      { label: "Google Posts", href: "/admin/content/google-posts", icon: MessageSquarePlus, module: "showrooms" as Module },
     ],
   },
   {
-    section: "System",
+    section: "System & Storage",
     items: [
       { label: "Media Library", href: "/admin/media", icon: FolderOpen, module: "media" as Module },
-      { label: "SEO", href: "/admin/seo", icon: Search, module: "seo" as Module },
+      { label: "SEO Engine", href: "/admin/seo", icon: Search, module: "seo" as Module },
       { label: "Users & Roles", href: "/admin/users", icon: ShieldCheck, module: "users" as Module },
       { label: "Settings", href: "/admin/settings", icon: Settings, module: "settings" as Module },
       { label: "Maintenance", href: "/admin/maintenance", icon: Wrench, module: "maintenance" as Module },
@@ -60,6 +78,7 @@ const nav = [
     ],
   },
 ] as const;
+
 
 const roleLabels: Record<Role, string> = {
   SUPER_ADMIN: "Super Admin",
