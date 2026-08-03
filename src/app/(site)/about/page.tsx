@@ -102,7 +102,7 @@ export default function AboutPage() {
           />
           <Reveal delay={0.3}>
             <div className="mt-10 flex justify-center">
-              <ButtonLink href="/book-visit" variant="gold" size="lg">
+              <ButtonLink href="/book-visit" variant="primary" size="lg">
                 Book a Private Visit
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>

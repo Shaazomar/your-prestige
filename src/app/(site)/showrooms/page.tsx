@@ -55,7 +55,7 @@ export default async function ShowroomsPage() {
           />
           <Reveal delay={0.3}>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <ButtonLink href="/book-visit" variant="gold" size="lg">
+              <ButtonLink href="/book-visit" variant="primary" size="lg">
                 Book a Visit
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>

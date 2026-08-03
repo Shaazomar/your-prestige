@@ -134,11 +134,11 @@ export default async function ShowroomDetailPage({
           )}
           <Reveal delay={0.4}>
             <div className="mt-9 flex flex-wrap gap-3">
-              <ButtonLink href={directionsHref(s)} external variant="gold" size="lg">
+              <ButtonLink href={directionsHref(s)} external variant="primary" size="lg">
                 <Navigation className="h-4.5 w-4.5" />
                 Get Directions
               </ButtonLink>
-              <ButtonLink href={`/book-visit?showroom=${s.slug}`} variant="outline-light" size="lg">
+              <ButtonLink href={`/book-visit?showroom=${s.slug}`} variant="outline" size="lg">
                 <CalendarCheck2 className="h-4.5 w-4.5" />
                 Book a Visit
               </ButtonLink>
@@ -390,11 +390,11 @@ export default async function ShowroomDetailPage({
           </p>
           <Reveal delay={0.2}>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <ButtonLink href={`/book-visit?showroom=${s.slug}`} variant="gold" size="lg">
+              <ButtonLink href={`/book-visit?showroom=${s.slug}`} variant="primary" size="lg">
                 Book a Visit
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>
-              <ButtonLink href="/request-quote" variant="outline-light" size="lg">
+              <ButtonLink href="/request-quote" variant="outline" size="lg">
                 Request a Quote
               </ButtonLink>
             </div>

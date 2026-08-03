@@ -257,7 +257,7 @@ export default async function LandingPage({
             Book a visit and we&apos;ll have the ranges you&apos;re considering laid out when you arrive.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-4">
-            <ButtonLink href="/book-visit" variant="gold" size="lg">
+            <ButtonLink href="/book-visit" variant="primary" size="lg">
               Book a Visit
             </ButtonLink>
             <a

@@ -73,7 +73,7 @@ export default async function BrandsPage() {
           />
           <Reveal delay={0.3}>
             <div className="mt-10 flex justify-center">
-              <ButtonLink href="/contact" variant="gold" size="lg">
+              <ButtonLink href="/contact" variant="primary" size="lg">
                 Register Your Practice
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>

@@ -34,7 +34,15 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
     <SmoothScroll>
       <OrganizationJsonLd />
       <Header
-        business={{ name: business.name, phone: business.phone, address: business.address }}
+        business={{
+          name: business.name,
+          phone: business.phone,
+          address: business.address,
+          whatsapp: business.whatsapp,
+          instagram: business.instagram,
+          facebook: business.facebook,
+          threads: business.threads,
+        }}
       />
       <main>
         <PageTransition>{children}</PageTransition>

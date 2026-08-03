@@ -143,7 +143,7 @@ export default async function BlogPostPage({
                       showroom.
                     </p>
                     <div className="mt-6">
-                      <ButtonLink href="/book-visit" variant="gold" size="md">
+                      <ButtonLink href="/book-visit" variant="primary" size="md">
                         Book a Visit
                         <ArrowUpRight className="h-4 w-4" />
                       </ButtonLink>

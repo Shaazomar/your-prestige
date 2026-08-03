@@ -217,7 +217,7 @@ export function LeadForm({
           />
           <Button
             type="submit"
-            variant="gold"
+            variant="primary"
             size="lg"
             className="w-full sm:w-auto"
             disabled={status === "submitting"}

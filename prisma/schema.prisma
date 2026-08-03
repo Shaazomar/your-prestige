@@ -619,6 +619,19 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+/// Footer newsletter signups. Deliberately separate from Lead: a Lead
+/// requires a phone number and is worked by sales, and padding that pipeline
+/// with email-only rows would corrupt it.
+model Subscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  source         String? // "footer" | "campaign" | ...
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
 // ————— Media Library —————
 
 model MediaFolder {

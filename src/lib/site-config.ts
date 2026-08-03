@@ -49,69 +49,99 @@ export const business = {
 
 export const siteUrl = "https://prestigetiles.in";
 
-export const mainNav = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  {
-    label: "Products",
-    href: "/products",
-    children: [
-      { label: "Premium Tiles", href: "/products/tiles" },
-      { label: "Sanitaryware", href: "/products/sanitary" },
-      { label: "Designer Picks", href: "/products/designer-picks" },
-    ],
-  },
+/**
+ * ————— Navigation —————
+ *
+ * Prestige 2.0 deliberately keeps the bar almost empty. Four destinations
+ * sit in the navbar; everything else lives one click away in the fullscreen
+ * menu. Adding a fifth item to `primaryNav` is the wrong instinct — put it
+ * in `megaMenu` instead.
+ */
+
+export interface NavLink {
+  label: string;
+  href: string;
+  /** Optional one-line description, rendered in the fullscreen menu only. */
+  hint?: string;
+}
+
+/** The only links rendered inline in the navbar. */
+export const primaryNav: readonly NavLink[] = [
   { label: "Collections", href: "/collections" },
-  { label: "Applications", href: "/applications" },
   { label: "Projects", href: "/projects" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Become Dealer", href: "/become-dealer" },
-  { label: "Catalogue", href: "/catalogue" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact", href: "/contact" },
-] as const;
+  { label: "About", href: "/about" },
+];
 
-export const footerNav = {
-  company: [
-    { label: "About Prestige", href: "/about" },
-    { label: "Why Choose Us", href: "/about#why-us" },
-    { label: "Our Infrastructure", href: "/about#infrastructure" },
-    { label: "Showrooms", href: "/showrooms" },
-    { label: "Become Dealer", href: "/become-dealer" },
-  ],
-  products: [
-    { label: "All Products", href: "/products" },
+/**
+ * Fullscreen menu. `primary` renders as large editorial type; the rest are
+ * grouped supporting columns. Every route the pre-2.0 site exposed is
+ * reachable from here — the redesign relocates navigation, it does not
+ * remove functionality.
+ */
+export const megaMenu = {
+  primary: [
+    { label: "Products", href: "/products", hint: "The full catalogue" },
+    { label: "Collections", href: "/collections", hint: "Curated ranges" },
+    { label: "Applications", href: "/applications", hint: "Room by room" },
+    { label: "Brands", href: "/brands", hint: "Who we partner with" },
+    { label: "Gallery", href: "/gallery", hint: "Installed work" },
+    { label: "Projects", href: "/projects", hint: "Case studies" },
+    { label: "Downloads", href: "/catalogue", hint: "Catalogues & specs" },
+    { label: "Contact", href: "/contact", hint: "Talk to us" },
+  ] satisfies NavLink[],
+
+  catalogue: [
     { label: "Premium Tiles", href: "/products/tiles" },
     { label: "Sanitaryware", href: "/products/sanitary" },
     { label: "Designer Picks", href: "/products/designer-picks" },
-    { label: "All Brands", href: "/brands" },
-  ],
-  collections: [
-    { label: "Lumina Marble", href: "/products?collection=Lumina+Marble+Collection" },
-    { label: "Volcanica Basalt", href: "/products?collection=Volcanica+Collection" },
-    { label: "Antico Stone", href: "/products?collection=Antico+Stone+Collection" },
-    { label: "Sanctuary Bath", href: "/products?collection=Sanctuary+Bath+Collection" },
-    { label: "Exterra Outdoor", href: "/products?collection=Exterra+Outdoor+Collection" },
-  ],
-  applications: [
+    { label: "Compare Products", href: "/compare" },
+    { label: "Saved Items", href: "/wishlist" },
+  ] satisfies NavLink[],
+
+  spaces: [
     { label: "Living Room", href: "/applications/living-room" },
     { label: "Kitchen & Slab", href: "/applications/kitchen" },
     { label: "Bathroom & Spa", href: "/applications/bathroom" },
     { label: "Outdoor & Patio", href: "/applications/outdoor" },
-    { label: "Commercial & Office", href: "/applications/commercial" },
-  ],
-  resources: [
-    { label: "Download Catalogue", href: "/catalogue" },
-    { label: "Product Comparison", href: "/compare" },
-    { label: "Project Gallery", href: "/gallery" },
-    { label: "Case Studies", href: "/projects" },
-    { label: "Blog & Insights", href: "/blog" },
-    { label: "FAQs", href: "/faqs" },
-  ],
-  support: [
-    { label: "Book Showroom Visit", href: "/book-visit" },
+    { label: "Commercial", href: "/applications/commercial" },
+  ] satisfies NavLink[],
+
+  company: [
+    { label: "About Prestige", href: "/about" },
+    { label: "Showrooms", href: "/showrooms" },
+    { label: "Become a Dealer", href: "/become-dealer" },
+    { label: "Testimonials", href: "/testimonials" },
+    { label: "Journal", href: "/blog" },
+  ] satisfies NavLink[],
+
+  visit: [
+    { label: "Book a Showroom Visit", href: "/book-visit" },
     { label: "Request a Quote", href: "/request-quote" },
-    { label: "Contact Sales", href: "/contact" },
-  ],
+    { label: "Current Offers", href: "/offers" },
+    { label: "FAQs", href: "/faqs" },
+  ] satisfies NavLink[],
+} as const;
+
+/** Minimal footer. Logo, a short link list, contact, social, newsletter. */
+export const footerNav = {
+  explore: [
+    { label: "Collections", href: "/collections" },
+    { label: "Products", href: "/products" },
+    { label: "Projects", href: "/projects" },
+    { label: "Gallery", href: "/gallery" },
+  ] satisfies NavLink[],
+
+  company: [
+    { label: "About", href: "/about" },
+    { label: "Showrooms", href: "/showrooms" },
+    { label: "Become a Dealer", href: "/become-dealer" },
+    { label: "Contact", href: "/contact" },
+  ] satisfies NavLink[],
+
+  legal: [
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
+  ] satisfies NavLink[],
 } as const;
 

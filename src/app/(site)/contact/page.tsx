@@ -145,7 +145,7 @@ export default async function ContactPage() {
                       href={directionsHref(flagship)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="glass absolute bottom-5 left-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-ink shadow-soft transition-transform hover:scale-105"
+                      className="glass-light absolute bottom-5 left-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-ink shadow-soft transition-transform hover:scale-105"
                     >
                       <Navigation className="h-4 w-4 text-gold" />
                       Directions to {flagship.locality ?? flagship.city}

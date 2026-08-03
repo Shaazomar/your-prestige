@@ -54,11 +54,11 @@ export const metadata: Metadata = {
   appleWebApp: { title: "Prestige", capable: true, statusBarStyle: "black-translucent" },
 };
 
+// Prestige 2.0 is a single dark theme, so the browser chrome matches it
+// unconditionally rather than tracking the OS preference.
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0a" },
-  ],
+  themeColor: "#0a0a0a",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -68,9 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${manrope.variable} ${instrument.variable} grain antialiased`}
-      >
+      <body className={`${manrope.variable} ${instrument.variable} antialiased`}>
         {children}
       </body>
     </html>

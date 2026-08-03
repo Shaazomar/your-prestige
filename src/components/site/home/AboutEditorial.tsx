@@ -39,7 +39,7 @@ export function AboutEditorial() {
             </Reveal>
             {/* Floating stat card */}
             <Reveal delay={0.5} direction="up" className="absolute -left-4 top-10 lg:-left-8">
-              <div className="glass rounded-2xl px-6 py-5 shadow-soft">
+              <div className="glass-light rounded-2xl px-6 py-5 shadow-soft">
                 <p className="text-3xl font-bold tracking-tight text-ink">15+</p>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-warm">Years of Craft</p>
               </div>

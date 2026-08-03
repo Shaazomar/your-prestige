@@ -52,7 +52,7 @@ export default function TestimonialsPage() {
               <h2 className="text-display-sm max-w-2xl">
                 Your project could be our next favourite story.
               </h2>
-              <ButtonLink href="/book-visit" variant="gold" size="lg">
+              <ButtonLink href="/book-visit" variant="primary" size="lg">
                 Start with a Visit
                 <ArrowUpRight className="h-5 w-5" />
               </ButtonLink>

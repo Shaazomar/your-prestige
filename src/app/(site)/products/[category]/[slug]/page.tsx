@@ -139,11 +139,11 @@ export default async function ProductPage({
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <ButtonLink href={`/request-quote?product=${product.slug}`} variant="gold" size="lg" className="shadow-yellow font-bold">
+            <ButtonLink href={`/request-quote?product=${product.slug}`} variant="primary" size="lg" className="shadow-yellow font-bold">
               Request Project Quotation
               <ArrowUpRight className="h-5 w-5" />
             </ButtonLink>
-            <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline-light" size="lg" className="border-white/30 text-white hover:bg-white hover:text-ink font-bold">
+            <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline" size="lg" className="border-white/30 text-white hover:bg-white hover:text-ink font-bold">
               Book Showroom Inspection
             </ButtonLink>
             <WishlistButton slug={product.slug} name={product.name} variant="full" className="border-white/30 text-white" />

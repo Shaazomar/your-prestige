@@ -81,7 +81,7 @@ export function QuickView({ product, onClose }: QuickViewProps) {
             <button
               onClick={onClose}
               aria-label="Close"
-              className="glass absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
+              className="glass-light absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
             >
               <X className="h-5 w-5" />
             </button>
@@ -111,14 +111,14 @@ export function QuickView({ product, onClose }: QuickViewProps) {
               <button
                 onClick={() => setSlide((s) => (s - 1 + images.length) % images.length)}
                 aria-label="Previous image"
-                className="glass absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
+                className="glass-light absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setSlide((s) => (s + 1) % images.length)}
                 aria-label="Next image"
-                className="glass absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
+                className="glass-light absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-ink shadow-soft transition-transform hover:scale-105"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -191,7 +191,7 @@ export function QuickView({ product, onClose }: QuickViewProps) {
 
               {/* Actions */}
               <div className="mt-8 flex flex-wrap items-center gap-3 border-t hairline pt-6">
-                <ButtonLink href="/request-quote" variant="gold" size="md">
+                <ButtonLink href="/request-quote" variant="primary" size="md">
                   Request a Quote
                   <ArrowUpRight className="h-4 w-4" />
                 </ButtonLink>

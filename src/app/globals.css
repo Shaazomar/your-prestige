@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
 /* ————————————————————————————————————————————
-   PRESTIGE TILES — Master Luxury Design System
-   Primary Background: #FFFFFF
-   Secondary Background: #F8F8F8
-   Primary Text: #0B0B0B
-   Secondary Text: #555555
-   Border: #E8E8E8
-   Accent: #F6C600
-   Accent Hover: #E5B800
-   Footer: #111111
+   PRESTIGE 2.0 — Luxury Minimalism Design System
+
+   Dark, editorial, architectural. Gold is a punctuation
+   mark, never a paragraph: active states, buttons, links
+   and micro-interactions only.
+
+   Background   #0A0A0A
+   Secondary    #111111
+   Surface      #171717
+   Text         #FAFAFA
+   Muted        #A0A0A0
+   Accent       #C6A667 (luxury gold)
 ———————————————————————————————————————————— */
 
 @theme {
-  /* Core neutrals */
-  --color-white: #ffffff;
-  --color-offwhite: #f8f8f8;
-  --color-primary-bg: #ffffff;
-  --color-secondary-bg: #f8f8f8;
-  --color-ivory: #ffffff;
-  --color-porcelain: #f8f8f8;
-  
+  /* ——— Surfaces ——— */
+  --color-canvas: #0a0a0a;
+  --color-secondary: #111111;
+  --color-surface: #171717;
+  --color-surface-raised: #1f1f1f;
+
+  /* Hairlines. Borders are light-on-dark at very low alpha — a visible
+     border is almost always the wrong answer in this system. */
+  --color-line: rgb(250 250 250 / 0.08);
+  --color-line-strong: rgb(250 250 250 / 0.16);
+
+  /* ——— Text ——— */
+  --color-text: #fafafa;
+  --color-muted: #a0a0a0;
+  --color-faint: #6b6b6b;
+
+  /* ——— Accent ——— */
+  --color-gold: #c6a667;
+  --color-gold-bright: #d8bd85;
+  --color-gold-deep: #a8873f;
+
+  /* ——— Status (admin surfaces only) ——— */
+  --color-success: #4ade80;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+
+  /* ——— Typography ——— */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), Georgia, serif;
+
+  /* Editorial display scale. Deliberately large — headings carry the
+     layout here, body copy is kept short. */
+  --text-display: clamp(3rem, 9vw, 8.5rem);
+  --text-hero: clamp(2.5rem, 6.5vw, 6rem);
+  --text-h1: clamp(2.25rem, 4.5vw, 4rem);
+  --text-h2: clamp(1.875rem, 3.2vw, 3rem);
+  --text-h3: clamp(1.5rem, 2.2vw, 2rem);
+  --text-h4: clamp(1.25rem, 1.6vw, 1.5rem);
+  --text-lead: clamp(1.0625rem, 1.3vw, 1.25rem);
+
+  /* ——— Rhythm ——— */
+  /* Sections breathe. These are the only vertical rhythm values used. */
+  --space-section: clamp(6rem, 12vw, 12rem);
+  --space-section-sm: clamp(4rem, 8vw, 7rem);
+
+  /* ——— Motion ——— */
+  /* No bounce, no overshoot. Everything decelerates. */
+  --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ——— Radii ——— */
+  --radius-card: 1.25rem;
+  --radius-media: 1.5rem;
+
+  /* ——— Elevation ——— */
+  /* On a #0A0A0A ground, shadow reads as depth only when it is very
+     soft and very large. Anything tighter looks like a border. */
+  --shadow-depth: 0 2px 8px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 8px 40px rgb(0 0 0 / 0.55);
+  --shadow-gold: 0 8px 32px rgb(198 166 103 / 0.18);
+}
+
+/* ————————————————————————————————————————————
+   COMPATIBILITY LAYER — TEMPORARY
+
+   The light-theme tokens the pre-2.0 site was built on. Roughly 1,700
+   class references still point here: the whole admin CMS, plus every
+   public page not yet migrated to the dark system above.
+
+   Tailwind silently emits nothing for an undefined token, so deleting
+   these early does not fail the build — it just makes text and borders
+   vanish. They stay until the migration finishes, then this whole
+   block goes.
+
+   Do not write new code against these.
+———————————————————————————————————————————— */
+
+@theme {
   --color-ink: #0b0b0b;
   --color-charcoal: #111111;
   --color-graphite: #222222;
@@ -29,103 +103,28 @@
   --color-stone-300: #cccccc;
   --color-stone-200: #e8e8e8;
   --color-stone-100: #f8f8f8;
+  --color-ivory: #ffffff;
+  --color-porcelain: #f8f8f8;
+  --color-offwhite: #f8f8f8;
+  --color-primary-bg: #ffffff;
+  --color-secondary-bg: #f8f8f8;
 
-  /* Accents */
-  --color-accent: #f6c600;
-  --color-accent-hover: #e5b800;
-  --color-gold: #f6c600;
-  --color-gold-light: #fbe678;
-  --color-gold-deep: #d4a700;
-  --color-brand: #f6c600;
-  --color-brand-deep: #e5b800;
+  --color-accent: #c6a667;
+  --color-accent-hover: #a8873f;
+  --color-gold-light: #d8bd85;
+  --color-brand: #c6a667;
+  --color-brand-deep: #a8873f;
 
-  /* Status */
-  --color-success: #16a34a;
-  --color-error: #dc2626;
-  --color-warning: #f59e0b;
-
-  /* Typography */
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-instrument), Georgia, serif;
-
-  /* Display scale strictly following Prestige Master Prompt */
-  --text-hero: clamp(2.75rem, 5.5vw, 4.5rem);      /* 72px desktop */
-  --text-heading: clamp(2.25rem, 4vw, 3.25rem);     /* 52px desktop */
-  --text-subheading: 1.75rem;                       /* 28px desktop */
-  --text-body: 1.125rem;                            /* 18px desktop */
-  --text-button: 1rem;                              /* 16px desktop */
-
-  --text-display-xl: clamp(3rem, 6vw, 4.5rem);
+  --text-heading: clamp(2.25rem, 4vw, 3.25rem);
+  --text-subheading: 1.75rem;
   --text-display-lg: clamp(2.25rem, 4.5vw, 3.25rem);
   --text-display-md: clamp(1.75rem, 3vw, 2.25rem);
   --text-display-sm: clamp(1.25rem, 2vw, 1.75rem);
 
-  /* Motion */
-  --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
-
-  /* Shadows */
+  /* Light-surface shadows. The dark system uses --shadow-depth/-lift. */
   --shadow-soft: 0 1px 3px rgb(11 11 11 / 0.05), 0 8px 24px rgb(11 11 11 / 0.04);
   --shadow-float: 0 4px 12px rgb(11 11 11 / 0.06), 0 24px 48px rgb(11 11 11 / 0.1);
-  --shadow-yellow: 0 8px 24px rgb(246 198 0 / 0.25);
-}
-
-/* ——— Base ——— */
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background: #ffffff;
-  color: #0b0b0b;
-  font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv01";
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  overflow-x: hidden;
-}
-
-::selection {
-  background: #f6c600;
-  color: #0b0b0b;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #f8f8f8;
-}
-::-webkit-scrollbar-thumb {
-  background: #cccccc;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #555555;
-}
-
-/* ——— Utilities ——— */
-
-@utility glass {
-  background: rgb(255 255 255 / 0.85);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid #e8e8e8;
-}
-
-@utility glass-dark {
-  background: rgb(17 17 17 / 0.85);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border: 1px solid rgb(255 255 255 / 0.1);
-}
-
-@utility text-hero {
-  font-size: var(--text-hero);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-  font-weight: 700;
+  --shadow-yellow: 0 8px 24px rgb(198 166 103 / 0.25);
 }
 
 @utility text-heading {
@@ -143,35 +142,38 @@ body {
 }
 
 @utility text-body-lg {
-  font-size: var(--text-body);
+  font-size: 1.125rem;
   line-height: 1.6;
   color: #555555;
 }
 
-@utility text-eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: #555555;
+/* Legacy light glass + hairline. Still load-bearing on ~20 unmigrated
+   public pages, so these keep their light-theme values; new dark work
+   uses `glass`/`glass-strong` and `border-line` instead. */
+@utility glass-light {
+  background: rgb(255 255 255 / 0.85);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid #e8e8e8;
 }
 
-@utility serif-accent {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+@utility glass-dark {
+  background: rgb(17 17 17 / 0.85);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgb(255 255 255 / 0.1);
 }
 
-/* Fine hairline borders */
+/* Light hairline. New dark-system code uses `border-line` directly,
+   which resolves from --color-line above. */
 @utility hairline {
   border-color: #e8e8e8;
 }
+
 @utility hairline-light {
   border-color: rgb(255 255 255 / 0.15);
 }
 
-/* Yellow accent underline for links */
 .link-yellow {
   position: relative;
   transition: color 0.3s var(--ease-luxury);
@@ -183,7 +185,7 @@ body {
   bottom: -3px;
   height: 2px;
   width: 100%;
-  background: #f6c600;
+  background: #c6a667;
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.4s var(--ease-luxury);
@@ -193,44 +195,315 @@ body {
   transform-origin: left;
 }
 
-/* Marquee for brand wall */
+/* ——————————————————— Base ——————————————————— */
+
+html {
+  /* Lenis drives scrolling; native smooth-scroll fights it. */
+  scroll-behavior: auto;
+  background: #0a0a0a;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #0a0a0a;
+  color: #fafafa;
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #c6a667;
+  color: #0a0a0a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 999px;
+  border: 3px solid #0a0a0a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d3d3d;
+}
+
+/* Focus is always visible and always gold — the one place the accent
+   is non-negotiable, for WCAG AA keyboard users. */
+:focus-visible {
+  outline: 2px solid #c6a667;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ——————————————————— Typography ——————————————————— */
+
+@utility text-display {
+  font-size: var(--text-display);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+}
+
+@utility text-hero {
+  font-size: var(--text-hero);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+}
+
+@utility text-h1 {
+  font-size: var(--text-h1);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-weight: 500;
+}
+
+@utility text-h2 {
+  font-size: var(--text-h2);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+@utility text-h3 {
+  font-size: var(--text-h3);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+@utility text-h4 {
+  font-size: var(--text-h4);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+}
+
+@utility text-lead {
+  font-size: var(--text-lead);
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+  color: #a0a0a0;
+}
+
+@utility text-body {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #a0a0a0;
+}
+
+/* The small tracked-out label that sits above a heading. */
+@utility text-eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6b6b6b;
+}
+
+@utility serif-accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* Numerals in stats/specs should align in columns. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ——————————————————— Layout ——————————————————— */
+
+@utility section {
+  padding-block: var(--space-section);
+}
+
+@utility section-sm {
+  padding-block: var(--space-section-sm);
+}
+
+/* ——————————————————— Surfaces ——————————————————— */
+
+@utility glass {
+  background: rgb(17 17 17 / 0.72);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgb(250 250 250 / 0.08);
+}
+
+@utility glass-strong {
+  background: rgb(10 10 10 / 0.92);
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+  border: 1px solid rgb(250 250 250 / 0.1);
+}
+
+/* ——————————————————— Media ——————————————————— */
+
+/* Every editorial image sits in one of these. The overflow-hidden +
+   rounded pairing is repeated often enough to be worth a utility. */
+@utility media-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-media);
+  background: #171717;
+}
+
+/* Bottom-up scrim so white text stays legible over any photograph.
+   Drawn as an ::after so it never needs an extra DOM node. */
+.media-scrim {
+  position: relative;
+}
+.media-scrim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(10 10 10 / 0.88) 0%,
+    rgb(10 10 10 / 0.45) 35%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+/* Content that must sit above the scrim. */
+.media-scrim > .scrim-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* ——————————————————— Interactions ——————————————————— */
+
+/* Gold underline that wipes in from the left on hover. */
+.link-underline {
+  position: relative;
+  transition: color 0.4s var(--ease-luxury);
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: #c6a667;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s var(--ease-luxury);
+}
+.link-underline:hover::after,
+.link-underline:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Image zoom on card hover. The parent owns the overflow, the image
+   owns the transform — never animate both. */
+.hover-zoom img,
+.hover-zoom [data-zoom] {
+  transition: transform 1.2s var(--ease-luxury);
+  will-change: transform;
+}
+.hover-zoom:hover img,
+.hover-zoom:hover [data-zoom],
+.hover-zoom:focus-visible img,
+.hover-zoom:focus-visible [data-zoom] {
+  transform: scale(1.06);
+}
+
+/* Arrow that slides right on button/link hover. */
+.arrow-slide svg {
+  transition: transform 0.5s var(--ease-luxury);
+}
+.arrow-slide:hover svg,
+.arrow-slide:focus-visible svg {
+  transform: translateX(4px);
+}
+
+/* ——————————————————— Animation ——————————————————— */
+
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 .animate-marquee {
-  animation: marquee 35s linear infinite;
+  animation: marquee 45s linear infinite;
 }
 .animate-marquee:hover {
   animation-play-state: paused;
 }
 
-/* Slow Ken Burns zoom for hero imagery */
+/* Slow drift on hero imagery — 24s so it is felt, not seen. */
 @keyframes kenburns {
   from { transform: scale(1); }
-  to { transform: scale(1.08); }
+  to { transform: scale(1.09); }
 }
 .animate-kenburns {
-  animation: kenburns 20s var(--ease-cinematic) infinite alternate;
+  animation: kenburns 24s var(--ease-cinematic) infinite alternate;
 }
 
-/* Scroll indicator pulse */
 @keyframes scroll-hint {
-  0% { transform: translateY(0); opacity: 1; }
-  70% { transform: translateY(8px); opacity: 0; }
+  0% { transform: translateY(0); opacity: 0; }
+  30% { opacity: 1; }
+  70% { transform: translateY(10px); opacity: 0; }
   100% { transform: translateY(0); opacity: 0; }
 }
 .animate-scroll-hint {
-  animation: scroll-hint 2s var(--ease-luxury) infinite;
+  animation: scroll-hint 2.4s var(--ease-luxury) infinite;
 }
 
-/* Reduced motion respect */
+/* Skeleton shimmer for streaming/Suspense fallbacks. */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #171717 25%,
+    #1f1f1f 50%,
+    #171717 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* ——————————————————— Accessibility ——————————————————— */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  html { scroll-behavior: auto; }
 }
-

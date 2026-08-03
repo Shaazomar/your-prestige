@@ -24,11 +24,11 @@ export default function NotFound() {
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-        <ButtonLink href="/" variant="gold" size="lg">
+        <ButtonLink href="/" variant="primary" size="lg">
           Back to Home
           <ArrowUpRight className="h-5 w-5" />
         </ButtonLink>
-        <ButtonLink href="/products" variant="outline-light" size="lg">
+        <ButtonLink href="/products" variant="outline" size="lg">
           <Search className="h-4 w-4" />
           Browse the Catalogue
         </ButtonLink>
