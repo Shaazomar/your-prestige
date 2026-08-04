@@ -11,13 +11,6 @@ import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { useCompare } from "@/hooks/useCompare";
 import { cn } from "@/lib/utils";
 
-
-const aspectClass: Record<CatalogProduct["aspect"], string> = {
-  portrait: "aspect-[4/5]",
-  square: "aspect-[1/1]",
-  landscape: "aspect-[5/4]",
-};
-
 interface ProductCardProps {
   product: CatalogProduct;
   onQuickView?: (product: CatalogProduct) => void;
@@ -64,7 +57,7 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
         className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-soft transition-all duration-500 group-hover:shadow-float group-hover:border-accent"
       >
         {/* Image stage */}
-        <div className={cn("relative block w-full overflow-hidden text-left", aspectClass[product.aspect])}>
+        <div className={cn("relative block w-full overflow-hidden text-left aspect-[4/5]")}>
           <button
             type="button"
             onClick={() => onQuickView?.(product)}
@@ -104,15 +97,15 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
                   toggleCompare(product.slug);
                 }}
                 className={cn(
-                  "flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-all shadow-xs",
+                  "flex h-8 w-8 items-center justify-center rounded-full transition-all shadow-xs",
                   compared
                     ? "bg-accent text-ink"
                     : "bg-black/60 text-white hover:bg-black/80 backdrop-blur-md"
                 )}
                 aria-label="Toggle compare"
+                title={compared ? "Comparing" : "Compare"}
               >
                 <Layers className="h-3.5 w-3.5" />
-                <span>{compared ? "Comparing" : "Compare"}</span>
               </button>
 
               <WishlistButton slug={product.slug} name={product.name} />
@@ -120,43 +113,43 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
           </div>
 
           {/* Texture swatch overlap */}
-          <div className="absolute bottom-4 left-4 h-12 w-12 overflow-hidden rounded-full border-2 border-white shadow-float transition-transform duration-500 group-hover:scale-110 z-10">
+          <div className="absolute bottom-3 left-3 h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-float transition-transform duration-500 group-hover:scale-110 z-10">
             <Image
               src={product.textureImage}
               alt={`${product.name} texture`}
               fill
-              sizes="48px"
+              sizes="36px"
               className="object-cover"
             />
           </div>
         </div>
 
         {/* Card Body */}
-        <div className="p-5 space-y-2">
+        <div className="p-3.5 space-y-1">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-accent">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-accent">
                 {product.brand} • {product.collection}
               </p>
               <Link href={href} className="link-yellow">
-                <h3 className="mt-0.5 text-lg font-bold tracking-tight text-ink group-hover:text-ink">
+                <h3 className="mt-0.5 text-sm font-bold tracking-tight text-ink group-hover:text-ink leading-tight">
                   {product.name}
                 </h3>
               </Link>
             </div>
-            <span className="shrink-0 rounded-full bg-offwhite px-2.5 py-0.5 text-[10px] font-bold text-stone-500 border border-stone-200">
+            <span className="shrink-0 rounded-full bg-offwhite px-2 py-0.5 text-[9px] font-bold text-stone-500 border border-stone-200">
               {product.thickness}
             </span>
           </div>
 
-          <p className="text-xs text-slate-warm">{product.finish}</p>
+          <p className="text-[11px] text-slate-warm">{product.finish}</p>
 
-          <div className="flex flex-wrap gap-1.5 pt-2">
+          <div className="flex flex-wrap gap-1 pt-1.5">
             {product.sizes.slice(0, 2).map((size, i) => (
               <SizeChip key={size} size={size} index={i} />
             ))}
             {product.sizes.length > 2 && (
-              <span className="inline-flex items-center rounded-full border border-dashed border-stone-300 px-2.5 py-1 text-[10px] text-stone-500">
+              <span className="inline-flex items-center rounded-full border border-dashed border-stone-300 px-2 py-0.5 text-[9px] text-stone-500">
                 +{product.sizes.length - 2} formats
               </span>
             )}

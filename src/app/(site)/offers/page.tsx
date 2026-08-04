@@ -3,7 +3,7 @@ import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Award } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Offers",
@@ -45,7 +45,7 @@ export default function OffersPage() {
                 <article className="flex h-full flex-col justify-between rounded-3xl border hairline bg-white p-10 shadow-soft transition-all duration-700 hover:-translate-y-2 hover:shadow-float">
                   <div>
                     <span className="mb-6 inline-flex items-center gap-2 rounded-full bg-gold/10 px-4 py-1.5 text-xs font-semibold text-gold-deep">
-                      <Sparkles className="h-3.5 w-3.5" />
+                      <Award className="h-3.5 w-3.5" />
                       {o.tag}
                     </span>
                     <h2 className="text-2xl font-semibold tracking-tight text-ink">

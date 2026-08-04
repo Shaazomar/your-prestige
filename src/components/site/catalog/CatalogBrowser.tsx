@@ -74,36 +74,36 @@ export function CatalogBrowser({
   ].filter((g) => g.options.length > 1);
 
   return (
-    <section className="py-16 md:py-24">
-      <Container>
+    <section className="py-12 bg-white">
+      <Container size="wide">
         {/* Search + filter toggle */}
-        <div className="sticky top-20 z-30 -mx-4 mb-8 bg-ivory/85 px-4 py-4 backdrop-blur-md">
+        <div className="relative z-10 -mx-6 mb-8 border-b border-stone-200 bg-white px-6 py-3 md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
           <div className="flex flex-wrap items-center gap-3">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 apply((p) => (query.trim() ? p.set("q", query.trim()) : p.delete("q")));
               }}
-              className="relative min-w-[240px] flex-1"
+              className="relative min-w-[180px] max-w-xs md:max-w-sm flex-1"
             >
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name, collection, brand, finish or code…"
-                className="w-full rounded-full border border-ink/10 bg-white py-3 pl-11 pr-4 text-sm outline-none transition-colors focus:border-gold/50"
+                placeholder="Search collections, brands…"
+                className="w-full rounded-full border border-stone-200 bg-offwhite py-1.5 pl-9 pr-3 text-xs font-medium outline-none transition-colors focus:border-accent focus:bg-white"
               />
             </form>
 
             <button
               type="button"
               onClick={() => setShowFilters((s) => !s)}
-              className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-5 py-3 text-sm font-medium transition-colors hover:border-gold/50"
+              className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-accent"
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-3.5 w-3.5" />
               Filters
               {activeFilters.length > 0 && (
-                <span className="rounded-full bg-gold px-2 py-0.5 text-[0.65rem] text-white">
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[0.65rem] text-ink font-bold">
                   {activeFilters.length}
                 </span>
               )}
@@ -112,7 +112,7 @@ export function CatalogBrowser({
             <select
               value={searchParams.get("sort") ?? "featured"}
               onChange={(e) => apply((p) => (e.target.value === "featured" ? p.delete("sort") : p.set("sort", e.target.value)))}
-              className="rounded-full border border-ink/10 bg-white px-4 py-3 text-sm outline-none focus:border-gold/50"
+              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs outline-none focus:border-accent font-medium text-slate-warm"
             >
               <option value="featured">Featured first</option>
               <option value="newest">Newest</option>
@@ -127,7 +127,7 @@ export function CatalogBrowser({
                 <button
                   key={f.key}
                   onClick={() => apply((p) => p.delete(f.key))}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs text-ivory transition-opacity hover:opacity-80"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-xs text-white transition-opacity hover:opacity-80"
                 >
                   {f.value}
                   <X className="h-3 w-3" />
@@ -196,7 +196,7 @@ export function CatalogBrowser({
             </button>
           </div>
         ) : (
-          <div className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${isPending ? "opacity-60" : ""} transition-opacity`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 ${isPending ? "opacity-60" : ""} transition-opacity`}>
             {products.map((product) => (
               <ProductCard key={product.slug} product={product} onQuickView={setQuickView} />
             ))}

@@ -3,11 +3,8 @@ import { Collections } from "@/components/site/home/Collections";
 import { FeaturedProductsSection } from "@/components/site/home/FeaturedProductsSection";
 import { StatsSection } from "@/components/site/home/StatsSection";
 import { ApplicationsSection } from "@/components/site/home/ApplicationsSection";
-import { BrandWall } from "@/components/site/home/BrandWall";
 import { AboutEditorial } from "@/components/site/home/AboutEditorial";
 import { WhyChooseUs } from "@/components/site/home/WhyChooseUs";
-import { GalleryPreview } from "@/components/site/home/GalleryPreview";
-import { ClientsSection } from "@/components/site/home/ClientsSection";
 import { Testimonials } from "@/components/site/home/Testimonials";
 import { ShowroomsSection } from "@/components/site/home/ShowroomsSection";
 import { CtaSection } from "@/components/site/home/CtaSection";
@@ -43,12 +40,9 @@ export default async function HomePage({
       <FeaturedProductsSection />
       <StatsSection />
       <ApplicationsSection />
-      <BrandWall />
       <AboutEditorial />
       <WhyChooseUs />
       <ShowroomsSection />
-      <GalleryPreview />
-      <ClientsSection />
       <Testimonials />
       <CtaSection />
     </main>

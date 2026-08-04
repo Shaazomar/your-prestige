@@ -65,7 +65,7 @@ export function FeaturedProductsSection() {
   const [scrollIndex, setScrollIndex] = useState(0);
 
   return (
-    <section className="bg-white py-20 lg:py-28 border-b border-stone-200">
+    <section className="bg-white py-20 lg:py-28">
       <Container size="wide">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">

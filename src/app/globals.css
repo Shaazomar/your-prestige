@@ -33,9 +33,9 @@
   --color-faint: #6b6b6b;
 
   /* ——— Accent ——— */
-  --color-gold: #c6a667;
-  --color-gold-bright: #d8bd85;
-  --color-gold-deep: #a8873f;
+  --color-gold: #eab308;
+  --color-gold-bright: #fde047;
+  --color-gold-deep: #ca8a04;
 
   /* ——— Status (admin surfaces only) ——— */
   --color-success: #4ade80;
@@ -109,11 +109,11 @@
   --color-primary-bg: #ffffff;
   --color-secondary-bg: #f8f8f8;
 
-  --color-accent: #c6a667;
-  --color-accent-hover: #a8873f;
-  --color-gold-light: #d8bd85;
-  --color-brand: #c6a667;
-  --color-brand-deep: #a8873f;
+  --color-accent: #eab308;
+  --color-accent-hover: #ca8a04;
+  --color-gold-light: #fde047;
+  --color-brand: #eab308;
+  --color-brand-deep: #ca8a04;
 
   --text-heading: clamp(2.25rem, 4vw, 3.25rem);
   --text-subheading: 1.75rem;
@@ -124,7 +124,7 @@
   /* Light-surface shadows. The dark system uses --shadow-depth/-lift. */
   --shadow-soft: 0 1px 3px rgb(11 11 11 / 0.05), 0 8px 24px rgb(11 11 11 / 0.04);
   --shadow-float: 0 4px 12px rgb(11 11 11 / 0.06), 0 24px 48px rgb(11 11 11 / 0.1);
-  --shadow-yellow: 0 8px 24px rgb(198 166 103 / 0.25);
+  --shadow-yellow: 0 8px 24px rgb(234 179 8 / 0.25);
 }
 
 @utility text-heading {
@@ -185,7 +185,7 @@
   bottom: -3px;
   height: 2px;
   width: 100%;
-  background: #c6a667;
+  background: var(--color-gold);
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.4s var(--ease-luxury);
@@ -216,7 +216,7 @@ body {
 }
 
 ::selection {
-  background: #c6a667;
+  background: var(--color-gold);
   color: #0a0a0a;
 }
 
@@ -238,7 +238,7 @@ body {
 /* Focus is always visible and always gold — the one place the accent
    is non-negotiable, for WCAG AA keyboard users. */
 :focus-visible {
-  outline: 2px solid #c6a667;
+  outline: 2px solid var(--color-gold);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -401,7 +401,7 @@ body {
   bottom: -2px;
   height: 1px;
   width: 100%;
-  background: #c6a667;
+  background: var(--color-gold);
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.5s var(--ease-luxury);

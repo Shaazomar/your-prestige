@@ -67,6 +67,7 @@ export interface NavLink {
 
 /** The only links rendered inline in the navbar. */
 export const primaryNav: readonly NavLink[] = [
+  { label: "Shop", href: "/products" },
   { label: "Collections", href: "/collections" },
   { label: "Projects", href: "/projects" },
   { label: "Gallery", href: "/gallery" },

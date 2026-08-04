@@ -31,7 +31,6 @@ interface HeaderProps {
  * the page underneath is doing.
  */
 export function Header({ business }: HeaderProps) {
-  const [scrolled, setScrolled] = useState(false);
   const [condensed, setCondensed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -42,7 +41,6 @@ export function Header({ business }: HeaderProps) {
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (y) => {
-    setScrolled(y > 24);
     setCondensed(y > 320);
   });
 
@@ -65,8 +63,7 @@ export function Header({ business }: HeaderProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const isHome = pathname === "/";
-  const floating = !(isHome && !scrolled);
+  const floating = true;
 
   return (
     <>

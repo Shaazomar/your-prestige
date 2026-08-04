@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Send, Sparkles } from "lucide-react";
+import { X, Send, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -109,7 +109,7 @@ export function Concierge({
             <div className="flex items-center justify-between rounded-t-3xl bg-ink px-6 py-5 text-ivory">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/20">
-                  <Sparkles className="h-5 w-5 text-gold" />
+                  <MessageSquare className="h-5 w-5 text-gold" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold tracking-wide">Prestige Concierge</p>

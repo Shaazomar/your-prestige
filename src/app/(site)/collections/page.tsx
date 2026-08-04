@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/site/PageHero";
 
@@ -108,9 +108,6 @@ export default function CollectionsPage() {
                 </div>
 
                 <div className={`lg:col-span-5 ${index % 2 === 1 ? "lg:order-1" : ""}`}>
-                  <span className="text-eyebrow text-accent block mb-2 font-bold flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" /> Prestige Collection
-                  </span>
                   <h2 className="text-heading text-ink mb-2">{col.title}</h2>
                   <p className="text-subheading text-slate-warm mb-4 font-semibold">{col.subtitle}</p>
                   <p className="text-body-lg text-slate-warm leading-relaxed mb-8">{col.description}</p>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Download, Play, ShieldCheck, Sparkles, Leaf, Award, Layers, Wrench, X } from "lucide-react";
+import { ArrowRight, Download, Play, X } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import type { HomepageHeroInput } from "@/app/admin/(dashboard)/content/homepage/schema";
 
@@ -19,9 +19,9 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
     <>
       <section className="relative overflow-hidden bg-white pt-28 pb-16 lg:pt-36 lg:pb-24">
         <Container size="wide">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
             {/* Left Column Text & CTAs */}
-            <div className="lg:col-span-6 space-y-8 z-10">
+            <div className="lg:col-span-6 space-y-8 z-10 lg:self-center">
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -150,66 +150,6 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
           </div>
         </Container>
 
-        {/* Feature Strip Card below Hero */}
-        <Container size="wide" className="mt-16 sm:mt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-[2.25rem] border border-stone-200/90 bg-white p-6 sm:p-8 shadow-float grid grid-cols-2 md:grid-cols-5 gap-6 divide-y md:divide-y-0 md:divide-x divide-stone-100"
-          >
-            <div className="flex items-center gap-4 pt-4 md:pt-0">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-offwhite text-ink border border-stone-200">
-                <ShieldCheck className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-ink">Premium Quality</h4>
-                <p className="text-[11px] text-stone-400">International standards</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 pt-4 md:pt-0 md:pl-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-offwhite text-ink border border-stone-200">
-                <Sparkles className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-ink">Innovative Designs</h4>
-                <p className="text-[11px] text-stone-400">Trendy & timeless</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 pt-4 md:pt-0 md:pl-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-offwhite text-ink border border-stone-200">
-                <Leaf className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-ink">Eco Friendly</h4>
-                <p className="text-[11px] text-stone-400">Sustainable surfaces</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 pt-4 md:pt-0 md:pl-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-offwhite text-ink border border-stone-200">
-                <Award className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-ink">High Durability</h4>
-                <p className="text-[11px] text-stone-400">Built to last</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 pt-4 md:pt-0 md:pl-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-offwhite text-ink border border-stone-200">
-                <Wrench className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-ink">Easy Maintenance</h4>
-                <p className="text-[11px] text-stone-400">Hassle free surfaces</p>
-              </div>
-            </div>
-          </motion.div>
-        </Container>
       </section>
 
       {/* Video Modal Trigger */}

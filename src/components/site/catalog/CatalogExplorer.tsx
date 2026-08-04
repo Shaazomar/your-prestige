@@ -73,19 +73,19 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
 
   return (
     <>
-      {/* Sticky filter bar */}
-      <div className="sticky top-20 z-30 -mx-6 border-b border-stone-200 bg-white/95 px-6 py-4 backdrop-blur-xl md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
+      {/* Filter bar (static to scroll naturally with the page and avoid overlap) */}
+      <div className="relative z-10 -mx-6 border-b border-stone-200 bg-white px-6 py-3 md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
         <div className="mx-auto max-w-[110rem]">
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
-            <div className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+            <div className="relative min-w-[180px] max-w-xs md:max-w-sm flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search collections, brands, finishes…"
+                placeholder="Search collections, brands…"
                 aria-label="Search catalogue"
-                className="w-full rounded-full border border-stone-200 bg-offwhite py-2.5 pl-11 pr-4 text-sm font-medium outline-none transition-colors focus:border-accent focus:bg-white"
+                className="w-full rounded-full border border-stone-200 bg-offwhite py-1.5 pl-9 pr-3 text-xs font-medium outline-none transition-colors focus:border-accent focus:bg-white"
               />
             </div>
 
@@ -106,33 +106,33 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                     label={app}
                     active={application === app}
                     onClick={() => setApplication(application === app ? null : app)}
-                    icon={<Icon className="h-3.5 w-3.5" />}
+                    icon={<Icon className="h-3 w-3" />}
                   />
                 );
               })}
             </div>
 
             {/* Grid vs List view toggle */}
-            <div className="hidden sm:flex items-center gap-1 rounded-full border border-stone-200 p-1 bg-offwhite">
+            <div className="hidden sm:flex items-center gap-1 rounded-full border border-stone-200 p-0.5 bg-offwhite">
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
-                  "p-1.5 rounded-full transition-colors",
+                  "p-1 rounded-full transition-colors",
                   viewMode === "grid" ? "bg-accent text-ink" : "text-stone-400 hover:text-ink"
                 )}
                 aria-label="Grid view"
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={cn(
-                  "p-1.5 rounded-full transition-colors",
+                  "p-1 rounded-full transition-colors",
                   viewMode === "list" ? "bg-accent text-ink" : "text-stone-400 hover:text-ink"
                 )}
                 aria-label="List view"
               >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5" />
               </button>
             </div>
 
@@ -140,7 +140,7 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
             <button
               onClick={() => setExpanded((v) => !v)}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition-colors duration-300",
+                "flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors duration-300",
                 expanded || activeCount > 0
                   ? "border-ink bg-ink text-white"
                   : "border-stone-200 text-slate-warm hover:border-accent"
@@ -267,7 +267,7 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
               </button>
             </div>
           ) : viewMode === "grid" ? (
-            <div className="columns-1 gap-8 sm:columns-2 xl:columns-3 [&>*]:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
               <AnimatePresence mode="popLayout">
                 {filtered.map((product) => (
                   <motion.div
@@ -277,7 +277,6 @@ export function CatalogExplorer({ products, lockedCategory }: CatalogExplorerPro
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.4 }}
-                    className="break-inside-avoid"
                   >
                     <ProductCard product={product} onQuickView={setQuickView} />
                   </motion.div>

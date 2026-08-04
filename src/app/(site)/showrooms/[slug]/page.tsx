@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  MapPin, Phone, Navigation, Clock, ArrowUpRight, User, Car, Sparkles, Store,
+  MapPin, Phone, Navigation, Clock, ArrowUpRight, User, Car, Check, Store,
   MessageCircle, CalendarCheck2, ChevronLeft,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -246,7 +246,7 @@ export default async function ShowroomDetailPage({
                           key={a}
                           className="inline-flex items-center gap-1.5 rounded-full border hairline bg-white px-4 py-2 text-sm text-slate-warm shadow-soft"
                         >
-                          <Sparkles className="h-3.5 w-3.5 text-gold" />
+                          <Check className="h-3.5 w-3.5 text-gold" />
                           {a}
                         </span>
                       ))}
