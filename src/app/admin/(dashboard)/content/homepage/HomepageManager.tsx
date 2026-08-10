@@ -102,6 +102,26 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
           <AField label="Secondary Button Label" value={values.secondaryCtaLabel} onChange={(e) => setValues((v) => v && { ...v, secondaryCtaLabel: e.target.value })} />
           <AField label="Secondary Button Link" value={values.secondaryCtaHref} onChange={(e) => setValues((v) => v && { ...v, secondaryCtaHref: e.target.value })} />
         </div>
+
+        <hr className="border-white/5 my-4" />
+        <p className="text-sm font-medium text-white/70">The Prestige Story (About Section)</p>
+        <AField label="Story Eyebrow" value={values.storyEyebrow || ""} onChange={(e) => setValues((v) => v && { ...v, storyEyebrow: e.target.value })} />
+        <AField label="Story Title" value={values.storyTitle || ""} onChange={(e) => setValues((v) => v && { ...v, storyTitle: e.target.value })} />
+        <ATextArea label="Story Paragraph 1" value={values.storyText1 || ""} onChange={(e) => setValues((v) => v && { ...v, storyText1: e.target.value })} />
+        <ATextArea label="Story Paragraph 2" value={values.storyText2 || ""} onChange={(e) => setValues((v) => v && { ...v, storyText2: e.target.value })} />
+        <ImageUploadField label="Story Main Image" value={values.storyMainImage || null} onChange={(url) => setValues((v) => v && { ...v, storyMainImage: url ?? "" })} />
+        <ImageUploadField label="Story Detail Image" value={values.storyDetailImage || null} onChange={(url) => setValues((v) => v && { ...v, storyDetailImage: url ?? "" })} />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <AField label="Stat Number (e.g. 15+)" value={values.storyStatNumber || ""} onChange={(e) => setValues((v) => v && { ...v, storyStatNumber: e.target.value })} />
+          <AField label="Stat Label (e.g. Years of Craft)" value={values.storyStatLabel || ""} onChange={(e) => setValues((v) => v && { ...v, storyStatLabel: e.target.value })} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <AField label="CTA Button Label" value={values.storyCtaLabel || ""} onChange={(e) => setValues((v) => v && { ...v, storyCtaLabel: e.target.value })} />
+          <AField label="CTA Button Link" value={values.storyCtaHref || ""} onChange={(e) => setValues((v) => v && { ...v, storyCtaHref: e.target.value })} />
+        </div>
+
         <button type="submit" disabled={saving} className="w-full rounded-xl border border-white/15 py-3 text-sm font-semibold text-white transition-colors hover:border-gold hover:text-gold disabled:opacity-60">
           {saving ? "Saving…" : "Save Draft"}
         </button>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Star } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
-import { testimonials } from "@/lib/demo-content";
+import { getPublishedTestimonials } from "@/lib/testimonials";
 import { RevealStagger, RevealItem, Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "What homeowners, architects and builders across Mangaluru say about Your Prestige.",
 };
 
-export default function TestimonialsPage() {
+export default async function TestimonialsPage() {
+  const testimonials = await getPublishedTestimonials();
+
   return (
     <>
       <PageHero

@@ -66,22 +66,29 @@ export default async function CategoryPage({
   if (useServerBrowser) {
     const result = await searchCatalog({ ...parseFilters(sp), category });
     return (
-      <>
-        <PageHero eyebrow={cat.eyebrow} title={cat.title} description={cat.description} />
-        <CatalogBrowser result={result} lockedCategory={category} />
-      </>
+      <main className="min-h-screen bg-white">
+        <CatalogBrowser
+          result={result}
+          lockedCategory={category}
+          eyebrow={cat.eyebrow}
+          title={cat.title}
+          description={cat.description}
+        />
+      </main>
     );
   }
 
-  // Deliberately the full catalogue, not just this category: CatalogExplorer
-  // derives its own facet chips from the array it receives, and `lockedCategory`
-  // is what narrows the grid. Pre-filtering here would make the chips under-count.
   const products = await getCatalogProducts();
 
   return (
-    <>
-      <PageHero eyebrow={cat.eyebrow} title={cat.title} description={cat.description} />
-      <CatalogExplorer products={products} lockedCategory={category as CatalogProduct["category"]} />
-    </>
+    <main className="min-h-screen bg-white">
+      <CatalogExplorer
+        products={products}
+        lockedCategory={category as CatalogProduct["category"]}
+        eyebrow={cat.eyebrow}
+        title={cat.title}
+        description={cat.description}
+      />
+    </main>
   );
 }

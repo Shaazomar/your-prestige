@@ -22,12 +22,20 @@ import type { CatalogSearchResult } from "@/lib/catalog-search";
  *
  * The cards, quick view and chips are the existing components, unchanged.
  */
+import { CatalogueHero } from "./CatalogueHero";
+
 export function CatalogBrowser({
   result,
   lockedCategory,
+  eyebrow,
+  title,
+  description,
 }: {
   result: CatalogSearchResult;
   lockedCategory?: string;
+  eyebrow?: string;
+  title?: string;
+  description?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -72,36 +80,38 @@ export function CatalogBrowser({
   ].filter((g) => g.options.length > 1);
 
   return (
-    <section className="py-12 bg-white">
+    <div className="min-h-screen bg-white pb-24">
+      <CatalogueHero eyebrow={eyebrow} title={title} description={description} />
+
       <Container size="wide">
-        {/* Search + filter toggle */}
-        <div className="relative z-10 -mx-6 mb-8 border-b border-stone-200 bg-white px-6 py-3 md:-mx-10 md:px-10 lg:-mx-14 lg:px-14">
+        {/* Search + filter toggle in floating container */}
+        <div className="relative z-20 -mt-2 mb-10 rounded-3xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
           <div className="flex flex-wrap items-center gap-3">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 apply((p) => (query.trim() ? p.set("q", query.trim()) : p.delete("q")));
               }}
-              className="relative min-w-[180px] max-w-xs md:max-w-sm flex-1"
+              className="relative min-w-[220px] flex-1"
             >
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search collections, brands…"
-                className="w-full rounded-full border border-stone-200 bg-offwhite py-1.5 pl-9 pr-3 text-xs font-medium outline-none transition-colors focus:border-accent focus:bg-white"
+                placeholder="Search tiles, collections, finishes…"
+                className="w-full rounded-full border border-stone-200 bg-stone-50/70 py-2.5 pl-11 pr-4 text-xs font-medium outline-none transition-all focus:border-gold focus:bg-white"
               />
             </form>
 
             <button
               type="button"
               onClick={() => setShowFilters((s) => !s)}
-              className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-accent"
+              className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2.5 text-xs font-bold transition-all duration-300 hover:border-gold hover:text-gold"
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-3.5 w-3.5 text-gold" />
               Filters
               {activeFilters.length > 0 && (
-                <span className="rounded-full bg-accent px-2 py-0.5 text-[0.65rem] text-ink font-bold">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-ink">
                   {activeFilters.length}
                 </span>
               )}
@@ -110,22 +120,22 @@ export function CatalogBrowser({
             <select
               value={searchParams.get("sort") ?? "featured"}
               onChange={(e) => apply((p) => (e.target.value === "featured" ? p.delete("sort") : p.set("sort", e.target.value)))}
-              className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs outline-none focus:border-accent font-medium text-slate-warm"
+              className="rounded-full border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 outline-none transition-colors hover:border-stone-300 focus:border-gold cursor-pointer"
             >
-              <option value="featured">Featured first</option>
+              <option value="featured">Most Popular</option>
               <option value="newest">Newest</option>
-              <option value="name">A–Z</option>
+              <option value="name">Name A–Z</option>
             </select>
           </div>
 
           {/* Active filter pills */}
           {activeFilters.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-stone-100">
               {activeFilters.map((f) => (
                 <button
                   key={f.key}
                   onClick={() => apply((p) => p.delete(f.key))}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-xs text-white transition-opacity hover:opacity-80"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-3 py-1 text-xs text-white transition-opacity hover:opacity-80"
                 >
                   {f.value}
                   <X className="h-3 w-3" />
@@ -133,7 +143,7 @@ export function CatalogBrowser({
               ))}
               <button
                 onClick={() => startTransition(() => router.push(pathname))}
-                className="text-xs text-ink/40 underline underline-offset-4 hover:text-ink"
+                className="text-xs text-stone-500 underline underline-offset-4 hover:text-ink"
               >
                 Clear all
               </button>
@@ -225,8 +235,7 @@ export function CatalogBrowser({
           </nav>
         )}
       </Container>
-
-    </section>
+    </div>
   );
 }
 

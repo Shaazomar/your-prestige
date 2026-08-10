@@ -23,24 +23,25 @@ export default async function ProductsPage({
   const count = await countPublishedProducts();
   const hasFilters = Object.keys(sp).some((k) => k !== "page");
 
-  // Below the cap the catalogue ships whole and filters instantly in the
-  // browser, which feels better on a curated range. Past it — or as soon as
-  // someone actually filters — Postgres does the work and the URL holds the
-  // state, so the view is shareable and crawlable.
   const useServerBrowser = count > CATALOG_CLIENT_LIMIT || hasFilters;
 
   return (
-    <>
-      <PageHero
-        eyebrow="The Catalogue"
-        title="An archive worth exploring."
-        description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
-      />
+    <main className="min-h-screen bg-white">
       {useServerBrowser ? (
-        <CatalogBrowser result={await searchCatalog(parseFilters(sp))} />
+        <CatalogBrowser
+          result={await searchCatalog(parseFilters(sp))}
+          eyebrow="THE CATALOGUE"
+          title={"An archive worth\nexploring."}
+          description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
+        />
       ) : (
-        <CatalogExplorer products={await getCatalogProducts()} />
+        <CatalogExplorer
+          products={await getCatalogProducts()}
+          eyebrow="THE CATALOGUE"
+          title={"An archive worth\nexploring."}
+          description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
+        />
       )}
-    </>
+    </main>
   );
 }

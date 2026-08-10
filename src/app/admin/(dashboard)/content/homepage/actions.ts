@@ -19,7 +19,9 @@ export async function isHomepagePublished(): Promise<boolean> {
     prisma.setting.findUnique({ where: { key: "homepage.hero.published" } }),
   ]);
   if (!published) return false;
-  return JSON.stringify(draft?.value ?? {}) === JSON.stringify(published.value);
+  const draftVal = draft ? { ...defaultHomepageHero, ...(draft.value as object) } : defaultHomepageHero;
+  const pubVal = { ...defaultHomepageHero, ...(published.value as object) };
+  return JSON.stringify(draftVal) === JSON.stringify(pubVal);
 }
 
 export async function saveHomepageDraft(input: HomepageHeroInput) {
@@ -31,6 +33,7 @@ export async function saveHomepageDraft(input: HomepageHeroInput) {
     update: { value: data },
   });
   await logAudit({ action: "homepage.save_draft", entity: "Setting", newValue: data, meta: { by: session.user.id } });
+  revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/?preview=1");
   return data;
@@ -40,12 +43,20 @@ export async function publishHomepage() {
   const session = await requirePermission("homepage", "publish");
   const draft = await prisma.setting.findUnique({ where: { key: "homepage.hero.draft" } });
   const value = draft?.value ?? defaultHomepageHero;
-  await prisma.setting.upsert({
-    where: { key: "homepage.hero.published" },
-    create: { key: "homepage.hero.published", value },
-    update: { value },
-  });
+  await Promise.all([
+    prisma.setting.upsert({
+      where: { key: "homepage.hero.published" },
+      create: { key: "homepage.hero.published", value },
+      update: { value },
+    }),
+    prisma.setting.upsert({
+      where: { key: "homepage.hero.draft" },
+      create: { key: "homepage.hero.draft", value },
+      update: { value },
+    }),
+  ]);
   await logAudit({ action: "homepage.publish", entity: "Setting", newValue: value, meta: { by: session.user.id } });
+  revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/?preview=1");
 }

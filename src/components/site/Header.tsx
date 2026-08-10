@@ -89,12 +89,12 @@ export function Header({ business }: HeaderProps) {
               "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
               floating
                 ? [
-                    "glass rounded-full shadow-[0_8px_40px_rgb(0_0_0/0.55)]",
+                    "bg-black rounded-full shadow-[0_8px_40px_rgb(0_0_0/0.55)] border border-white/10",
                     condensed
                       ? "max-w-5xl px-4 py-2 md:px-5"
                       : "max-w-6xl px-5 py-2.5 md:px-6 md:py-3",
                   ]
-                : "max-w-none rounded-full border border-transparent bg-transparent px-1 py-2"
+                : "max-w-none rounded-full border border-transparent bg-black px-1 py-2"
             )}
           >
             <Link

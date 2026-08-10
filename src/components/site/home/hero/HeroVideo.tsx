@@ -1,10 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
 import { OrganicVideoShape } from "./OrganicVideoShape";
-import { VideoPlayButton } from "./VideoPlayButton";
-import { WatchStoryBadge } from "./WatchStoryBadge";
 
 interface HeroVideoProps {
   posterImage: string;
@@ -12,66 +8,49 @@ interface HeroVideoProps {
   modalVideoUrl?: string;
 }
 
-export function HeroVideo({ posterImage, videoSrc, modalVideoUrl }: HeroVideoProps) {
-  const [videoOpen, setVideoOpen] = useState(false);
+export function parseVideoUrl(url?: string) {
+  if (!url || typeof url !== "string") return { type: "none" as const, embedUrl: null, rawUrl: null };
+  const trimmed = url.trim();
+  if (!trimmed) return { type: "none" as const, embedUrl: null, rawUrl: null };
 
-  const activeModalUrl =
-    modalVideoUrl || videoSrc || "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1";
+  const ytRegex = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = trimmed.match(ytRegex);
+  if (match && match[2].length === 11) {
+    const videoId = match[2];
+    return {
+      type: "youtube" as const,
+      videoId,
+      embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1`,
+      backgroundEmbedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&enablejsapi=1`,
+      rawUrl: trimmed,
+    };
+  }
 
-  const isNativeVideo =
-    activeModalUrl.startsWith("/uploads/") ||
-    activeModalUrl.endsWith(".mp4") ||
-    activeModalUrl.endsWith(".mov") ||
-    activeModalUrl.endsWith(".webm") ||
-    activeModalUrl.includes("amazonaws.com") ||
-    activeModalUrl.includes("s3");
+  const vimeoRegex = /(?:vimeo\.com\/)(\d+)/;
+  const vimeoMatch = trimmed.match(vimeoRegex);
+  if (vimeoMatch && vimeoMatch[1]) {
+    const videoId = vimeoMatch[1];
+    return {
+      type: "vimeo" as const,
+      videoId,
+      embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1`,
+      backgroundEmbedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&loop=1&background=1`,
+      rawUrl: trimmed,
+    };
+  }
 
+  return {
+    type: "native" as const,
+    embedUrl: trimmed,
+    backgroundEmbedUrl: trimmed,
+    rawUrl: trimmed,
+  };
+}
+
+export function HeroVideo({ posterImage, videoSrc }: HeroVideoProps) {
   return (
-    <>
-      <div className="relative w-full aspect-[4/3] sm:aspect-[14/11] lg:h-[620px]">
-        <OrganicVideoShape posterImage={posterImage} videoSrc={videoSrc}>
-          {/* Centered Play Button */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-            <VideoPlayButton onClick={() => setVideoOpen(true)} />
-          </div>
-        </OrganicVideoShape>
-
-        {/* Floating Watch Story Badge */}
-        <WatchStoryBadge onClick={() => setVideoOpen(true)} />
-      </div>
-
-      {/* Fullscreen Video Story Modal */}
-      {videoOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-charcoal shadow-2xl">
-            <button
-              onClick={() => setVideoOpen(false)}
-              className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white hover:text-ink transition-colors"
-              aria-label="Close video"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="relative aspect-video w-full flex items-center justify-center bg-black">
-              {isNativeVideo ? (
-                <video
-                  src={activeModalUrl}
-                  controls
-                  autoPlay
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <iframe
-                  src={activeModalUrl}
-                  title="Prestige Tiles Brand Story"
-                  className="h-full w-full border-0"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="relative w-full aspect-[4/3] sm:aspect-[14/11] lg:h-[620px]">
+      <OrganicVideoShape posterImage={posterImage} videoSrc={videoSrc} />
+    </div>
   );
 }

@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <Sidebar user={session.user} />
       <div className="lg:pl-64">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/8 bg-[#0c0c0b]/85 px-6 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/8 bg-black px-6">
           <p className="text-sm text-white/40">
             Signed in as <span className="text-white/70">{session.user.name}</span>
           </p>

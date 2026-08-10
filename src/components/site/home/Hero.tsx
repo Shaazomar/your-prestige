@@ -9,9 +9,19 @@ import type { HomepageHeroInput } from "@/app/admin/(dashboard)/content/homepage
 import { HeroVideo } from "./hero/HeroVideo";
 
 export function Hero({ data }: { data: HomepageHeroInput }) {
+  const eyebrow = data?.eyebrow || "CRAFTING SURFACES";
+  const heading = data?.heading || "Surfaces that Inspire Spaces";
+  const subheading =
+    data?.subheading ||
+    "Premium tiles crafted with precision, inspired by nature, designed for timeless spaces.";
   const heroImage =
-    data.heroImage ||
+    data?.heroImage ||
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop";
+
+  const primaryLabel = data?.primaryCtaLabel || "Explore Collections";
+  const primaryHref = data?.primaryCtaHref || "/products";
+  const secondaryLabel = data?.secondaryCtaLabel || "Download Catalogue";
+  const secondaryHref = data?.secondaryCtaHref || "/catalogue";
 
   return (
     <section className="relative overflow-hidden bg-white pt-28 pb-16 lg:pt-36 lg:pb-24">
@@ -26,7 +36,7 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
               className="inline-flex items-center gap-2"
             >
               <span className="text-xs font-bold uppercase tracking-[0.25em] text-stone-500">
-                CRAFTING SURFACES
+                {eyebrow}
               </span>
               <span className="h-[2px] w-8 bg-accent" />
             </motion.div>
@@ -35,10 +45,9 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
               initial={{ opacity: 0, filter: "blur(12px)", y: 24 }}
               animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
               transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-              className="font-serif text-5xl sm:text-6xl lg:text-[4.25rem] leading-[1.06] font-bold tracking-tight text-ink"
+              className="font-serif text-5xl sm:text-6xl lg:text-[4.25rem] leading-[1.06] font-bold tracking-tight text-ink whitespace-pre-line"
             >
-              Surfaces that <br />
-              <span className="italic font-normal">Inspire Spaces</span>
+              {heading}
             </motion.h1>
 
             <motion.p
@@ -47,8 +56,7 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="max-w-xl text-base sm:text-lg leading-relaxed text-slate-warm"
             >
-              {data.subheading ||
-                "Premium tiles crafted with precision, inspired by nature, designed for timeless spaces."}
+              {subheading}
             </motion.p>
 
             {/* CTAs */}
@@ -58,21 +66,25 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex flex-wrap items-center gap-4 pt-2"
             >
-              <Link
-                href="/products"
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-xs font-bold uppercase tracking-wider text-ink hover:bg-accent-hover transition-all duration-300 shadow-yellow group"
-              >
-                Explore Collections
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
+              {primaryLabel && primaryHref && (
+                <Link
+                  href={primaryHref}
+                  className="inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-xs font-bold uppercase tracking-wider text-ink hover:bg-accent-hover transition-all duration-300 shadow-yellow group"
+                >
+                  {primaryLabel}
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              )}
 
-              <Link
-                href="/catalogue"
-                className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-7 py-4 text-xs font-bold uppercase tracking-wider text-ink hover:border-ink transition-all duration-300 shadow-xs"
-              >
-                Download Catalogue
-                <Download className="h-4 w-4 text-slate-warm" />
-              </Link>
+              {secondaryLabel && secondaryHref && (
+                <Link
+                  href={secondaryHref}
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-7 py-4 text-xs font-bold uppercase tracking-wider text-ink hover:border-ink transition-all duration-300 shadow-xs"
+                >
+                  {secondaryLabel}
+                  <Download className="h-4 w-4 text-slate-warm" />
+                </Link>
+              )}
             </motion.div>
 
             {/* Trust Badge */}

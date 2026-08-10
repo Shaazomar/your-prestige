@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { FaqAccordion } from "@/components/site/FaqAccordion";
-import { faqs } from "@/lib/demo-content";
+import { getPublishedFaqs } from "@/lib/faqs";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 
@@ -12,7 +12,9 @@ export const metadata: Metadata = {
     "Answers to common questions about visiting, brands, delivery, trade pricing and installation at Your Prestige, Mangaluru.",
 };
 
-export default function FaqsPage() {
+export default async function FaqsPage() {
+  const faqs = await getPublishedFaqs();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

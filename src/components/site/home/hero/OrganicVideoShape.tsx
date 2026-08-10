@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { parseVideoUrl } from "./HeroVideo";
 
 interface OrganicVideoShapeProps {
   posterImage: string;
@@ -18,17 +19,15 @@ export function OrganicVideoShape({
 }: OrganicVideoShapeProps) {
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoInfo = parseVideoUrl(videoSrc);
 
   useEffect(() => {
-    if (videoRef.current && videoRef.current.readyState >= 3) {
+    if (videoInfo.type === "native" && videoRef.current && videoRef.current.readyState >= 3) {
       setVideoReady(true);
     }
-  }, []);
+  }, [videoInfo.type]);
 
-  // Default architectural ambient video fallback if no video URL provided
-  const activeVideo =
-    videoSrc ||
-    "https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-of-a-building-41561-large.mp4";
+  const showVideo = videoInfo.type !== "none";
 
   return (
     <div className="relative w-full h-full group">
@@ -69,35 +68,51 @@ export function OrganicVideoShape({
           WebkitClipPath: "url(#hero-organic-clip)",
         }}
       >
-        {/* Poster Image (shown immediately before video loads) */}
+        {/* Poster Image (shown immediately before video loads or when no video is set) */}
         <Image
-          src={posterImage}
+          src={
+            posterImage ||
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop"
+          }
           alt="Luxury architectural tile showroom preview"
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
           className={cn(
             "object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            videoReady ? "opacity-0" : "opacity-100"
+            showVideo && videoReady ? "opacity-0" : "opacity-100"
           )}
         />
 
-        {/* Video Source */}
-        <video
-          ref={videoRef}
-          src={activeVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          onCanPlay={() => setVideoReady(true)}
-          onLoadedData={() => setVideoReady(true)}
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            videoReady ? "opacity-100" : "opacity-0"
-          )}
-        />
+        {/* Render Native Video Source */}
+        {videoInfo.type === "native" && (
+          <video
+            ref={videoRef}
+            src={videoInfo.backgroundEmbedUrl!}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onCanPlay={() => setVideoReady(true)}
+            onLoadedData={() => setVideoReady(true)}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              videoReady ? "opacity-100" : "opacity-0"
+            )}
+          />
+        )}
+
+        {/* Render YouTube/Vimeo Background Embed */}
+        {(videoInfo.type === "youtube" || videoInfo.type === "vimeo") && (
+          <iframe
+            src={videoInfo.backgroundEmbedUrl!}
+            title="Background Video"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-150 border-0"
+            allow="autoplay; encrypted-media"
+            onLoad={() => setVideoReady(true)}
+          />
+        )}
 
         {/* Subtle Dark Gradient Overlay for Control Legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />

@@ -11,7 +11,7 @@ import { CtaSection } from "@/components/site/home/CtaSection";
 import { getPublishedHomepageHero, getHomepageDraft } from "@/app/admin/(dashboard)/content/homepage/actions";
 import { auth } from "@/lib/auth";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage({
   searchParams,
@@ -40,7 +40,7 @@ export default async function HomePage({
       <FeaturedProductsSection />
       <StatsSection />
       <ApplicationsSection />
-      <AboutEditorial />
+      <AboutEditorial data={hero} />
       <WhyChooseUs />
       <ShowroomsSection />
       <Testimonials />
