@@ -18,6 +18,7 @@ import { ProductWhatsAppActions } from "@/components/site/catalog/ProductWhatsAp
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
 import { getBusiness } from "@/lib/business";
+import { getPublicProductInventory } from "@/lib/public-inventory";
 
 
 export const revalidate = 3600;
@@ -53,7 +54,10 @@ export default async function ProductPage({
   const product = await getCatalogProduct(slug);
   if (!product) notFound();
 
-  const biz = await getBusiness();
+  const [biz, pubInventory] = await Promise.all([
+    getBusiness(),
+    getPublicProductInventory(product.slug),
+  ]);
 
   const related = await getRelatedProducts(product);
   const inspirationGallery = [product.lifestyleImage, ...product.gallery];
@@ -212,6 +216,45 @@ export default async function ProductPage({
               </div>
             </div>
           </div>
+
+          {/* Public Customer Stock Availability Table */}
+          {pubInventory && (
+            <div className="mt-16 rounded-3xl border border-stone-200 bg-stone-50/70 p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gold">Live Inventory Status</span>
+                  <h3 className="font-serif text-xl font-bold text-ink">Showroom & Depot Availability</h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-700">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {pubInventory.status}
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-stone-400 font-bold uppercase tracking-wider">
+                      <th className="py-3 px-4">Size</th>
+                      <th className="py-3 px-4">Brand</th>
+                      <th className="py-3 px-4">Tile Name</th>
+                      <th className="py-3 px-4">Stock Available</th>
+                      <th className="py-3 px-4">In-Transit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-200/60 font-medium text-stone-800">
+                    <tr className="bg-white">
+                      <td className="py-3.5 px-4 font-semibold text-ink">{pubInventory.size}</td>
+                      <td className="py-3.5 px-4">{pubInventory.brand}</td>
+                      <td className="py-3.5 px-4 font-bold text-ink">{pubInventory.tileName}</td>
+                      <td className="py-3.5 px-4 text-emerald-600 font-bold">{pubInventory.stockAvailable}</td>
+                      <td className="py-3.5 px-4 text-blue-600 font-bold">{pubInventory.inTransitStock}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </Container>
       </section>
 

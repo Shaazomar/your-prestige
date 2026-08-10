@@ -47,7 +47,7 @@ export const getWhatsAppOrderingNumber = cache(async (): Promise<string> => {
   } catch {
     // Database fallback
   }
-  return "+919876543210";
+  return "+919008919195";
 });
 
 /**

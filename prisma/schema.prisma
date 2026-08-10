@@ -1069,6 +1069,7 @@ model Inventory {
   id             String    @id @default(cuid())
   productId      String    @unique
   product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId    String?   // Ready for future Depot / Multi-warehouse management
   totalStock     Float     @default(0)
   availableStock Float     @default(0)
   reservedStock  Float     @default(0)
@@ -1079,6 +1080,25 @@ model Inventory {
   stockStatus    String    @default("OUT_OF_STOCK") // IN_STOCK | LIMITED_STOCK | OUT_OF_STOCK | COMING_SOON
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  blocks InventoryBlock[]
+}
+
+model InventoryBlock {
+  id              String    @id @default(cuid())
+  inventoryId     String
+  inventory       Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  blockedBy       String    // Dealer name or Sales Representative name
+  quantity        Float     // Quantity in Boxes / Units
+  remarks         String?   // Internal reservation remarks
+  approvalStatus  String    @default("PENDING") // PENDING | APPROVED | REJECTED | EXPIRED
+  blockApprovedBy String?   // Approving manager name
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([inventoryId])
+  @@index([approvalStatus])
 }
 
 model InventoryHistory {
@@ -1086,7 +1106,7 @@ model InventoryHistory {
   productId      String
   product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity       Float
-  type           String    // ADJUSTMENT | RESTOCK | DAMAGE | RESERVATION | TRANSIT_IN
+  type           String    // ADJUSTMENT | RESTOCK | DAMAGE | RESERVATION | TRANSIT_IN | BLOCK_APPROVED
   notes          String?
   createdById    String?
   createdAt      DateTime  @default(now())
