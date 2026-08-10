@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ExternalLink, Loader2, Rocket, CheckCircle2 } from "lucide-react";
 import { AField, ATextArea } from "@/components/admin/FormField";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import { VideoUploadField } from "@/components/admin/VideoUploadField";
 import { homepageHeroSchema, type HomepageHeroInput } from "./schema";
 import { getHomepageDraft, saveHomepageDraft, publishHomepage, isHomepagePublished } from "./actions";
 
@@ -92,7 +93,7 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
         <AField label="Heading" required value={values.heading} onChange={(e) => setValues((v) => v && { ...v, heading: e.target.value })} error={errors.heading} />
         <ATextArea label="Subheading" value={values.subheading} onChange={(e) => setValues((v) => v && { ...v, subheading: e.target.value })} />
         <ImageUploadField label="Hero Image" value={values.heroImage || null} onChange={(url) => setValues((v) => v && { ...v, heroImage: url ?? "" })} />
-        <AField label="Hero Video URL (optional, overrides image)" value={values.heroVideo} onChange={(e) => setValues((v) => v && { ...v, heroVideo: e.target.value })} placeholder="https://…mp4" />
+        <VideoUploadField label="Hero Video (optional, overrides image)" value={values.heroVideo || null} onChange={(url) => setValues((v) => v && { ...v, heroVideo: url ?? "" })} />
         <div className="grid grid-cols-2 gap-4">
           <AField label="Primary Button Label" value={values.primaryCtaLabel} onChange={(e) => setValues((v) => v && { ...v, primaryCtaLabel: e.target.value })} />
           <AField label="Primary Button Link" value={values.primaryCtaHref} onChange={(e) => setValues((v) => v && { ...v, primaryCtaHref: e.target.value })} />

@@ -6,8 +6,8 @@ import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
-  Store, FileStack, MapPin, MessageSquarePlus, ShoppingCart, UserCheck, Building2,
-  FileSpreadsheet, Warehouse, Ticket, Star, LineChart, SlidersHorizontal, LogOut,
+  Store, FileStack, MapPin, MessageSquarePlus, MessageSquare, Building2,
+  FileSpreadsheet, Warehouse, Star, LineChart, SlidersHorizontal, LogOut, Layers,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,14 +26,12 @@ const nav = [
     ],
   },
   {
-    section: "E-Commerce",
+    section: "Commerce & Operations",
     items: [
-      { label: "Orders", href: "/admin/orders", icon: ShoppingCart, module: "orders" as Module },
-      { label: "Quotes (B2B)", href: "/admin/quotes", icon: FileSpreadsheet, module: "quotes" as Module },
+      { label: "WhatsApp Commerce", href: "/admin/whatsapp", icon: MessageSquare, module: "settings" as Module },
       { label: "Dealers", href: "/admin/dealers", icon: Building2, module: "dealers" as Module },
-      { label: "Customers", href: "/admin/customers", icon: UserCheck, module: "customers" as Module },
       { label: "Inventory", href: "/admin/inventory", icon: Warehouse, module: "inventory" as Module },
-      { label: "Coupons", href: "/admin/coupons", icon: Ticket, module: "coupons" as Module },
+      { label: "Offers", href: "/admin/content/offers", icon: BadgePercent, module: "offers" as Module },
       { label: "Reviews", href: "/admin/reviews", icon: Star, module: "reviews" as Module },
     ],
   },
@@ -42,7 +40,9 @@ const nav = [
     items: [
       { label: "Products", href: "/admin/content/products", icon: Package, module: "products" as Module },
       { label: "Catalog Imports", href: "/admin/content/catalog-imports", icon: FileStack, module: "catalogImports" as Module },
+      { label: "Excel Import", href: "/admin/content/excel-import", icon: FileSpreadsheet, module: "catalogImports" as Module },
       { label: "Categories", href: "/admin/content/categories", icon: Tags, module: "categories" as Module },
+      { label: "Collections", href: "/admin/content/collections", icon: Layers, module: "collections" as Module },
       { label: "Brands", href: "/admin/content/brands", icon: Award, module: "brands" as Module },
       { label: "Attributes & Specs", href: "/admin/attributes", icon: SlidersHorizontal, module: "attributes" as Module },
       { label: "Showrooms", href: "/admin/content/showrooms", icon: Store, module: "showrooms" as Module },

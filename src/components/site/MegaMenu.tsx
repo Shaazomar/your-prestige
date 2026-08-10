@@ -165,9 +165,9 @@ export function MegaMenu({
                   type="button"
                   onClick={onClose}
                   aria-label="Close menu"
-                  className="grid h-10 w-10 place-items-center rounded-full border border-line text-text transition-colors duration-500 hover:border-gold hover:text-gold"
+                  className="grid h-11 w-11 place-items-center rounded-full border border-line text-text transition-colors duration-500 hover:border-gold hover:text-gold"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>

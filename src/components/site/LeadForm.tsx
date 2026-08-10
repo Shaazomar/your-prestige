@@ -220,10 +220,10 @@ export function LeadForm({
             variant="primary"
             size="lg"
             className="w-full sm:w-auto"
-            disabled={status === "submitting"}
+            loading={status === "submitting"}
+            loadingText="Sending..."
           >
-            {status === "submitting" ? "Sending…" : submitLabel}
-            <ArrowUpRight className="h-5 w-5" />
+            {submitLabel}
           </Button>
           {status === "error" && (
             <p className="text-sm text-red-500">

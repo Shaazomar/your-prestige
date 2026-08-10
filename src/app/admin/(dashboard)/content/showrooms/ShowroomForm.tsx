@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AField, ATextArea, AToggle, ATagInput } from "@/components/admin/FormField";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import { VideoUploadField } from "@/components/admin/VideoUploadField";
 import { MultiImageField } from "@/components/admin/MultiImageField";
 import { showroomSchema, type ShowroomInput } from "./schema";
 import { createShowroom, updateShowroom, getShowroomProductOptions } from "./actions";
@@ -235,7 +236,7 @@ export function ShowroomForm({
           onChange={(url) => setValues((v) => ({ ...v, heroImage: url ?? "" }))}
         />
         <MultiImageField label="Gallery" value={values.gallery} onChange={(gallery) => setValues((v) => ({ ...v, gallery }))} />
-        <AField label="Hero Video URL" value={values.video} onChange={(e) => setValues((v) => ({ ...v, video: e.target.value }))} placeholder="https://…mp4 or YouTube" />
+        <VideoUploadField label="Hero Video" value={values.video || null} onChange={(url) => setValues((v) => ({ ...v, video: url ?? "" }))} />
       </section>
 
       <section className="space-y-5 border-t border-white/8 pt-6">

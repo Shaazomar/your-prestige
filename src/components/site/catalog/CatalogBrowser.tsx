@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, X, SlidersHorizontal, Loader2 } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "./ProductCard";
-import { QuickView } from "./QuickView";
 import { FilterChip } from "./FilterChip";
 import type { CatalogProduct } from "@/lib/catalog";
 import type { CatalogSearchResult } from "@/lib/catalog-search";
@@ -34,7 +33,6 @@ export function CatalogBrowser({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [quickView, setQuickView] = useState<CatalogProduct | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
 
@@ -198,7 +196,7 @@ export function CatalogBrowser({
         ) : (
           <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 ${isPending ? "opacity-60" : ""} transition-opacity`}>
             {products.map((product) => (
-              <ProductCard key={product.slug} product={product} onQuickView={setQuickView} />
+              <ProductCard key={product.slug} product={product} />
             ))}
           </div>
         )}
@@ -228,7 +226,6 @@ export function CatalogBrowser({
         )}
       </Container>
 
-      <QuickView product={quickView} onClose={() => setQuickView(null)} />
     </section>
   );
 }

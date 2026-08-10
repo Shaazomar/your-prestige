@@ -14,6 +14,7 @@ export type Module =
   | "catalogImports"
   | "landingPages"
   | "categories"
+  | "collections"
   | "brands"
   | "portfolio"
   | "showrooms"
@@ -33,11 +34,7 @@ export type Module =
   | "maintenance"
   | "analytics"
   | "logs"
-  | "orders"
-  | "customers"
   | "dealers"
-  | "quotes"
-  | "coupons"
   | "reviews"
   | "reports"
   | "inventory"
@@ -48,19 +45,18 @@ export type Action = "view" | "create" | "edit" | "delete" | "publish" | "settin
 
 const ALL_MODULES: Module[] = [
   "dashboard", "homepage", "products", "catalogImports", "landingPages",
-  "categories", "brands", "portfolio",
+  "categories", "collections", "brands", "portfolio",
   "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "leads",
   "bookings", "conversations", "media", "seo", "users", "settings",
   "maintenance", "analytics", "logs",
-  "orders", "customers", "dealers", "quotes", "coupons", "reviews", "reports", "inventory", "attributes", "specifications",
+  "dealers", "reviews", "reports", "inventory", "attributes", "specifications",
 ];
-
 
 const ALL_ACTIONS: Action[] = ["view", "create", "edit", "delete", "publish", "settings", "analytics"];
 
 const CONTENT_MODULES: Module[] = [
   "dashboard", "homepage", "products", "catalogImports", "landingPages",
-  "categories", "brands", "portfolio",
+  "categories", "collections", "brands", "portfolio",
   "showrooms", "gallery", "videos", "testimonials", "blog", "faqs", "offers", "media",
 ];
 

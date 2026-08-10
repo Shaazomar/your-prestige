@@ -11,20 +11,19 @@ export async function loginAction(
   _prevState: LoginState | null,
   formData: FormData
 ): Promise<LoginState> {
-  const email = formData.get("email");
-  const password = formData.get("password");
+  const passkey = formData.get("passkey");
   const callbackUrl = (formData.get("callbackUrl") as string) || "/admin";
 
-  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
-    return { error: "Enter your email and password." };
+  if (typeof passkey !== "string" || !passkey) {
+    return { error: "Enter the passkey." };
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: callbackUrl });
+    await signIn("credentials", { passkey, redirectTo: callbackUrl });
     return {};
   } catch (err) {
     if (err instanceof AuthError) {
-      return { error: "Invalid email or password." };
+      return { error: "Invalid passkey." };
     }
     // NEXT_REDIRECT and other framework-internal throws must propagate
     throw err;

@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
         </div>
         <div className="rounded-3xl border border-white/8 bg-[#141413] p-8">
           <h1 className="mb-1 text-xl font-semibold">Sign in</h1>
-          <p className="mb-7 text-sm text-white/40">Enter your admin credentials to continue.</p>
+          <p className="mb-7 text-sm text-white/40">Enter the admin passkey to continue.</p>
           <Suspense>
             <LoginForm />
           </Suspense>

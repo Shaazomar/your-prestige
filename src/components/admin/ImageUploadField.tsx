@@ -88,7 +88,7 @@ export function ImageUploadField({ label, value, onChange, aspect = "aspect-vide
         }}
       />
       <input
-        type="url"
+        type="text"
         placeholder="…or paste an image URL"
         defaultValue={value ?? ""}
         onBlur={(e) => {

@@ -109,6 +109,7 @@ export function toCatalogProduct(row: ProductRow): CatalogProduct {
     gallery,
     aspect,
     featured: row.featured,
+    sku: row.sku || row.productCode || undefined,
   };
 }
 

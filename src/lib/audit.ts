@@ -29,6 +29,15 @@ export async function logAudit(params: LogAuditParams) {
     const forwardedFor = h.get("x-forwarded-for");
     const ip = forwardedFor?.split(",")[0]?.trim() || h.get("x-real-ip") || undefined;
 
+    let validUserId: string | undefined = undefined;
+    if (session?.user?.id) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
+      });
+      if (userExists) validUserId = userExists.id;
+    }
+
     await prisma.auditLog.create({
       data: {
         action: params.action,
@@ -40,7 +49,7 @@ export async function logAudit(params: LogAuditParams) {
         ipAddress: ip,
         userAgent: h.get("user-agent") || undefined,
         roleAtTime: session?.user?.role,
-        userId: session?.user?.id,
+        userId: validUserId,
       },
     });
   } catch (err) {

@@ -10,14 +10,14 @@ import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { useCompare } from "@/hooks/useCompare";
 import { cn } from "@/lib/utils";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 interface ProductCardProps {
   product: CatalogProduct;
-  onQuickView?: (product: CatalogProduct) => void;
   className?: string;
 }
 
-export function ProductCard({ product, onQuickView, className }: ProductCardProps) {
+export function ProductCard({ product, className }: ProductCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const { has: isComparing, toggle: toggleCompare } = useCompare();
@@ -58,10 +58,9 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
       >
         {/* Image stage */}
         <div className={cn("relative block w-full overflow-hidden text-left aspect-[4/5]")}>
-          <button
-            type="button"
-            onClick={() => onQuickView?.(product)}
-            aria-label={`Quick view ${product.name}`}
+          <Link
+            href={href}
+            aria-label={`View details of ${product.name}`}
             className="absolute inset-0 w-full h-full text-left"
           >
             <motion.div
@@ -69,22 +68,23 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0"
             >
-              <Image
+              <SafeImage
                 src={product.lifestyleImage}
                 alt={product.name}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover"
+                lightSkeleton
               />
             </motion.div>
 
             <div className="absolute inset-0 bg-ink/0 transition-colors duration-500 group-hover:bg-ink/30" />
-          </button>
+          </Link>
 
           {/* Top chips */}
           <div className="absolute inset-x-4 top-4 flex items-start justify-between pointer-events-auto z-10">
             {product.tag ? (
-              <span className="rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink shadow-xs">
+              <span className="rounded-full bg-accent px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink shadow-xs">
                 {product.tag}
               </span>
             ) : (
@@ -97,7 +97,7 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
                   toggleCompare(product.slug);
                 }}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full transition-all shadow-xs",
+                  "flex h-11 w-11 items-center justify-center rounded-full transition-all shadow-xs",
                   compared
                     ? "bg-accent text-ink"
                     : "bg-black/60 text-white hover:bg-black/80 backdrop-blur-md"
@@ -105,7 +105,7 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
                 aria-label="Toggle compare"
                 title={compared ? "Comparing" : "Compare"}
               >
-                <Layers className="h-3.5 w-3.5" />
+                <Layers className="h-4 w-4" />
               </button>
 
               <WishlistButton slug={product.slug} name={product.name} />
@@ -113,13 +113,14 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
           </div>
 
           {/* Texture swatch overlap */}
-          <div className="absolute bottom-3 left-3 h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-float transition-transform duration-500 group-hover:scale-110 z-10">
-            <Image
+          <div className="absolute bottom-3 left-3 h-11 w-11 overflow-hidden rounded-full border-2 border-white shadow-float transition-transform duration-500 group-hover:scale-110 z-10">
+            <SafeImage
               src={product.textureImage}
               alt={`${product.name} texture`}
               fill
-              sizes="36px"
+              sizes="44px"
               className="object-cover"
+              lightSkeleton
             />
           </div>
         </div>
@@ -153,6 +154,29 @@ export function ProductCard({ product, onQuickView, className }: ProductCardProp
                 +{product.sizes.length - 2} formats
               </span>
             )}
+          </div>
+
+          {/* WhatsApp & Enquiry List Actions */}
+          <div className="pt-2 border-t border-stone-100 flex items-center gap-1.5">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const text = `Hello Prestige Tiles,\n\nI am interested in ordering:\n*Product*: ${product.name}\n*Brand*: ${product.brand}\n*Finish*: ${product.finish}\n*Size*: ${product.sizes[0] || "Standard"}\n*Product Link*: ${window.location.origin}${href}\n\nPlease share pricing and availability details.`;
+                window.open(`https://wa.me/919876543210?text=${encodeURIComponent(text)}`, "_blank");
+                fetch("/api/analytics/whatsapp", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ eventType: "PRODUCT_CLICK", productName: product.name, collectionName: product.collection }),
+                }).catch(() => {});
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#25D366] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-xs transition-transform hover:scale-[1.02]"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5" aria-hidden>
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              Enquire
+            </button>
           </div>
         </div>
       </motion.div>

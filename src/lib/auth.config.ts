@@ -13,4 +13,5 @@ export const authConfig = {
   pages: { signIn: "/admin/login" },
   providers: [],
   trustHost: true,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "your@prestige-secret-key-fallback",
 } satisfies NextAuthConfig;

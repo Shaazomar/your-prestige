@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
   },
+  experimental: {
+    middlewareClientMaxBodySize: "50mb",
+  },
 };
 
 export default nextConfig;

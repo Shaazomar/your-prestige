@@ -34,16 +34,26 @@ export function MediaManager({ permissions }: { permissions: { create: boolean; 
   async function handleUpload(files: FileList) {
     setUploading(true);
     let success = 0;
-    for (const file of Array.from(files)) {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/media", { method: "POST", body: form });
-      if (res.ok) success++;
+    const total = files.length;
+    for (let i = 0; i < total; i++) {
+      const file = files[i];
+      toast.loading(`Uploading "${file.name}" (${i + 1}/${total})…`, { id: "media-upload" });
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch("/api/admin/media", { method: "POST", body: form });
+        if (res.ok) success++;
+      } catch (err) {
+        console.error(err);
+      }
     }
+    toast.dismiss("media-upload");
     setUploading(false);
     if (success > 0) {
-      toast.success(`${success} file${success > 1 ? "s" : ""} uploaded`);
+      toast.success(`${success}/${total} file${success > 1 ? "s" : ""} uploaded successfully`);
       list.refresh();
+    } else {
+      toast.error("Upload failed");
     }
   }
 

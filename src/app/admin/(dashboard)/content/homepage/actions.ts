@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
@@ -30,6 +31,8 @@ export async function saveHomepageDraft(input: HomepageHeroInput) {
     update: { value: data },
   });
   await logAudit({ action: "homepage.save_draft", entity: "Setting", newValue: data, meta: { by: session.user.id } });
+  revalidatePath("/");
+  revalidatePath("/?preview=1");
   return data;
 }
 
@@ -43,6 +46,8 @@ export async function publishHomepage() {
     update: { value },
   });
   await logAudit({ action: "homepage.publish", entity: "Setting", newValue: value, meta: { by: session.user.id } });
+  revalidatePath("/");
+  revalidatePath("/?preview=1");
 }
 
 /** Read by the public homepage — falls back to defaults if nothing published yet. */

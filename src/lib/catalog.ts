@@ -35,6 +35,7 @@ export const applicationList: Application[] = [
 ];
 
 export interface CatalogProduct {
+  id?: string;
   slug: string;
   name: string;
   collection: string;
@@ -57,6 +58,7 @@ export interface CatalogProduct {
   /** Masonry rhythm — varies card silhouette across the grid */
   aspect: "portrait" | "square" | "landscape";
   featured?: boolean;
+  sku?: string;
 }
 
 export const products: CatalogProduct[] = [

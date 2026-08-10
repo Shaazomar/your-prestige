@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, Trash2, ShoppingBag } from "lucide-react";
 import { useLocalCollection, WISHLIST_KEY } from "@/hooks/useLocalCollection";
 import { products } from "@/lib/catalog";
+import { business } from "@/lib/site-config";
+import { waHref } from "@/lib/business";
 
 
 interface WishlistDrawerProps {
@@ -127,11 +129,13 @@ export function WishlistDrawer({ isOpen, onClose, onOpenQuote }: WishlistDrawerP
               <button
                 onClick={() => {
                   onClose();
-                  onOpenQuote();
+                  const message = `Hi! I would like to order/enquire about these items from my wishlist:\n` +
+                    wishlistProducts.map((p, i) => `${i + 1}. ${p!.name} (SKU: ${p!.sku || "N/A"})`).join("\n");
+                  window.open(waHref(business.whatsapp, message), "_blank");
                 }}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-ink hover:bg-accent-hover transition-colors shadow-yellow"
               >
-                <ShoppingBag className="h-4 w-4" /> Request Quote for All ({wishlistProducts.length})
+                <ShoppingBag className="h-4 w-4" /> Order All on WhatsApp ({wishlistProducts.length})
               </button>
               <Link
                 href="/products"

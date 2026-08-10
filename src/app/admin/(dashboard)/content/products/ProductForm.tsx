@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { AField, ATextArea, ASelect, AToggle, ATagInput } from "@/components/admin/FormField";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { MultiImageField } from "@/components/admin/MultiImageField";
@@ -191,8 +192,19 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
         <AToggle label="Published" checked={values.published} onChange={(published) => setValues((v) => ({ ...v, published }))} />
       </section>
 
-      <button type="submit" disabled={saving} className="w-full rounded-xl bg-gold py-3 text-sm font-semibold text-ivory transition-colors hover:bg-gold-deep disabled:opacity-60">
-        {saving ? "Saving…" : product ? "Save Changes" : "Create Product"}
+      <button
+        type="submit"
+        disabled={saving}
+        className="w-full flex items-center justify-center gap-2 rounded-xl bg-gold py-3 text-sm font-semibold text-ivory transition-colors hover:bg-gold-deep disabled:opacity-60"
+      >
+        {saving ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Saving…
+          </>
+        ) : (
+          product ? "Save Changes" : "Create Product"
+        )}
       </button>
     </form>
   );

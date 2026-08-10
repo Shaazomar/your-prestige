@@ -26,19 +26,23 @@ export function GalleryItemsEditor({ albumId }: { albumId: string }) {
     setUploading(true);
     try {
       const urls: string[] = [];
-      for (const file of Array.from(files)) {
+      const total = files.length;
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        toast.loading(`Uploading "${file.name}" (${i + 1}/${total})…`, { id: "gallery-upload" });
         const form = new FormData();
         form.append("file", file);
         const res = await fetch("/api/admin/media", { method: "POST", body: form });
-        if (!res.ok) throw new Error("Upload failed");
+        if (!res.ok) throw new Error(`Upload failed for file: ${file.name}`);
         const data = await res.json();
         urls.push(data.url);
       }
+      toast.loading("Saving gallery updates…", { id: "gallery-upload" });
       const created = await addAlbumItems(albumId, urls);
       setItems((prev) => [...prev, ...created]);
-      toast.success(`${urls.length} image${urls.length > 1 ? "s" : ""} added`);
+      toast.success(`${urls.length} image${urls.length > 1 ? "s" : ""} added successfully`, { id: "gallery-upload" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : "Upload failed", { id: "gallery-upload" });
     } finally {
       setUploading(false);
     }

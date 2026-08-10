@@ -1,13 +1,28 @@
 import { requirePermission } from "@/lib/rbac";
 import { AlertTriangle, CheckCircle2, Box } from "lucide-react";
-import { products } from "@/lib/catalog";
-
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import { prisma } from "@/lib/prisma";
+import { InventoryManager } from "./InventoryManager";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Inventory & Stock Levels" };
 
 export default async function AdminInventoryPage() {
   await requirePermission("inventory", "view");
+
+  const session = await auth();
+  const role = session!.user.role;
+
+  // Query actual stats from the database
+  const totalSkus = await prisma.product.count({ where: { deletedAt: null } });
+  
+  const inventories = await prisma.inventory.findMany({
+    select: { availableStock: true, minimumStock: true }
+  });
+
+  const totalStockSum = inventories.reduce((sum, i) => sum + i.availableStock, 0);
+  const lowStockCount = inventories.filter(i => i.availableStock <= i.minimumStock).length;
 
   return (
     <div className="space-y-6">
@@ -24,7 +39,7 @@ export default async function AdminInventoryPage() {
             <span className="text-xs uppercase tracking-wider font-semibold">Total SKUs Tracked</span>
             <Box className="h-4 w-4 text-gold" />
           </div>
-          <p className="text-2xl font-bold text-white">{products.length}</p>
+          <p className="text-2xl font-bold text-white">{totalSkus}</p>
           <span className="text-xs text-white/40">Active catalog items</span>
         </div>
         <div className="rounded-2xl border border-white/8 bg-[#141413] p-5">
@@ -32,7 +47,7 @@ export default async function AdminInventoryPage() {
             <span className="text-xs uppercase tracking-wider font-semibold">In Stock Slabs</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
-          <p className="text-2xl font-bold text-white">42,500 Sq.Ft</p>
+          <p className="text-2xl font-bold text-white">{totalStockSum.toLocaleString()} Slabs</p>
           <span className="text-xs text-emerald-400 font-medium">Ready for dispatch</span>
         </div>
         <div className="rounded-2xl border border-white/8 bg-[#141413] p-5">
@@ -40,46 +55,12 @@ export default async function AdminInventoryPage() {
             <span className="text-xs uppercase tracking-wider font-semibold">Low Stock Warnings</span>
             <AlertTriangle className="h-4 w-4 text-amber-400" />
           </div>
-          <p className="text-2xl font-bold text-white">2 SKUs</p>
+          <p className="text-2xl font-bold text-white">{lowStockCount} SKUs</p>
           <span className="text-xs text-amber-400 font-medium">Below minimum threshold</span>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/8 bg-[#141413] p-6 space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-white/70">
-            <thead className="border-b border-white/8 text-[11px] uppercase tracking-wider text-white/40">
-              <tr>
-                <th className="py-3 px-4">Product Name</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Stock Status</th>
-                <th className="py-3 px-4">Available Qty</th>
-                <th className="py-3 px-4">Reserved Qty</th>
-                <th className="py-3 px-4">Batch / Shade</th>
-                <th className="py-3 px-4">Min Threshold</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {products.map((p, idx) => (
-                <tr key={p.slug} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3.5 px-4 font-semibold text-white">{p.name}</td>
-                  <td className="py-3.5 px-4 text-white/60 capitalize">{p.category}</td>
-                  <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                      In Stock
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-bold text-white">{1200 + idx * 350} Sq.Ft</td>
-                  <td className="py-3.5 px-4 text-white/60">{150 + idx * 40} Sq.Ft</td>
-                  <td className="py-3.5 px-4 font-mono text-gold">BT-2026-{A01 + idx}</td>
-                  <td className="py-3.5 px-4 text-white/40">500 Sq.Ft</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <InventoryManager canEdit={can(role, "inventory", "edit")} />
     </div>
   );
 }
-const A01 = 101;

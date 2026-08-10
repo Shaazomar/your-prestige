@@ -3,22 +3,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowUpRight, Download, Ruler, Layers, Palette, Fingerprint, MessageCircle, Rotate3D, Box,
+  Download, Ruler, Layers, Palette, Fingerprint, Rotate3D, Box,
 } from "lucide-react";
 import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
 import { Parallax } from "@/components/motion/Parallax";
-import { ButtonLink } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
 import { BrandMark } from "@/components/site/catalog/BrandMark";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
-import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { RecentlyViewed } from "@/components/site/catalog/RecentlyViewed";
+import { ProductWhatsAppActions } from "@/components/site/catalog/ProductWhatsAppActions";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
-import { business } from "@/lib/site-config";
 import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
+import { getBusiness } from "@/lib/business";
 
 
 export const revalidate = 3600;
@@ -53,6 +52,8 @@ export default async function ProductPage({
   const { slug } = await params;
   const product = await getCatalogProduct(slug);
   if (!product) notFound();
+
+  const biz = await getBusiness();
 
   const related = await getRelatedProducts(product);
   const inspirationGallery = [product.lifestyleImage, ...product.gallery];
@@ -138,26 +139,8 @@ export default async function ProductPage({
             {product.description}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <ButtonLink href={`/request-quote?product=${product.slug}`} variant="primary" size="lg" className="shadow-yellow font-bold">
-              Request Project Quotation
-              <ArrowUpRight className="h-5 w-5" />
-            </ButtonLink>
-            <ButtonLink href={`/book-visit?product=${product.slug}`} variant="outline" size="lg" className="border-white/30 text-white hover:bg-white hover:text-ink font-bold">
-              Book Showroom Inspection
-            </ButtonLink>
-            <WishlistButton slug={product.slug} name={product.name} variant="full" className="border-white/30 text-white" />
-            <a
-              href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
-                `Hi! I am interested in ${product.name} (${product.collection}). Please send quote details.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Ask on WhatsApp"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 text-white transition-all hover:border-[#25D366] hover:bg-[#25D366] hover:text-white"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </a>
+          <div className="mt-8">
+            <ProductWhatsAppActions product={product} whatsappNumber={biz.whatsapp} />
           </div>
         </Container>
       </section>

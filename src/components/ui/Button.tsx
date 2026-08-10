@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
@@ -53,9 +53,19 @@ type BaseProps = VariantProps<typeof buttonVariants> & {
   children: ReactNode;
   /** Renders the sliding arrow. Default for navigation, off for form submits. */
   withArrow?: boolean;
+  loading?: boolean;
+  loadingText?: string;
 };
 
-function Inner({ children, withArrow }: { children: ReactNode; withArrow?: boolean }) {
+function Inner({ children, withArrow, loading, loadingText }: { children: ReactNode; withArrow?: boolean; loading?: boolean; loadingText?: string }) {
+  if (loading) {
+    return (
+      <>
+        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+        {loadingText || children}
+      </>
+    );
+  }
   if (!withArrow) return <>{children}</>;
   return (
     <>
@@ -76,11 +86,18 @@ export function Button({
   size,
   children,
   withArrow,
+  loading,
+  loadingText,
+  disabled,
   ...props
 }: ButtonProps) {
   return (
-    <button className={cn(buttonVariants({ variant, size }), className)} {...props}>
-      <Inner withArrow={withArrow}>{children}</Inner>
+    <button
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || loading}
+      {...props}
+    >
+      <Inner withArrow={withArrow} loading={loading} loadingText={loadingText}>{children}</Inner>
     </button>
   );
 }
@@ -99,10 +116,16 @@ export function ButtonLink({
   href,
   external,
   withArrow,
+  loading,
+  loadingText,
   ...rest
 }: ButtonLinkProps) {
-  const classes = cn(buttonVariants({ variant, size }), className);
-  const inner = <Inner withArrow={withArrow}>{children}</Inner>;
+  const classes = cn(
+    buttonVariants({ variant, size }),
+    loading && "pointer-events-none opacity-50",
+    className
+  );
+  const inner = <Inner withArrow={withArrow} loading={loading} loadingText={loadingText}>{children}</Inner>;
 
   if (external) {
     return (
@@ -125,3 +148,4 @@ export function ButtonLink({
 }
 
 export { buttonVariants };
+

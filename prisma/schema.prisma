@@ -85,6 +85,7 @@ model Category {
 
   products Product[]
   seo      Seo?
+  offers   Offer[]
 
   createdById String?
   updatedById String?
@@ -130,10 +131,14 @@ model Product {
   id              String  @id @default(cuid())
   slug            String  @unique
   name            String
-  collection      String? // e.g. "Lumina Marble Collection"
+  collection      String? // e.g. "Lumina Marble Collection" (legacy string field)
+  collectionId    String?
+  collectionRelation Collection? @relation("CollectionProducts", fields: [collectionId], references: [id], onDelete: SetNull)
   description     String?
+  shortDescription String?
   finish          String?
   thickness       String?
+  size            String?
   sizes           Json? // string[]
   material        String?
   color           String?
@@ -144,7 +149,8 @@ model Product {
   // vocabulary is never lost — feeds search + meta keywords, not the icon row.
   applicationTags Json? // string[]
   searchKeywords  Json? // string[] — flattened facet tokens for search
-  productCode     String? // manufacturer SKU / article code, e.g. "GVT-8016"
+  productCode     String? // manufacturer SKU / article code, e.g. "GVT-8016" (legacy SKU)
+  sku             String? @unique
   surface         String? // "Glossy" | "Matt" | "Carving" | ... (finish is the family)
   lifestyleImage  String? // dominant hero/card image — full room scene
   blurData        String? // tiny base64 data URI behind the hero, for next/image placeholder
@@ -157,8 +163,16 @@ model Product {
   relatedIds      Json? // string[] — manually curated related product ids
   featured        Boolean @default(false)
   designerPick    Boolean @default(false)
+  newArrival      Boolean @default(false)
   published       Boolean @default(true)
-  priceIndicator  String? // "₹₹₹" — luxury catalogue, not ecommerce (yet)
+  status          String  @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  weight          String?
+  coverage        String?
+  packing         String?
+  specifications  Json? // [{ key, value }]
+  price           Decimal? @db.Decimal(10, 2)
+  mrp             Decimal? @db.Decimal(10, 2)
+  priceIndicator  String? // "₹₹₹"
   viewCount       Int     @default(0)
 
   categoryId String?
@@ -167,6 +181,9 @@ model Product {
   brand      Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
 
   seo Seo?
+  inventory Inventory?
+  inventoryHistory InventoryHistory[]
+  offers Offer[]
 
   // Provenance — which catalogue import produced this row, if any. A plain
   // column rather than an FK so deleting an import never cascades into the
@@ -182,6 +199,7 @@ model Product {
 
   @@index([categoryId])
   @@index([brandId])
+  @@index([collectionId])
   @@index([published, deletedAt])
   @@index([featured])
   @@index([collection])
@@ -365,20 +383,45 @@ model Faq {
   @@index([showroomId])
 }
 
-model Offer {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?
-  image         String?
-  validFrom     DateTime?
-  validUntil    DateTime?
-  showCountdown Boolean   @default(false)
-  published     Boolean   @default(true)
+enum OfferType {
+  PRODUCT
+  COLLECTION
+  CATEGORY
+  SEASONAL
+  FESTIVAL
+  LIMITED_TIME
+  FEATURED
+}
 
-  createdById String?
-  deletedAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Offer {
+  id                 String      @id @default(cuid())
+  name               String
+  type               OfferType   @default(PRODUCT)
+  productId          String?
+  product            Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  collectionId       String?
+  collection         Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  categoryId         String?
+  category           Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  originalPrice      Decimal?    @db.Decimal(10, 2)
+  offerPrice         Decimal?    @db.Decimal(10, 2)
+  discountPercentage Float?
+  startDate          DateTime?
+  endDate            DateTime?
+  banner             String?
+  description        String?
+  status             String      @default("ACTIVE") // ACTIVE | INACTIVE | SCHEDULED
+  priority           Int         @default(0)
+  featured           Boolean     @default(false)
+  createdById        String?
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([productId])
+  @@index([collectionId])
+  @@index([categoryId])
+  @@index([deletedAt])
 }
 
 // ————— Leads, Bookings & Conversations —————
@@ -601,6 +644,8 @@ model Seo {
 
   landingPageId String?      @unique
   landingPage   LandingPage? @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  collectionId  String?      @unique
+  collection    Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   updatedAt DateTime @updatedAt
 }
@@ -995,4 +1040,72 @@ model GooglePost {
 
   @@index([published, deletedAt])
   @@index([showroomId])
+}
+
+// ————— E-Commerce Upgrades —————
+
+model Collection {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  image       String?
+  sortOrder   Int       @default(0)
+  published   Boolean   @default(true)
+  products    Product[] @relation("CollectionProducts")
+  seo         Seo?
+  offers      Offer[]
+  createdById String?
+  updatedById String?
+  deletedById String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([deletedAt])
+}
+
+model Inventory {
+  id             String    @id @default(cuid())
+  productId      String    @unique
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  totalStock     Float     @default(0)
+  availableStock Float     @default(0)
+  reservedStock  Float     @default(0)
+  damagedStock   Float     @default(0)
+  transitStock   Float     @default(0)
+  minimumStock   Float     @default(0)
+  maximumStock   Float     @default(0)
+  stockStatus    String    @default("OUT_OF_STOCK") // IN_STOCK | LIMITED_STOCK | OUT_OF_STOCK | COMING_SOON
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model InventoryHistory {
+  id             String    @id @default(cuid())
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity       Float
+  type           String    // ADJUSTMENT | RESTOCK | DAMAGE | RESERVATION | TRANSIT_IN
+  notes          String?
+  createdById    String?
+  createdAt      DateTime  @default(now())
+}
+
+model WhatsAppAnalytics {
+  id             String   @id @default(cuid())
+  eventType      String   // BUTTON_CLICK | PRODUCT_CLICK | ENQUIRY_LIST_CREATED | ENQUIRY_LIST_SENT
+  productId      String?
+  productSku     String?
+  productName    String?
+  collectionName String?
+  quantity       String?
+  unit           String?  // Boxes | Pieces | Sq.ft | Sq.m
+  sourcePage     String?
+  device         String?
+  createdAt      DateTime @default(now())
+
+  @@index([eventType])
+  @@index([productId])
+  @@index([createdAt])
 }

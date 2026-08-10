@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { uploadFile } from "@/lib/storage";
 
-const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 export async function POST(req: NextRequest) {
   try {

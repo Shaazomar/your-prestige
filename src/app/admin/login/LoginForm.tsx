@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import { loginAction, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -17,30 +17,15 @@ export function LoginForm() {
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
       <label className="block">
-        <span className="mb-2 block text-sm font-medium text-white/60">Email</span>
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="you@yourprestige.in"
-            className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition-colors focus:border-gold"
-          />
-        </div>
-      </label>
-
-      <label className="block">
-        <span className="mb-2 block text-sm font-medium text-white/60">Password</span>
+        <span className="mb-2 block text-sm font-medium text-white/60">Passkey</span>
         <div className="relative">
           <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
           <input
-            name="password"
+            name="passkey"
             type="password"
             required
             autoComplete="current-password"
-            placeholder="••••••••"
+            placeholder="Enter passkey"
             className="w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition-colors focus:border-gold"
           />
         </div>

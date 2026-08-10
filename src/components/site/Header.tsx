@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Menu as MenuIcon } from "lucide-react";
+import { Search, Menu as MenuIcon, ShoppingBag } from "lucide-react";
 import { primaryNav } from "@/lib/site-config";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,8 @@ import { WishlistDrawer } from "./WishlistDrawer";
 import { CompareDrawer } from "./CompareDrawer";
 import { QuoteModal } from "./QuoteModal";
 import { MegaMenu, type MegaMenuBusiness } from "./MegaMenu";
+import { EnquiryListDrawer } from "./EnquiryListDrawer";
+import { useEnquiryList } from "@/lib/enquiry-store";
 
 interface HeaderProps {
   /** Contact + social details, resolved from the CMS by the site layout. */
@@ -36,6 +38,9 @@ export function Header({ business }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [enquiryOpen, setEnquiryOpen] = useState(false);
+
+  const { itemCount } = useEnquiryList();
 
   const pathname = usePathname();
   const { scrollY } = useScroll();
@@ -133,19 +138,36 @@ export function Header({ business }: HeaderProps) {
                 onClick={() => setSearchOpen(true)}
                 aria-label="Search"
                 className={cn(
-                  "grid h-9 w-9 place-items-center rounded-full text-muted",
+                  "grid h-11 w-11 place-items-center rounded-full text-muted",
                   "transition-colors duration-500 hover:bg-surface hover:text-text"
                 )}
               >
-                <Search className="h-[1.05rem] w-[1.05rem]" />
+                <Search className="h-[1.2rem] w-[1.2rem]" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEnquiryOpen(true)}
+                aria-label="Enquiry List"
+                className={cn(
+                  "relative grid h-11 w-11 place-items-center rounded-full text-gold",
+                  "transition-colors duration-500 hover:bg-gold/10"
+                )}
+              >
+                <ShoppingBag className="h-[1.2rem] w-[1.2rem]" />
+                {itemCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-black shadow-sm">
+                    {itemCount}
+                  </span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => setQuoteOpen(true)}
                 className={cn(
-                  "hidden h-9 items-center rounded-full bg-gold px-5 text-[0.8125rem]",
-                  "font-medium tracking-tight text-canvas sm:inline-flex",
+                  "hidden h-11 items-center rounded-full bg-gold px-6 text-[0.875rem]",
+                  "font-semibold tracking-tight text-canvas sm:inline-flex",
                   "transition-colors duration-500 hover:bg-gold-bright"
                 )}
               >
@@ -158,11 +180,11 @@ export function Header({ business }: HeaderProps) {
                 aria-label="Open menu"
                 aria-expanded={menuOpen}
                 className={cn(
-                  "grid h-9 w-9 place-items-center rounded-full text-text",
+                  "grid h-11 w-11 place-items-center rounded-full text-text",
                   "transition-colors duration-500 hover:bg-surface"
                 )}
               >
-                <MenuIcon className="h-[1.15rem] w-[1.15rem]" />
+                <MenuIcon className="h-[1.25rem] w-[1.25rem]" />
               </button>
             </div>
           </div>
@@ -195,6 +217,11 @@ export function Header({ business }: HeaderProps) {
       />
       <CompareDrawer />
       <QuoteModal isOpen={quoteOpen} onClose={() => setQuoteOpen(false)} />
+      <EnquiryListDrawer
+        isOpen={enquiryOpen}
+        onClose={() => setEnquiryOpen(false)}
+        whatsappNumber={business.whatsapp || ""}
+      />
     </>
   );
 }

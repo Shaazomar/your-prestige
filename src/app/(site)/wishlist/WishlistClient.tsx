@@ -9,6 +9,8 @@ import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { useLocalCollection, WISHLIST_KEY } from "@/hooks/useLocalCollection";
 import type { CatalogProduct } from "@/lib/catalog";
+import { business } from "@/lib/site-config";
+import { waHref } from "@/lib/business";
 
 /**
  * The visitor's saved selection.
@@ -65,7 +67,14 @@ export function WishlistClient() {
         }),
       });
       if (!res.ok) throw new Error("Could not send your request");
-      toast.success("Sent — our team will be in touch shortly.");
+      toast.success("Details saved! Directing you to WhatsApp to place your order...");
+      
+      const message = `Hi! I would like to order/enquire about these items from my wishlist:\n` +
+        products.map((p, i) => `${i + 1}. ${p.name} (SKU: ${p.sku || "N/A"})`).join("\n") +
+        (form.message ? `\n\nNotes: ${form.message}` : "");
+      
+      window.open(waHref(business.whatsapp, message), "_blank");
+      
       setForm({ name: "", phone: "", message: "" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -153,9 +162,9 @@ export function WishlistClient() {
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <form onSubmit={handleSubmit} className="rounded-3xl border border-ink/8 bg-white/70 p-6">
             <p className="text-eyebrow mb-2 text-gold">Next step</p>
-            <h2 className="text-xl font-semibold tracking-tight">Request a quotation</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Order via WhatsApp</h2>
             <p className="mt-2 text-sm text-ink/45">
-              We&apos;ll price your saved selection and suggest anything that pairs well with it.
+              Submit details to log your enquiry, then continue directly on WhatsApp to coordinate pricing and delivery.
             </p>
 
             <div className="mt-6 space-y-3">
@@ -185,7 +194,7 @@ export function WishlistClient() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3.5 text-sm font-medium text-ivory transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {sending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {sending ? "Sending…" : `Request quote for ${products.length}`}
+                {sending ? "Sending…" : `Order all on WhatsApp`}
               </button>
             </div>
 
