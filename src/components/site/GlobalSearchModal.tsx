@@ -224,7 +224,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search collections, products, spaces…"
+                placeholder="Search by tile name, size, brand or collection…"
                 aria-label="Search"
                 autoComplete="off"
                 className="min-w-0 flex-1 bg-transparent text-lg text-text placeholder:text-faint focus:outline-none md:text-xl"
@@ -293,11 +293,11 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                           className={cn(
                             "group flex w-full items-center gap-4 rounded-2xl px-3 py-2.5 text-left",
                             "transition-colors duration-300",
-                            active ? "bg-surface" : "hover:bg-surface/60"
+                            active ? "bg-stone-100" : "hover:bg-stone-100/60"
                           )}
                         >
                           {hit.image ? (
-                            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-surface">
+                            <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-stone-100">
                               <Image
                                 src={hit.image}
                                 alt=""
@@ -307,7 +307,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                               />
                             </span>
                           ) : (
-                            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-surface">
+                            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-stone-100">
                               <Search className="h-4 w-4 text-faint" aria-hidden="true" />
                             </span>
                           )}

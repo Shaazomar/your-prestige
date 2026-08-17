@@ -39,26 +39,29 @@ export function SkeletonImage({ className, light = false }: SkeletonProps) {
   return <Skeleton className={cn("aspect-[4/5] w-full rounded-2xl", className)} light={light} />;
 }
 
-export function SkeletonProductCard({ light = false }: { light?: boolean }) {
+/**
+ * Mirrors ProductCard exactly: 4:5 image, then brand / name / size / meta
+ * hanging beneath it with no surrounding panel. If the card changes shape,
+ * this has to change with it — a skeleton that settles into a different
+ * layout is worse than no skeleton at all.
+ */
+export function SkeletonProductCard({ light = true }: { light?: boolean }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-4 space-y-4 shadow-soft">
-      <SkeletonImage light={light} className="w-full" />
-      <div className="space-y-2">
-        <Skeleton light={light} className="h-3 w-1/3" />
-        <Skeleton light={light} className="h-4 w-3/4" />
-        <Skeleton light={light} className="h-3 w-1/2" />
-        <div className="flex gap-1.5 pt-2">
-          <Skeleton light={light} className="h-5 w-12 rounded-full" />
-          <Skeleton light={light} className="h-5 w-16 rounded-full" />
-        </div>
+    <div className="flex flex-col">
+      <Skeleton light={light} className="aspect-[4/5] w-full rounded-[1.25rem]" />
+      <div className="pt-4">
+        <Skeleton light={light} className="h-2.5 w-16 rounded-full" />
+        <Skeleton light={light} className="mt-2.5 h-3.5 w-3/4 rounded-full" />
+        <Skeleton light={light} className="mt-2 h-3 w-1/2 rounded-full" />
+        <Skeleton light={light} className="mt-1.5 h-2.5 w-2/5 rounded-full" />
       </div>
     </div>
   );
 }
 
-export function SkeletonProductGrid({ count = 8, light = false }: { count?: number; light?: boolean }) {
+export function SkeletonProductGrid({ count = 8, light = true }: { count?: number; light?: boolean }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+    <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 md:gap-x-6 xl:grid-cols-4 xl:gap-x-8">
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonProductCard key={i} light={light} />
       ))}

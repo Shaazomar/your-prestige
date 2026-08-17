@@ -1,36 +1,46 @@
 @import "tailwindcss";
 
 /* ————————————————————————————————————————————
-   PRESTIGE 2.0 — Luxury Minimalism Design System
+   PRESTIGE 3.0 — Architectural Surface Design System
 
-   Dark, editorial, architectural. Gold is a punctuation
-   mark, never a paragraph: active states, buttons, links
+   Warm-white, editorial, architectural. The site reads like a
+   material sample board: paper-toned grounds, near-black type,
+   and photography carrying the colour. Gold is a punctuation
+   mark, never a paragraph — active states, CTA detail, links
    and micro-interactions only.
 
-   Background   #0A0A0A
-   Secondary    #111111
-   Surface      #171717
-   Text         #FAFAFA
-   Muted        #A0A0A0
-   Accent       #C6A667 (luxury gold)
+   Canvas       #FAFAF8  (warm white — page ground)
+   Secondary    #F7F6F2  (warm off-white — alternating bands)
+   Surface      #FFFFFF  (raised cards, panels, nav)
+   Text         #181818  (near-black)
+   Muted        #6E6A63  (warm neutral gray)
+   Accent       #EAB308  (Prestige gold)
+
+   NOTE — this replaces the abandoned "2.0" dark theme. That
+   migration only ever reached the chrome (header, footer, mega
+   menu, search) while ~40 public pages stayed light, which is
+   what produced the black-navbar-on-white-page mismatch. Token
+   *names* are unchanged so both halves resolve to one palette.
 ———————————————————————————————————————————— */
 
 @theme {
   /* ——— Surfaces ——— */
-  --color-canvas: #0a0a0a;
-  --color-secondary: #111111;
-  --color-surface: #171717;
-  --color-surface-raised: #1f1f1f;
+  --color-canvas: #fafaf8;
+  --color-secondary: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  /* Inverted ground, for the footer and full-bleed editorial bands. */
+  --color-canvas-inverse: #141412;
 
-  /* Hairlines. Borders are light-on-dark at very low alpha — a visible
-     border is almost always the wrong answer in this system. */
-  --color-line: rgb(250 250 250 / 0.08);
-  --color-line-strong: rgb(250 250 250 / 0.16);
+  /* Hairlines. Warm gray at low alpha — a hard visible border is almost
+     always the wrong answer in this system. */
+  --color-line: rgb(24 24 24 / 0.08);
+  --color-line-strong: rgb(24 24 24 / 0.16);
 
   /* ——— Text ——— */
-  --color-text: #fafafa;
-  --color-muted: #a0a0a0;
-  --color-faint: #6b6b6b;
+  --color-text: #181818;
+  --color-muted: #6e6a63;
+  --color-faint: #9a958c;
 
   /* ——— Accent ——— */
   --color-gold: #eab308;
@@ -72,42 +82,48 @@
   --radius-media: 1.5rem;
 
   /* ——— Elevation ——— */
-  /* On a #0A0A0A ground, shadow reads as depth only when it is very
-     soft and very large. Anything tighter looks like a border. */
-  --shadow-depth: 0 2px 8px rgb(0 0 0 / 0.4);
-  --shadow-lift: 0 8px 40px rgb(0 0 0 / 0.55);
-  --shadow-gold: 0 8px 32px rgb(198 166 103 / 0.18);
+  /* On a warm-white ground, shadow has to stay near-invisible: wide,
+     very low alpha, slightly warm. Anything tighter reads as a border. */
+  --shadow-depth: 0 1px 2px rgb(24 24 18 / 0.04), 0 4px 16px rgb(24 24 18 / 0.04);
+  --shadow-lift: 0 2px 6px rgb(24 24 18 / 0.05), 0 18px 48px rgb(24 24 18 / 0.09);
+  --shadow-gold: 0 8px 28px rgb(234 179 8 / 0.22);
 }
 
 /* ————————————————————————————————————————————
-   COMPATIBILITY LAYER — TEMPORARY
+   COMPATIBILITY LAYER
 
-   The light-theme tokens the pre-2.0 site was built on. Roughly 1,700
-   class references still point here: the whole admin CMS, plus every
-   public page not yet migrated to the dark system above.
+   The token names the pre-3.0 site was built on. Roughly 1,700 class
+   references still point here: the whole admin CMS, plus every public
+   page written before the design system existed.
 
-   Tailwind silently emits nothing for an undefined token, so deleting
-   these early does not fail the build — it just makes text and borders
-   vanish. They stay until the migration finishes, then this whole
-   block goes.
+   These are no longer a *separate* palette. Each one is now an alias
+   onto the Prestige 3.0 values above, so a page still written in
+   `bg-porcelain text-ink border-stone-200` renders in the same warm
+   system as a page written in `bg-secondary text-text border-line`.
+   That is what makes the site visually consistent without rewriting
+   forty pages by hand.
 
-   Do not write new code against these.
+   Prefer the semantic names (canvas/surface/text/muted/line) in new
+   code — these stay only so the older pages keep working.
 ———————————————————————————————————————————— */
 
 @theme {
-  --color-ink: #0b0b0b;
-  --color-charcoal: #111111;
-  --color-graphite: #222222;
-  --color-slate-warm: #555555;
-  --color-stone-400: #777777;
-  --color-stone-300: #cccccc;
-  --color-stone-200: #e8e8e8;
-  --color-stone-100: #f8f8f8;
+  --color-ink: #181818;
+  --color-charcoal: #141412;
+  --color-graphite: #2a2924;
+  --color-slate-warm: #6e6a63;
+  --color-stone-600: #57534b;
+  --color-stone-500: #6e6a63;
+  --color-stone-400: #9a958c;
+  --color-stone-300: #d6d3ca;
+  --color-stone-200: #e7e4dc;
+  --color-stone-100: #f2f0ea;
+  --color-stone-50: #f7f6f2;
   --color-ivory: #ffffff;
-  --color-porcelain: #f8f8f8;
-  --color-offwhite: #f8f8f8;
-  --color-primary-bg: #ffffff;
-  --color-secondary-bg: #f8f8f8;
+  --color-porcelain: #f7f6f2;
+  --color-offwhite: #fafaf8;
+  --color-primary-bg: #fafaf8;
+  --color-secondary-bg: #f7f6f2;
 
   --color-accent: #eab308;
   --color-accent-hover: #ca8a04;
@@ -144,17 +160,16 @@
 @utility text-body-lg {
   font-size: 1.125rem;
   line-height: 1.6;
-  color: #555555;
+  color: #57534b;
 }
 
-/* Legacy light glass + hairline. Still load-bearing on ~20 unmigrated
-   public pages, so these keep their light-theme values; new dark work
-   uses `glass`/`glass-strong` and `border-line` instead. */
+/* Older aliases, still referenced across the unmigrated pages. `glass`
+   and `glass-strong` above are the ones to reach for in new code. */
 @utility glass-light {
   background: rgb(255 255 255 / 0.85);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid #e8e8e8;
+  border: 1px solid #e7e4dc;
 }
 
 @utility glass-dark {
@@ -167,7 +182,7 @@
 /* Light hairline. New dark-system code uses `border-line` directly,
    which resolves from --color-line above. */
 @utility hairline {
-  border-color: #e8e8e8;
+  border-color: #e7e4dc;
 }
 
 @utility hairline-light {
@@ -200,13 +215,13 @@
 html {
   /* Lenis drives scrolling; native smooth-scroll fights it. */
   scroll-behavior: auto;
-  background: #0a0a0a;
+  background: #fafaf8;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: #0a0a0a;
-  color: #fafafa;
+  background: #fafaf8;
+  color: #181818;
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "cv01";
   -webkit-font-smoothing: antialiased;
@@ -217,22 +232,22 @@ body {
 
 ::selection {
   background: var(--color-gold);
-  color: #0a0a0a;
+  color: #181818;
 }
 
 ::-webkit-scrollbar {
   width: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: #f2f0ea;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #d6d3ca;
   border-radius: 999px;
-  border: 3px solid #0a0a0a;
+  border: 3px solid #f2f0ea;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d3d3d;
+  background: #b8b4a9;
 }
 
 /* Focus is always visible and always gold — the one place the accent
@@ -294,13 +309,13 @@ body {
   font-size: var(--text-lead);
   line-height: 1.65;
   letter-spacing: -0.005em;
-  color: #a0a0a0;
+  color: #6e6a63;
 }
 
 @utility text-body {
   font-size: 1rem;
   line-height: 1.75;
-  color: #a0a0a0;
+  color: #6e6a63;
 }
 
 /* The small tracked-out label that sits above a heading. */
@@ -338,18 +353,21 @@ body {
 
 /* ——————————————————— Surfaces ——————————————————— */
 
+/* The floating navbar at rest: barely there, lets the hero read through. */
 @utility glass {
-  background: rgb(17 17 17 / 0.72);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid rgb(250 250 250 / 0.08);
+  background: rgb(255 255 255 / 0.62);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgb(24 24 18 / 0.06);
 }
 
+/* The same navbar once scrolled, plus sheets and panels that must stay
+   legible over arbitrary page content. */
 @utility glass-strong {
-  background: rgb(10 10 10 / 0.92);
-  backdrop-filter: blur(40px) saturate(1.4);
-  -webkit-backdrop-filter: blur(40px) saturate(1.4);
-  border: 1px solid rgb(250 250 250 / 0.1);
+  background: rgb(255 255 255 / 0.9);
+  backdrop-filter: blur(32px) saturate(1.5);
+  -webkit-backdrop-filter: blur(32px) saturate(1.5);
+  border: 1px solid rgb(24 24 18 / 0.08);
 }
 
 /* ——————————————————— Media ——————————————————— */
@@ -472,12 +490,14 @@ body {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }
 }
+/* Shimmer stays deliberately shallow — on a warm-white ground a
+   high-contrast sweep reads as a defect, not as loading. */
 .skeleton {
   background: linear-gradient(
     90deg,
-    #171717 25%,
-    #1f1f1f 50%,
-    #171717 75%
+    #f0eee8 25%,
+    #e5e2d9 50%,
+    #f0eee8 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
@@ -486,12 +506,20 @@ body {
 .skeleton-light {
   background: linear-gradient(
     90deg,
-    #e8e8e8 25%,
-    #d8d8d8 50%,
-    #e8e8e8 75%
+    #f2f0ea 25%,
+    #e7e4dc 50%,
+    #f2f0ea 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
+}
+
+/* Loading surfaces must not animate for users who asked for stillness. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton-light {
+    animation: none;
+  }
 }
 
 /* ——————————————————— Accessibility ——————————————————— */

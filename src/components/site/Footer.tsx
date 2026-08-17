@@ -7,11 +7,15 @@ import { getBusiness, telHref, waHref } from "@/lib/business";
 import { NewsletterForm } from "./NewsletterForm";
 
 /**
- * Minimal footer: lockup, two short link columns, contact, newsletter.
+ * Footer: lockup, two short link columns, contact, newsletter, wordmark.
  *
- * The pre-2.0 footer carried a six-column sitemap. Navigation now lives in
- * the fullscreen menu, so this only needs the handful of links people
- * actually reach for at the bottom of a page.
+ * Navigation lives in the fullscreen menu, so this only needs the handful
+ * of links people actually reach for at the bottom of a page.
+ *
+ * This is the one near-black band on an otherwise warm-white site. It gives
+ * the page a floor to land on — without it the content just fades out — and
+ * the oversized wordmark underneath signs the page off rather than trailing
+ * away into legal small print.
  */
 export async function Footer() {
   const business = await getBusiness();
@@ -23,18 +27,18 @@ export async function Footer() {
   ].filter((s) => s.href);
 
   return (
-    <footer className="border-t border-line bg-canvas">
+    <footer className="bg-[#141412] text-white">
       <div className="mx-auto w-full max-w-[110rem] px-6 py-16 sm:px-8 md:py-24 lg:px-14">
         <div className="grid gap-14 lg:grid-cols-12 lg:gap-10">
           {/* Lockup + newsletter */}
           <div className="lg:col-span-5">
             <Logo size="md" tone="light" />
-            <p className="mt-6 max-w-sm text-sm leading-relaxed text-muted">
+            <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/55">
               {business.tagline}
             </p>
 
             <div className="mt-10 max-w-sm">
-              <h2 className="text-eyebrow mb-4 text-faint">Newsletter</h2>
+              <h2 className="text-eyebrow mb-4 text-white/40">Newsletter</h2>
               <NewsletterForm />
             </div>
           </div>
@@ -45,14 +49,14 @@ export async function Footer() {
 
           {/* Contact */}
           <div className="lg:col-span-3">
-            <h2 className="text-eyebrow mb-5 text-faint">Visit</h2>
+            <h2 className="text-eyebrow mb-5 text-white/40">Visit</h2>
             <ul className="space-y-4 text-sm">
               <li>
                 <a
                   href={business.mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex gap-3 text-muted transition-colors duration-500 hover:text-gold"
+                  className="flex gap-3 text-white/65 transition-colors duration-500 hover:text-gold"
                 >
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{business.address}</span>
@@ -61,7 +65,7 @@ export async function Footer() {
               <li>
                 <a
                   href={telHref(business.phone)}
-                  className="flex items-center gap-3 text-muted transition-colors duration-500 hover:text-gold"
+                  className="flex items-center gap-3 text-white/65 transition-colors duration-500 hover:text-gold"
                 >
                   <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {business.phone}
@@ -73,7 +77,7 @@ export async function Footer() {
                     href={waHref(business.whatsapp)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-muted transition-colors duration-500 hover:text-gold"
+                    className="flex items-center gap-3 text-white/65 transition-colors duration-500 hover:text-gold"
                   >
                     <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                     WhatsApp
@@ -84,7 +88,7 @@ export async function Footer() {
                 <li>
                   <a
                     href={`mailto:${business.email}`}
-                    className="flex items-center gap-3 text-muted transition-colors duration-500 hover:text-gold"
+                    className="flex items-center gap-3 text-white/65 transition-colors duration-500 hover:text-gold"
                   >
                     <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
                     {business.email}
@@ -96,8 +100,8 @@ export async function Footer() {
         </div>
 
         {/* Baseline */}
-        <div className="mt-16 flex flex-col gap-6 border-t border-line pt-8 md:mt-20 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-faint">
+        <div className="mt-16 flex flex-col gap-6 border-t border-white/10 pt-8 md:mt-20 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-white/40">
             © {new Date().getFullYear()} {business.legalName}. All rights reserved.
           </p>
 
@@ -106,7 +110,7 @@ export async function Footer() {
               <Link
                 key={l.href}
                 href={l.href}
-                className="text-sm text-faint transition-colors duration-500 hover:text-gold"
+                className="text-sm text-white/40 transition-colors duration-500 hover:text-gold"
               >
                 {l.label}
               </Link>
@@ -121,7 +125,7 @@ export async function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="text-faint transition-colors duration-500 hover:text-gold"
+                    className="text-white/40 transition-colors duration-500 hover:text-gold"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -130,6 +134,17 @@ export async function Footer() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Closing wordmark. Clipped at the baseline so it reads as a mark
+          printed on the page rather than another line of content. */}
+      <div
+        aria-hidden="true"
+        className="select-none overflow-hidden px-6 pb-[clamp(0.5rem,2vw,1.75rem)] sm:px-8 lg:px-14"
+      >
+        <span className="block translate-y-[0.14em] whitespace-nowrap text-center font-serif text-[clamp(3.5rem,15.5vw,15rem)] font-medium leading-[0.8] tracking-[-0.045em] text-white/[0.07]">
+          {business.name}
+        </span>
       </div>
     </footer>
   );
@@ -146,13 +161,13 @@ function FooterColumn({
 }) {
   return (
     <div className={className}>
-      <h2 className="text-eyebrow mb-5 text-faint">{title}</h2>
+      <h2 className="text-eyebrow mb-5 text-white/40">{title}</h2>
       <ul className="space-y-3">
         {links.map((l) => (
           <li key={l.href}>
             <Link
               href={l.href}
-              className="text-sm text-muted transition-colors duration-500 hover:text-gold"
+              className="text-sm text-white/65 transition-colors duration-500 hover:text-gold"
             >
               {l.label}
             </Link>

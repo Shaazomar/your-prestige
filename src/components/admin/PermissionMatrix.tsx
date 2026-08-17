@@ -1,9 +1,12 @@
 import { permissionsFor, type Action, type Module } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 
-const roles: Role[] = ["SUPER_ADMIN", "OWNER", "MARKETING", "CONTENT", "SEO", "SUPPORT", "VIEWER"];
+const roles: Role[] = [
+  "SUPER_ADMIN", "MANAGER", "SHOWROOM_INCHARGE", "SHOWROOM_STAFF", "DEALER", "VIEWER",
+];
 const modules: Module[] = [
-  "products", "categories", "brands", "portfolio", "gallery", "videos", "testimonials",
+  "products", "categories", "brands", "inventory", "dealers", "showrooms",
+  "portfolio", "gallery", "videos", "testimonials",
   "blog", "faqs", "offers", "leads", "bookings", "conversations", "media", "seo",
   "users", "settings", "analytics", "logs",
 ];

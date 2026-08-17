@@ -5,11 +5,11 @@ export default function ProductsLoading() {
   return (
     <div className="bg-white min-h-screen">
       {/* Page Hero Skeleton */}
-      <div className="bg-[#111] text-white py-20 border-b border-white/5">
+      <div className="bg-secondary py-20 border-b border-line">
         <Container size="wide" className="space-y-4">
-          <div className="h-3 w-24 bg-white/10 rounded-full animate-pulse" />
-          <div className="h-10 w-2/3 bg-white/10 rounded-xl animate-pulse" />
-          <div className="h-4 w-1/2 bg-white/10 rounded-md animate-pulse" />
+          <div className="h-3 w-24 bg-stone-200/70 rounded-full animate-pulse" />
+          <div className="h-10 w-2/3 bg-stone-200/70 rounded-xl animate-pulse" />
+          <div className="h-4 w-1/2 bg-stone-200/70 rounded-md animate-pulse" />
         </Container>
       </div>
 

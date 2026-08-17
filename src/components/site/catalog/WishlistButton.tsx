@@ -44,7 +44,7 @@ export function WishlistButton({
         aria-pressed={saved}
         className={cn(
           "inline-flex items-center gap-2 rounded-full border px-6 py-3 text-sm font-medium transition-colors duration-300",
-          saved ? "border-gold bg-gold/10 text-gold" : "border-ink/15 hover:border-gold/50",
+          saved ? "border-gold bg-gold/10 text-gold-deep" : "border-line-strong hover:border-gold/50",
           !wishlist.ready && "invisible",
           className
         )}
@@ -62,8 +62,8 @@ export function WishlistButton({
       aria-label={saved ? `Remove ${name} from your selection` : `Save ${name} to your selection`}
       aria-pressed={saved}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition-colors duration-300",
-        saved ? "bg-gold text-white" : "bg-black/25 text-white/90 hover:bg-black/45",
+        "grid h-9 w-9 place-items-center rounded-full backdrop-blur-sm transition-colors duration-300",
+        saved ? "bg-gold text-text" : "bg-canvas/85 text-muted hover:text-text",
         !wishlist.ready && "invisible",
         className
       )}

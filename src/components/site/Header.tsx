@@ -24,13 +24,13 @@ interface HeaderProps {
 /**
  * Floating glass navbar.
  *
- * Three scroll states, in order: transparent over the home hero, then a
- * glass pill, then the same pill condensed. It never touches the browser
+ * Two scroll states: a barely-there glass pill at rest, and the same pill
+ * condensed and more opaque once scrolled. It never touches the browser
  * edge — the outer wrapper always keeps a gutter.
  *
- * Transparency is scoped to the home hero specifically. Everywhere else the
- * pill stays glass, which keeps the light nav text legible regardless of what
- * the page underneath is doing.
+ * The pill is translucent rather than solid so the hero reads through it,
+ * but it always carries a backdrop blur and a hairline, which is what keeps
+ * near-black nav type legible over arbitrary page content underneath.
  */
 export function Header({ business }: HeaderProps) {
   const [condensed, setCondensed] = useState(false);
@@ -68,8 +68,6 @@ export function Header({ business }: HeaderProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const floating = true;
-
   return (
     <>
       <motion.header
@@ -86,15 +84,10 @@ export function Header({ business }: HeaderProps) {
           <div
             className={cn(
               "pointer-events-auto mx-auto flex items-center justify-between gap-6",
-              "transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              floating
-                ? [
-                    "bg-black rounded-full shadow-[0_8px_40px_rgb(0_0_0/0.55)] border border-white/10",
-                    condensed
-                      ? "max-w-5xl px-4 py-2 md:px-5"
-                      : "max-w-6xl px-5 py-2.5 md:px-6 md:py-3",
-                  ]
-                : "max-w-none rounded-full border border-transparent bg-black px-1 py-2"
+              "rounded-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              condensed
+                ? "glass-strong max-w-5xl px-4 py-2 shadow-lift md:px-5"
+                : "glass max-w-6xl px-5 py-2.5 shadow-depth md:px-6 md:py-3"
             )}
           >
             <Link
@@ -102,7 +95,7 @@ export function Header({ business }: HeaderProps) {
               className="relative z-10 shrink-0"
               aria-label={`${business.name} — Home`}
             >
-              <Logo size={condensed ? "xs" : "sm"} tone="light" />
+              <Logo size={condensed ? "xs" : "sm"} tone="dark" />
             </Link>
 
             <nav className="hidden items-center gap-9 lg:flex" aria-label="Primary">
@@ -139,7 +132,7 @@ export function Header({ business }: HeaderProps) {
                 aria-label="Search"
                 className={cn(
                   "grid h-11 w-11 place-items-center rounded-full text-muted",
-                  "transition-colors duration-500 hover:bg-surface hover:text-text"
+                  "transition-colors duration-500 hover:bg-secondary hover:text-text"
                 )}
               >
                 <Search className="h-[1.2rem] w-[1.2rem]" />
@@ -156,7 +149,7 @@ export function Header({ business }: HeaderProps) {
               >
                 <ShoppingBag className="h-[1.2rem] w-[1.2rem]" />
                 {itemCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-black shadow-sm">
+                  <span className="absolute top-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-text shadow-sm">
                     {itemCount}
                   </span>
                 )}
@@ -167,7 +160,7 @@ export function Header({ business }: HeaderProps) {
                 onClick={() => setQuoteOpen(true)}
                 className={cn(
                   "hidden h-11 items-center rounded-full bg-gold px-6 text-[0.875rem]",
-                  "font-semibold tracking-tight text-canvas sm:inline-flex",
+                  "font-semibold tracking-tight text-text sm:inline-flex",
                   "transition-colors duration-500 hover:bg-gold-bright"
                 )}
               >
@@ -181,7 +174,7 @@ export function Header({ business }: HeaderProps) {
                 aria-expanded={menuOpen}
                 className={cn(
                   "grid h-11 w-11 place-items-center rounded-full text-text",
-                  "transition-colors duration-500 hover:bg-surface"
+                  "transition-colors duration-500 hover:bg-secondary"
                 )}
               >
                 <MenuIcon className="h-[1.25rem] w-[1.25rem]" />

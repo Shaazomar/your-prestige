@@ -74,7 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!user) {
             user = await prisma.user.findFirst({
               where: {
-                role: { in: ["SUPER_ADMIN", "OWNER"] },
+                role: { in: ["SUPER_ADMIN", "MANAGER"] },
                 status: "ACTIVE",
               },
             });

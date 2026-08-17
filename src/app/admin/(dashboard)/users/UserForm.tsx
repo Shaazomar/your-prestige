@@ -10,11 +10,10 @@ import type { Role } from "@prisma/client";
 
 const roleOptions: { value: Role; label: string }[] = [
   { value: "SUPER_ADMIN", label: "Super Admin" },
-  { value: "OWNER", label: "Owner" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "CONTENT", label: "Content Editor" },
-  { value: "SEO", label: "SEO Specialist" },
-  { value: "SUPPORT", label: "Support" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "SHOWROOM_INCHARGE", label: "Showroom In-Charge" },
+  { value: "SHOWROOM_STAFF", label: "Showroom Staff" },
+  { value: "DEALER", label: "Dealer" },
   { value: "VIEWER", label: "Viewer" },
 ];
 

@@ -82,11 +82,10 @@ const nav = [
 
 const roleLabels: Record<Role, string> = {
   SUPER_ADMIN: "Super Admin",
-  OWNER: "Owner",
-  MARKETING: "Marketing",
-  CONTENT: "Content Editor",
-  SEO: "SEO Specialist",
-  SUPPORT: "Support",
+  MANAGER: "Manager",
+  SHOWROOM_INCHARGE: "Showroom In-Charge",
+  SHOWROOM_STAFF: "Showroom Staff",
+  DEALER: "Dealer",
   VIEWER: "Viewer",
 };
 

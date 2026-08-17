@@ -23,20 +23,33 @@ datasource db {
 
 // ————— Users & RBAC —————
 
+// Depot roles. These are the values that actually exist in the shared
+// database — the inventory app (prestige-inv) and this CMS run against one
+// Postgres instance, and it owns the enum. The legacy CMS roles (OWNER,
+// MARKETING, CONTENT, SEO, SUPPORT) were replaced there; see permissions.ts
+// for how the old content-team capabilities were remapped onto these.
 enum Role {
   SUPER_ADMIN
-  OWNER
-  MARKETING
-  CONTENT
-  SEO
-  SUPPORT
+  MANAGER
   VIEWER
+  SHOWROOM_INCHARGE
+  SHOWROOM_STAFF
+  DEALER
 }
 
 enum UserStatus {
   ACTIVE
   INVITED
   DEACTIVATED
+  INACTIVE
+  SUSPENDED
+}
+
+/// Named blockers on the depot floor, kept as an enum so a stock block is
+/// always attributable to a real person rather than free text.
+enum BlockedBy {
+  SAMSHUDIN
+  SALMAN
 }
 
 model User {
@@ -57,11 +70,24 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Depot scoping — which dealer/warehouse/showroom this account acts for.
+  // Snake-cased because the inventory app created these columns.
+  dealer_id    String?
+  dealer       Dealer?    @relation(fields: [dealer_id], references: [id], onDelete: SetNull)
+  warehouse_id String?
+  warehouse    Warehouse? @relation(fields: [warehouse_id], references: [id], onDelete: SetNull)
+  showroomId   String?
+  showroom     Showroom?  @relation(fields: [showroomId], references: [id], onDelete: SetNull)
+
   leadsAssigned    Lead[]     @relation("AssignedLeads")
   leadNotes        LeadNote[]
   auditLogs        AuditLog[]
   posts            Post[]
   bookingsAssigned Booking[]  @relation("AssignedBookings")
+
+  announcements          Announcement[]
+  announcementRecipients AnnouncementRecipient[]
+  notifications          Notification[]
 
   @@index([status])
   @@index([role])
@@ -180,10 +206,25 @@ model Product {
   brandId    String?
   brand      Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
 
+  // — Depot / master-import provenance —
+  // Written by prestige-inv's `seed:prestige`. `importKey` is the stable
+  // identity for that import: the source spreadsheet supplied no SKU at all,
+  // so "<SHEET>-<ROW>" is what upserts match on. Unique, so re-running the
+  // import updates rather than duplicates.
+  importKey     String? @unique
+  sourceSheet   String?
+  sourceRow     Int?
+  /// "Box" | "Piece" | "Bag/Unit" — the unit its stock is counted in.
+  unit          String?
+  /// S3 object keys, resolved through the S3 helper rather than stored as URLs.
+  image_key     String?
+  thumbnail_key String?
+
   seo Seo?
   inventory Inventory?
   inventoryHistory InventoryHistory[]
   offers Offer[]
+  stockBookingItems StockBookingItem[]
 
   // Provenance — which catalogue import produced this row, if any. A plain
   // column rather than an FK so deleting an import never cascades into the
@@ -589,6 +630,8 @@ model Showroom {
   testimonials Testimonial[]
   faqs         Faq[]
   googlePosts  GooglePost[]
+  stockBlocks  StockBlock[]
+  users        User[]
 
   createdById String?
   updatedById String?
@@ -1065,23 +1108,169 @@ model Collection {
   @@index([deletedAt])
 }
 
+model Warehouse {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  location    String?
+  address     String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventories        Inventory[]
+  inventoryMovements InventoryMovement[]
+  stockBlocks        StockBlock[]
+  shipments          Shipment[]
+  stockBookings      StockBooking[]
+  users              User[]
+}
+
+model Dealer {
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  contact     String?
+  email       String?  @unique
+  phone       String?
+  address     String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stockBlocks   StockBlock[]
+  stockBookings StockBooking[]
+  users         User[]
+}
+
 model Inventory {
   id             String    @id @default(cuid())
   productId      String    @unique
   product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  warehouseId    String?   // Ready for future Depot / Multi-warehouse management
+  warehouseId    String?   
+  warehouse      Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
   totalStock     Float     @default(0)
   availableStock Float     @default(0)
+  blockedStock   Float     @default(0)
+  allocatedStock Float     @default(0)
   reservedStock  Float     @default(0)
   damagedStock   Float     @default(0)
   transitStock   Float     @default(0)
+  /// Stock already handed over. Physical stock only drops at this point —
+  /// blocking a quantity never reduces it.
+  deliveredStock Float     @default(0)
+  /// Part-boxes, counted in pieces rather than boxes.
+  looseStock     Float     @default(0)
   minimumStock   Float     @default(0)
   maximumStock   Float     @default(0)
-  stockStatus    String    @default("OUT_OF_STOCK") // IN_STOCK | LIMITED_STOCK | OUT_OF_STOCK | COMING_SOON
+  reorderLevel   Float     @default(0)
+  stockStatus    String    @default("OUT_OF_STOCK") // AVAILABLE | LOW_STOCK | OUT_OF_STOCK | INCOMING | BLOCKED | PARTIALLY_AVAILABLE | DAMAGED
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  blocks InventoryBlock[]
+  blocks    InventoryBlock[]
+  stockBlocks StockBlock[]
+  movements InventoryMovement[]
+
+  @@index([warehouseId])
+  @@index([stockStatus])
+}
+
+model StockBlock {
+  id          String    @id @default(cuid())
+  productId   String
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  dealerId    String?
+  dealer      Dealer?   @relation(fields: [dealerId], references: [id], onDelete: SetNull)
+  showroomId  String?
+  showroom    Showroom? @relation(fields: [showroomId], references: [id], onDelete: SetNull)
+  quantity    Float
+  requestedBy String
+  approvedBy  String?
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED | CONFIRMED | EXPIRED | CANCELLED | RELEASED
+  remarks     String?
+  /// Human-readable reference, e.g. "BLK-000123".
+  block_number  String?    @unique
+  /// BLOCKED | CONFIRMED — whether this is a soft hold or a committed order.
+  block_type    String     @default("BLOCKED")
+  blocked_by    BlockedBy?
+  /// DIRECT | SHOWROOM_INCHARGE | MANAGER — who has to sign this off.
+  approvalRoute String     @default("DIRECT")
+  createdAt   DateTime  @default(now())
+  approvedAt  DateTime?
+  expiresAt   DateTime?
+  confirmedAt DateTime?
+  releasedAt  DateTime?
+  deliveredAt DateTime?
+
+  @@index([inventoryId])
+  @@index([productId])
+  @@index([dealerId])
+  @@index([warehouseId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model InventoryMovement {
+  id               String    @id @default(cuid())
+  inventoryId      String
+  inventory        Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  productId        String
+  warehouseId      String?
+  warehouse        Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  movementType     String    // STOCK_IN | STOCK_OUT | BLOCKED | BLOCK_RELEASED | ALLOCATED | DEALLOCATED | DISPATCHED | IN_TRANSIT | RECEIVED | DAMAGED | RETURNED | TRANSFER_IN | TRANSFER_OUT | ADJUSTMENT
+  quantity         Float
+  previousQuantity Float
+  newQuantity      Float
+  referenceType    String?   // BLOCK | SHIPMENT | ADJUSTMENT | ORDER
+  referenceId      String?
+  reason           String?
+  performedBy      String
+  createdAt        DateTime  @default(now())
+
+  @@index([inventoryId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([movementType])
+  @@index([createdAt])
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  shipmentNumber String         @unique
+  supplier       String?
+  warehouseId    String?
+  warehouse      Warehouse?     @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  status         String         @default("EXPECTED") // EXPECTED | DISPATCHED | IN_TRANSIT | ARRIVED | RECEIVING | PARTIALLY_RECEIVED | RECEIVED | CANCELLED
+  expectedDate   DateTime?
+  dispatchDate   DateTime?
+  arrivalDate    DateTime?
+  remarks        String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  items          ShipmentItem[]
+
+  @@index([warehouseId])
+  @@index([status])
+}
+
+model ShipmentItem {
+  id               String   @id @default(cuid())
+  shipmentId       String
+  shipment         Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  productId        String
+  expectedQuantity Float
+  receivedQuantity Float    @default(0)
+  damagedQuantity  Float    @default(0)
+  shortQuantity    Float    @default(0)
+  status           String   @default("PENDING")
+
+  @@index([shipmentId])
+  @@index([productId])
 }
 
 model InventoryBlock {
@@ -1110,6 +1299,161 @@ model InventoryHistory {
   notes          String?
   createdById    String?
   createdAt      DateTime  @default(now())
+}
+
+// ————— Depot: bookings, import batches, notifications —————
+//
+// These tables are created and written by the inventory app (prestige-inv),
+// which shares this database. They are declared here so the CMS can read them
+// and — critically — so a `prisma migrate` run from this project never
+// generates a migration that drops them.
+
+/// Batch record for every run of the master product/inventory import. Makes
+/// re-imports auditable and gives the importer somewhere to record a dry run.
+model ProductImportBatch {
+  id                 String    @id @default(cuid())
+  fileName           String
+  /// sha256 of the source file — identifies a re-import of identical data.
+  fileHash           String
+  /// MASTER_ONLY | OPENING_INVENTORY
+  mode               String    @default("OPENING_INVENTORY")
+  dryRun             Boolean   @default(false)
+  /// RUNNING | COMPLETED | FAILED
+  status             String    @default("RUNNING")
+  startedAt          DateTime  @default(now())
+  completedAt        DateTime?
+  totalRows          Int       @default(0)
+  createdRows        Int       @default(0)
+  updatedRows        Int       @default(0)
+  skippedRows        Int       @default(0)
+  warningRows        Int       @default(0)
+  failedRows         Int       @default(0)
+  brandsCreated      Int       @default(0)
+  categoriesCreated  Int       @default(0)
+  collectionsCreated Int       @default(0)
+  inventoryCreated   Int       @default(0)
+  createdBy          String?
+  errorReport        Json?
+
+  @@index([startedAt])
+  @@index([status])
+}
+
+/// A dealer's multi-line stock reservation. Separate from StockBlock, which
+/// holds a single product line; a booking groups lines under one approval.
+model StockBooking {
+  id            String    @id @default(cuid())
+  bookingNumber String    @unique
+  dealerId      String
+  dealer        Dealer    @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  /// DRAFT | PENDING | APPROVED | CONFIRMED | CANCELLED | RELEASED | EXPIRED
+  status        String    @default("DRAFT")
+  requestedBy   String
+  requestedAt   DateTime  @default(now())
+  expiresAt     DateTime?
+  approvedBy    String?
+  approvedAt    DateTime?
+  confirmedAt   DateTime?
+  cancelledAt   DateTime?
+  releasedAt    DateTime?
+  notes         String?
+  priority      String    @default("NORMAL")
+
+  extensionRequested Boolean @default(false)
+  extensionHours     Int?
+  extensionReason    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items StockBookingItem[]
+
+  @@index([bookingNumber])
+  @@index([createdAt])
+  @@index([dealerId])
+  @@index([expiresAt])
+  @@index([status])
+  @@index([warehouseId])
+}
+
+model StockBookingItem {
+  id        String       @id @default(cuid())
+  bookingId String
+  booking   StockBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  requestedQuantity Float
+  approvedQuantity  Float  @default(0)
+  reservedQuantity  Float  @default(0)
+  allocatedQuantity Float  @default(0)
+  fulfilledQuantity Float  @default(0)
+  cancelledQuantity Float  @default(0)
+  unit              String @default("Boxes")
+  remarks           String?
+
+  @@index([bookingId])
+  @@index([productId])
+}
+
+/// Broadcast from staff to a role/dealer/warehouse audience. Fans out into
+/// AnnouncementRecipient so read state is per-user.
+model Announcement {
+  id              String    @id @default(cuid())
+  created_by_id   String
+  createdBy       User      @relation(fields: [created_by_id], references: [id], onDelete: Cascade)
+  title           String
+  message         String
+  priority        String    @default("NORMAL")
+  /// ALL | ROLE | DEALER | WAREHOUSE | SHOWROOM
+  audience_type   String
+  audience_filter String?
+  created_at      DateTime  @default(now())
+  scheduled_at    DateTime?
+  expires_at      DateTime?
+  /// DRAFT | SCHEDULED | SENT
+  status          String    @default("SENT")
+
+  recipients AnnouncementRecipient[]
+}
+
+model AnnouncementRecipient {
+  id              String       @id @default(cuid())
+  announcement_id String
+  announcement    Announcement @relation(fields: [announcement_id], references: [id], onDelete: Cascade)
+  user_id         String
+  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  delivered_at    DateTime?
+  read_at         DateTime?
+  created_at      DateTime     @default(now())
+
+  @@index([announcement_id])
+  @@index([user_id])
+}
+
+/// Per-user notification. Only ever written from real events (a block created,
+/// approved, expiring, delivered) — never generated by a catalogue import.
+model Notification {
+  id         String    @id @default(cuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  /// BLOCK_CREATED | BLOCK_APPROVED | BLOCK_REJECTED | BLOCK_EXPIRING |
+  /// BLOCK_EXPIRED | BOOKING_CONFIRMED | STOCK_DELIVERED | ANNOUNCEMENT
+  type       String
+  title      String
+  message    String
+  priority   String    @default("NORMAL")
+  data       Json?
+  is_read    Boolean   @default(false)
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+  expires_at DateTime?
+
+  @@index([created_at])
+  @@index([is_read])
+  @@index([user_id])
 }
 
 model WhatsAppAnalytics {

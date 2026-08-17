@@ -3,17 +3,17 @@ import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 
 export default function ProductDetailLoading() {
   return (
-    <div className="bg-[#0a0a0a] text-white min-h-screen">
+    <div className="min-h-screen bg-canvas">
       {/* Product Hero Skeleton */}
-      <div className="relative h-[80vh] flex items-end pb-16 bg-[#111]">
+      <div className="relative h-[80vh] flex items-end pb-16 bg-stone-100">
         <Container size="wide" className="w-full space-y-4">
-          <Skeleton className="h-4 w-32 bg-white/10" />
-          <Skeleton className="h-12 w-1/2 bg-white/10" />
-          <Skeleton className="h-6 w-1/3 bg-white/10" />
-          <Skeleton className="h-20 w-2/3 bg-white/10" />
+          <Skeleton className="h-4 w-32 bg-stone-200/70" />
+          <Skeleton className="h-12 w-1/2 bg-stone-200/70" />
+          <Skeleton className="h-6 w-1/3 bg-stone-200/70" />
+          <Skeleton className="h-20 w-2/3 bg-stone-200/70" />
           <div className="flex gap-4 pt-4">
-            <Skeleton className="h-12 w-48 rounded-xl bg-white/10" />
-            <Skeleton className="h-12 w-48 rounded-xl bg-white/10" />
+            <Skeleton className="h-12 w-48 rounded-xl bg-stone-200/70" />
+            <Skeleton className="h-12 w-48 rounded-xl bg-stone-200/70" />
           </div>
         </Container>
       </div>

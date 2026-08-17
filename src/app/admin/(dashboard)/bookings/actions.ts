@@ -50,7 +50,10 @@ export async function listAllBookingsForCalendar(): Promise<BookingRow[]> {
 export async function getConsultants() {
   await requirePermission("bookings", "view");
   return prisma.user.findMany({
-    where: { status: "ACTIVE", role: { in: ["SUPER_ADMIN", "OWNER", "SUPPORT", "MARKETING"] } },
+    where: {
+      status: "ACTIVE",
+      role: { in: ["SUPER_ADMIN", "MANAGER", "SHOWROOM_INCHARGE", "SHOWROOM_STAFF"] },
+    },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

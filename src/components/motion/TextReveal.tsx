@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 
@@ -18,6 +18,11 @@ interface TextRevealProps {
  * - "blur": Smooth blur(12px) + translateY(20px) -> blur(0px) clear transition.
  * - "word": Word-by-word mask rise out of clip bounds.
  * - "character": Character-by-character stagger animation.
+ *
+ * Under `prefers-reduced-motion` every mode renders the text plainly. The
+ * character and word modes in particular split text into dozens of animated
+ * spans, which is exactly the sort of thing that triggers vestibular
+ * symptoms — so the opt-out short-circuits before any of that is built.
  */
 export function TextReveal({
   text,
@@ -26,6 +31,12 @@ export function TextReveal({
   as: Tag = "h2",
   mode = "blur",
 }: TextRevealProps) {
+  const reduced = useReducedMotion();
+
+  if (reduced) {
+    return <Tag className={cn(className)}>{text}</Tag>;
+  }
+
   if (mode === "blur") {
     return (
       <Tag className={cn("will-change-[transform,opacity,filter]", className)}>
