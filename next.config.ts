@@ -25,7 +25,14 @@ const nextConfig: NextConfig = {
   experimental: {
     middlewareClientMaxBodySize: "50mb",
   },
+  async rewrites() {
+    return [
+      {
+        source: "/product/:category/:slug",
+        destination: "/products/:category/:slug",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
-

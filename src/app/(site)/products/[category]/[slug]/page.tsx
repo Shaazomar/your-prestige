@@ -1,27 +1,34 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  Download, Ruler, Layers, Palette, Fingerprint, Rotate3D, Box,
+  Download,
+  Ruler,
+  Layers,
+  Palette,
+  Fingerprint,
+  Box,
+  ArrowLeft,
+  Sparkles,
+  ShieldCheck,
+  Compass,
+  MapPin,
 } from "lucide-react";
 import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
-import { Parallax } from "@/components/motion/Parallax";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
-import { BrandMark } from "@/components/site/catalog/BrandMark";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
 import { RecentlyViewed } from "@/components/site/catalog/RecentlyViewed";
 import { StickyProductCta } from "@/components/site/catalog/StickyProductCta";
-import { ProductWhatsAppActions } from "@/components/site/catalog/ProductWhatsAppActions";
+import { ProductGallery } from "@/components/site/catalog/ProductGallery";
+import { ProductInfoActions } from "@/components/site/catalog/ProductInfoActions";
+import { TechnicalAccordion } from "@/components/site/catalog/TechnicalAccordion";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
 import { getBusiness } from "@/lib/business";
-import { ButtonLink } from "@/components/ui/Button";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
-
+import { getWhatsAppOrderingNumber } from "@/lib/whatsapp";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 export const revalidate = 3600;
 
@@ -32,7 +39,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; category: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getCatalogProduct(slug);
@@ -40,8 +47,8 @@ export async function generateMetadata({
 
   const path = `/products/${product.category}/${product.slug}`;
   const base: Metadata = {
-    title: `${product.name} — ${product.collection} | Prestige Tiles`,
-    description: `${product.name} by ${product.brand}. ${product.finish}, available in ${product.sizes.join(", ")}. Experience it at Prestige Tiles.`,
+    title: `${product.name} — ${product.sizes[0] || ""} | Prestige Tiles`,
+    description: `${product.name} by ${product.brand}. ${product.finish} surface in ${product.color}, designed for contemporary interiors. Experience at Prestige Tiles.`,
   };
 
   return applySeo(base, await getSeoForPath(path), path);
@@ -50,16 +57,15 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; category: string }>;
 }) {
   const { slug } = await params;
   const product = await getCatalogProduct(slug);
   if (!product) notFound();
 
   const biz = await getBusiness();
-
-  const related = await getRelatedProducts(product);
-  const inspirationGallery = [product.lifestyleImage, ...product.gallery];
+  const whatsappNumber = await getWhatsAppOrderingNumber();
+  const related = await getRelatedProducts(product, 4);
 
   const categoryLabel =
     product.category === "sanitary"
@@ -68,12 +74,7 @@ export default async function ProductPage({
         ? "Designer Picks"
         : "Tiles";
 
-  const specs = [
-    { icon: Ruler, label: "Slab Thickness", value: product.thickness },
-    { icon: Layers, label: "Surface Finish", value: product.finish },
-    { icon: Palette, label: "Color Tone", value: product.color },
-    { icon: Fingerprint, label: "Texture Grain", value: product.texture },
-  ];
+  const productNo = product.sku || `PT-${slug.slice(0, 6).toUpperCase()}`;
 
   const packingDetails = [
     { label: "Pieces per Box", value: "2 Pcs" },
@@ -95,90 +96,202 @@ export default async function ProductPage({
   });
 
   return (
-    <>
+    <div className="bg-canvas text-text pt-24 pb-20 md:pt-28 md:pb-32">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Cinematic Hero */}
-      <section className="relative flex h-[86vh] min-h-[580px] items-end overflow-hidden bg-charcoal text-white">
-        <div className="absolute inset-0">
-          <Image
-            src={product.lifestyleImage}
-            alt={`${product.name} styled in an interior setting`}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
-        </div>
+      {/* Breadcrumb & Navigation Section */}
+      <section className="mb-8 md:mb-12">
+        <Container size="wide">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line/40 pb-4">
+            <Breadcrumbs
+              items={[
+                { label: "Products", href: "/products" },
+                { label: categoryLabel, href: `/products/${product.category}` },
+                { label: product.name },
+              ]}
+            />
 
-        <Container size="wide" className="relative z-10 pb-16 md:pb-24">
-          <Breadcrumbs
-            dark
-            items={[
-              { label: "Products", href: "/products" },
-              { label: categoryLabel, href: `/products/${product.category}` },
-              { label: product.name },
-            ]}
-          />
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            {product.tag && (
-              <span className="rounded-full bg-accent px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-ink shadow-yellow">
-                {product.tag}
-              </span>
-            )}
-            <span className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-md flex items-center gap-1.5 border border-white/20">
-              <Rotate3D className="h-3.5 w-3.5 text-accent" /> 360° Studio View Ready
-            </span>
-            <BrandMark brand={product.brand} dark />
-          </div>
-
-          <p className="text-eyebrow mt-6 text-accent font-bold">{product.collection}</p>
-          <h1 className="text-hero max-w-4xl text-white font-bold leading-tight mt-1">{product.name}</h1>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-stone-300">
-            {product.description}
-          </p>
-
-          <div className="mt-8">
-            <ProductWhatsAppActions product={product} whatsappNumber={biz.whatsapp} />
+            <Link
+              href={`/products/${product.category}`}
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:text-gold"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back to {categoryLabel}</span>
+            </Link>
           </div>
         </Container>
       </section>
 
-      {/* Technical Specifications & Packing Grid */}
-      <section className="bg-white py-24 md:py-32 border-b border-stone-200">
+      {/* Product Hero Section (Desktop: Left ~58% Gallery, Right ~42% Info) */}
+      <section className="mb-20 md:mb-28">
         <Container size="wide">
-          <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
-            <div>
-              <span className="text-eyebrow text-accent block mb-3 font-bold">Technical Precision</span>
-              <h2 className="text-heading text-ink mb-8">Architectural Specifications</h2>
+          <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16 xl:gap-20 items-start">
+            {/* LEFT: Architectural Gallery */}
+            <div className="w-full">
+              <ProductGallery
+                mainImage={product.lifestyleImage}
+                textureImage={product.textureImage}
+                galleryImages={product.gallery}
+                productName={product.name}
+                brand={product.brand}
+                tag={product.tag}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                {specs.map((s) => (
-                  <div key={s.label} className="rounded-2xl border border-stone-200 bg-offwhite p-6 shadow-soft hover:border-accent transition-colors">
-                    <s.icon className="mb-3 h-6 w-6 text-accent" />
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                      {s.label}
-                    </p>
-                    <p className="mt-1 font-bold text-ink text-base">{s.value}</p>
-                  </div>
-                ))}
+            {/* RIGHT: Product Information */}
+            <div className="flex flex-col space-y-6">
+              {/* Eyebrow & Brand */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-gold">
+                  <span>{product.brand}</span>
+                  <span className="text-line-strong">•</span>
+                  <span className="text-muted">{product.collection}</span>
+                </div>
+                {/* Subtle Product Code */}
+                <span className="font-mono text-[11px] font-medium text-faint bg-secondary px-2.5 py-1 rounded-md border border-line/40">
+                  Product No. {productNo}
+                </span>
               </div>
 
-              {/* Packing specs box */}
-              <div className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-soft">
-                <div className="flex items-center gap-2 mb-4">
-                  <Box className="h-5 w-5 text-accent" />
-                  <h4 className="text-sm font-bold text-ink">Packaging & Logistics Standards</h4>
+              {/* Editorial Main Heading */}
+              <div>
+                <h1 className="font-serif text-[clamp(2.25rem,4.5vw,3.75rem)] font-light leading-[1.1] text-text tracking-tight">
+                  {product.name}
+                </h1>
+                <p className="mt-3 text-sm md:text-base leading-relaxed text-muted font-normal max-w-xl">
+                  {product.description}
+                </p>
+              </div>
+
+              {/* Spec Badges Ribbon */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-3 border-y border-line/40">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-faint">
+                    Surface Finish
+                  </span>
+                  <span className="text-xs font-semibold text-text mt-0.5 truncate">
+                    {product.finish}
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs">
+
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-faint">
+                    Thickness
+                  </span>
+                  <span className="text-xs font-semibold text-text mt-0.5">
+                    {product.thickness}
+                  </span>
+                </div>
+
+                <div className="flex flex-col col-span-2 sm:col-span-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-faint">
+                    Tone & Color
+                  </span>
+                  <span className="text-xs font-semibold text-text mt-0.5 truncate">
+                    {product.color}
+                  </span>
+                </div>
+              </div>
+
+              {/* Interactive Actions (WhatsApp CTA, Quantity, Size, Share) */}
+              <ProductInfoActions product={product} whatsappNumber={whatsappNumber} />
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-2 gap-4 pt-2 text-[11px] text-muted">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
+                  <span>100% Quality Assured</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Compass className="h-4 w-4 text-gold shrink-0" />
+                  <span>Custom Cutting Available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Architectural Specification Grid */}
+      <section className="mb-24 md:mb-32">
+        <Container size="wide">
+          <div className="rounded-[32px] bg-secondary/80 p-8 sm:p-12 lg:p-16 border border-line/60 shadow-lift">
+            <div className="max-w-2xl mb-10">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold block mb-2">
+                MATERIAL DIMENSIONS & ATTRIBUTES
+              </span>
+              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-light text-text">
+                Architectural Specifications
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 border-b border-line/50 pb-10">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted mb-2">
+                  <Ruler className="h-4 w-4 text-gold" />
+                  <span>FORMAT SIZES</span>
+                </div>
+                <div className="font-serif text-xl sm:text-2xl font-medium text-text">
+                  {product.sizes[0] || "Standard"}
+                </div>
+                {product.sizes.length > 1 && (
+                  <p className="mt-1 text-[11px] text-muted">
+                    +{product.sizes.length - 1} additional formats
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted mb-2">
+                  <Layers className="h-4 w-4 text-gold" />
+                  <span>SURFACE FINISH</span>
+                </div>
+                <div className="font-serif text-xl sm:text-2xl font-medium text-text">
+                  {product.finish}
+                </div>
+                <p className="mt-1 text-[11px] text-muted">High durability vitrified</p>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted mb-2">
+                  <Palette className="h-4 w-4 text-gold" />
+                  <span>COLOR TONE</span>
+                </div>
+                <div className="font-serif text-xl sm:text-2xl font-medium text-text">
+                  {product.color}
+                </div>
+                <p className="mt-1 text-[11px] text-muted">Natural mineral hue</p>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted mb-2">
+                  <Fingerprint className="h-4 w-4 text-gold" />
+                  <span>TEXTURE GRAIN</span>
+                </div>
+                <div className="font-serif text-xl sm:text-2xl font-medium text-text truncate">
+                  {product.texture}
+                </div>
+                <p className="mt-1 text-[11px] text-muted">Tactile depth</p>
+              </div>
+            </div>
+
+            {/* Packaging & Logistics Details */}
+            <div className="mt-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text mb-3">
+                  <Box className="h-4 w-4 text-gold" />
+                  <span>Packaging & Logistics Standards</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                   {packingDetails.map((item) => (
-                    <div key={item.label} className="border-b border-stone-100 pb-2">
-                      <span className="text-stone-400 block">{item.label}</span>
-                      <span className="font-bold text-ink">{item.value}</span>
+                    <div key={item.label} className="bg-surface p-3.5 rounded-xl border border-line/40">
+                      <span className="text-[10px] text-muted block uppercase tracking-wider font-semibold">
+                        {item.label}
+                      </span>
+                      <span className="font-bold text-text mt-1 block">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -186,143 +299,217 @@ export default async function ProductPage({
 
               <Link
                 href="/catalogue"
-                className="group mt-8 inline-flex items-center gap-3 rounded-xl bg-ink px-8 py-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-accent hover:text-ink transition-colors shadow-soft"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-text px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-gold hover:text-black transition-colors shrink-0 shadow-sm"
               >
-                <Download className="h-4 w-4 text-accent group-hover:text-ink" />
-                Download PDF Specification Sheet
+                <Download className="h-4 w-4" />
+                <span>PDF Tech Sheet</span>
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Material Story (Editorial Section - Asymmetric 60/40 Split) */}
+      <section className="mb-24 md:mb-32">
+        <Container size="wide">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 items-center">
+            {/* Image Side */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[36px_16px_80px_20px] bg-stone-200 border border-line/40 shadow-lift">
+              <SafeImage
+                src={product.textureImage || product.lifestyleImage}
+                alt={`${product.name} material story detail`}
+                fill
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                placeholderLabel={product.brand}
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gold mb-1">
+                  <Sparkles className="h-3 w-3" /> TACTILE DEPTH & ARTISANRY
+                </span>
+                <p className="font-serif text-lg md:text-xl font-light">
+                  Precision engineered to capture authentic geological movement.
+                </p>
+              </div>
+            </div>
+
+            {/* Narrative Content */}
+            <div className="flex flex-col space-y-6">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold">
+                THE MATERIAL STORY
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light text-text leading-[1.15]">
+                Crafted for Contemporary Architectural Spaces
+              </h2>
+              <div className="space-y-4 text-sm sm:text-base leading-relaxed text-muted font-normal">
+                <p>
+                  {product.name} embodies modern surface design, fusing high-grade vitrified durability with the subtle nuance of natural stone. Every slab undergoes strict temperature-firing processes to ensure impervious non-porosity and flawless structural integrity.
+                </p>
+                <p>
+                  Designed for seamlessly continuous floor and wall transitions, this surface provides superior resistance against staining, thermal variance, and daily heavy footfall, making it an ideal specification for high-end residences, luxury hospitality, and premium retail environments.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-line/40 flex flex-wrap gap-6">
+                <div>
+                  <span className="font-serif text-2xl font-medium text-text block">
+                    Zero Maintenance
+                  </span>
+                  <span className="text-xs text-muted">Stain & scratch resistant</span>
+                </div>
+                <div>
+                  <span className="font-serif text-2xl font-medium text-text block">
+                    Eco Certified
+                  </span>
+                  <span className="text-xs text-muted">Sustainably manufactured</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Application Environments Showcase */}
+      {product.applications && product.applications.length > 0 && (
+        <section className="mb-24 md:mb-32">
+          <Container size="wide">
+            <div className="mb-10 text-center max-w-2xl mx-auto">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold block mb-2">
+                APPLICATION SUITABILITY
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-light text-text">
+                Ideal Environments
+              </h2>
+              <p className="mt-3 text-sm text-muted">
+                Extensively tested for longevity across residential and commercial settings.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-3">
+              {product.applications.map((app) => (
+                <ApplicationBadge key={app} application={app} />
+              ))}
+            </div>
+          </Container>
+        </section>
+      )}
+
+      {/* Large Full-Width Architectural Curved Media Section */}
+      <section className="mb-24 md:mb-32">
+        <Container size="wide">
+          <div className="relative aspect-[21/9] min-h-[320px] w-full overflow-hidden rounded-[32px] md:rounded-[48px] bg-stone-900 border border-line/40 shadow-lift">
+            <SafeImage
+              src={product.lifestyleImage}
+              alt={`${product.name} full scale interior environment`}
+              fill
+              sizes="100vw"
+              placeholderLabel={product.brand}
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 backdrop-brightness-95" />
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
+              <div className="max-w-2xl text-white space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold">
+                  PRESTIGE ARCHITECTURAL COLLECTION
+                </span>
+                <h3 className="font-serif text-2xl sm:text-4xl md:text-5xl font-light leading-tight">
+                  {product.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300 font-normal max-w-lg mx-auto">
+                  Transforming residential and commercial interiors into timeless architectural statements.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Technical Accordion Section */}
+      <section className="mb-24 md:mb-32">
+        <Container size="wide">
+          <TechnicalAccordion product={product} />
+        </Container>
+      </section>
+
+      {/* Showroom & WhatsApp Consultation Banner */}
+      <section className="mb-24 md:mb-32">
+        <Container size="wide">
+          <div className="rounded-[32px] bg-canvas-inverse text-white p-8 sm:p-12 lg:p-16 border border-white/10 shadow-lift relative overflow-hidden">
+            <div className="relative z-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="space-y-3 max-w-2xl">
+                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gold">
+                  PERSONAL CONSULTATION
+                </span>
+                <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-light leading-snug text-white">
+                  Experience {product.name} in person at our Showroom
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300">
+                  Speak with our material specialists for precise quantity estimations, custom cut sizing, and live depot stock confirmations.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4 shrink-0">
+                <a
+                  href={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(
+                    `Hello Prestige Tiles,\n\nI would like to schedule a consultation/enquiry for *${product.name}* (${product.brand}).`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-text hover:bg-gold-bright transition-colors"
+                >
+                  <span>Enquire via WhatsApp</span>
+                </a>
+                <Link
+                  href="/showrooms"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/20 transition-colors backdrop-blur-sm"
+                >
+                  <MapPin className="h-4 w-4 text-gold" />
+                  <span>Find a Showroom</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Related Products Section */}
+      {related.length > 0 && (
+        <section className="mb-20 md:mb-28 border-t border-line/40 pt-20">
+          <Container size="wide">
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold block mb-2">
+                  CURATED SELECTION
+                </span>
+                <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-light text-text">
+                  Explore Similar Surfaces
+                </h2>
+              </div>
+              <Link
+                href={`/products/${product.category}`}
+                className="text-xs font-bold uppercase tracking-wider text-text hover:text-gold transition-colors"
+              >
+                View All {categoryLabel} →
               </Link>
             </div>
 
-            <div>
-              <div>
-                <span className="text-eyebrow text-accent block mb-3 font-bold">Dimensional Scale</span>
-                <h3 className="text-subheading text-ink mb-4 font-bold">Available Sizing Formats</h3>
-                <div className="flex flex-wrap gap-3">
-                  {product.sizes.map((size, i) => (
-                    <SizeChip key={size} size={size} index={i} />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-12">
-                <span className="text-eyebrow text-accent block mb-3 font-bold">Application Environments</span>
-                <h3 className="text-subheading text-ink mb-4 font-bold">Tested Application Suitability</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {product.applications.map((app) => (
-                    <ApplicationBadge key={app} application={app} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Availability is deliberately NOT published here. Depot quantities
-              (physical, blocked, confirmed, in-transit, damaged) are internal
-              and never reach a public surface — stock is confirmed personally
-              over WhatsApp or at the showroom instead. */}
-          <div className="mt-16 rounded-3xl border border-stone-200 bg-stone-50/70 p-6 sm:p-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gold">
-                  Availability
-                </span>
-                <h3 className="font-serif text-xl font-bold text-ink">
-                  Check current availability with our team
-                </h3>
-                <p className="mt-1.5 max-w-md text-sm text-stone-500">
-                  Stock moves quickly across our depot and showrooms. Message us for
-                  live availability, lead times and pricing on this surface.
-                </p>
-              </div>
-              <ButtonLink
-                href={buildWhatsAppLink(
-                  biz.whatsapp || "",
-                  `Hello Prestige Tiles,\n\nI'd like to check availability for:\n*${product.name}* (${product.brand})\n\nCould you share current stock and pricing?`
-                )}
-                external
-                variant="primary"
-                size="lg"
-                withArrow
-                className="shrink-0"
-              >
-                Enquire on WhatsApp
-              </ButtonLink>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* Texture Macro Parallax */}
-      <section className="relative overflow-hidden bg-charcoal py-2 text-white">
-        <Parallax speed={0.1} className="relative h-[65vh] min-h-[400px]">
-          <div className="relative h-full w-full">
-            <Image
-              src={product.textureImage}
-              alt={`${product.name} material close-up texture`}
-              fill
-              sizes="100vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-          </div>
-        </Parallax>
-        <Container size="wide" className="pointer-events-none absolute inset-0 z-10 flex items-center">
-          <div className="max-w-lg">
-            <span className="text-eyebrow text-accent block mb-2 font-bold">Tactile Surface Depth</span>
-            <p className="serif-accent text-3xl leading-tight text-white md:text-4xl">
-              Authentic Italian vein pattern reproduction — crafted to feel quarried from nature.
-            </p>
-          </div>
-        </Container>
-      </section>
-
-      {/* Installation Gallery */}
-      <section className="bg-offwhite py-24 md:py-32 border-b border-stone-200">
-        <Container size="wide">
-          <SectionHeading
-            eyebrow="Architectural Installations"
-            title="Gallery & Lifestyle Scenes"
-            description={`Explore how ${product.name} elevates living rooms, luxury hotels, and commercial spaces.`}
-            className="mb-16"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inspirationGallery.map((src, i) => (
-              <div key={i} className="group relative h-80 overflow-hidden rounded-2xl border border-stone-200 shadow-soft">
-                <Image
-                  src={src}
-                  alt={`${product.name} view ${i + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* Related Products */}
-      {related.length > 0 && (
-        <section className="bg-white py-24 md:py-32">
-          <Container size="wide">
-            <SectionHeading
-              eyebrow="Complementary Finishes"
-              title="Pairs Beautifully With"
-              className="mb-14"
-            />
             <RelatedProducts products={related} />
           </Container>
         </section>
       )}
 
+      {/* Recently Viewed Bar */}
       <RecentlyViewed currentSlug={product.slug} currentName={product.name} />
 
+      {/* Sticky Mobile CTA Bar */}
       <StickyProductCta
         name={product.name}
         brand={product.brand}
-        whatsappNumber={biz.whatsapp || ""}
+        sku={product.sku}
+        size={product.sizes[0]}
+        whatsappNumber={whatsappNumber}
       />
-    </>
+    </div>
   );
 }
-

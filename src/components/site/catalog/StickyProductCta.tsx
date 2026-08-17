@@ -2,40 +2,43 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { MessageSquare, ArrowUpRight } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
-interface Props {
+interface StickyProductCtaProps {
   name: string;
   brand: string;
+  sku?: string;
+  size?: string;
   whatsappNumber: string;
 }
 
-/**
- * Mobile-only sticky enquiry bar.
- *
- * Deliberately absent until the visitor has scrolled past the hero: while the
- * product's own CTA is still on screen the bar would be a second copy of a
- * button they can already see, and it would cover product imagery to say so.
- *
- * Sits above the iOS home indicator via `env(safe-area-inset-bottom)`, and is
- * hidden on `md` and up where the in-page CTA never leaves the viewport.
- */
-export function StickyProductCta({ name, brand, whatsappNumber }: Props) {
+export function StickyProductCta({
+  name,
+  brand,
+  sku,
+  size,
+  whatsappNumber,
+}: StickyProductCtaProps) {
   const [visible, setVisible] = useState(false);
   const reduced = useReducedMotion();
 
   useEffect(() => {
     function onScroll() {
-      setVisible(window.scrollY > 640);
+      // Show sticky bar once user scrolls past the main hero CTA section (~500px)
+      setVisible(window.scrollY > 520);
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const skuStr = sku ? ` (Product No: ${sku})` : "";
+  const sizeStr = size ? ` - Size: ${size}` : "";
+
   const href = buildWhatsAppLink(
     whatsappNumber,
-    `Hello Prestige Tiles,\n\nI'm interested in *${name}* (${brand}).\n\nCould you share pricing and availability?`
+    `Hello Prestige Tiles,\n\nI am interested in:\n*${name}* (${brand})${skuStr}${sizeStr}\n\nPlease share pricing and availability.`
   );
 
   return (
@@ -48,23 +51,26 @@ export function StickyProductCta({ name, brand, whatsappNumber }: Props) {
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-x-0 bottom-0 z-40 md:hidden"
         >
-          <div className="glass-strong border-t border-line pb-[env(safe-area-inset-bottom)]">
-            <div className="flex items-center gap-3 px-4 py-3">
+          <div className="bg-canvas-inverse/95 text-white backdrop-blur-xl border-t border-white/10 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-float">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[0.8125rem] font-medium leading-tight text-text">
+                <p className="truncate text-xs font-bold tracking-tight text-white">
                   {name}
                 </p>
-                <p className="truncate text-[0.6875rem] uppercase tracking-[0.14em] text-gold">
+                <p className="truncate text-[10px] uppercase tracking-widest text-gold">
                   {brand}
                 </p>
               </div>
+
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 shrink-0 items-center rounded-full bg-gold px-6 text-sm font-semibold tracking-tight text-text transition-colors duration-300 hover:bg-gold-bright"
+                className="flex items-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-transform active:scale-95 shrink-0"
               >
-                Enquire
+                <MessageSquare className="h-4 w-4 fill-current" />
+                <span>Enquire on WhatsApp</span>
+                <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
