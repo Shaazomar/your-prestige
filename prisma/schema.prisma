@@ -1473,3 +1473,31 @@ model WhatsAppAnalytics {
   @@index([productId])
   @@index([createdAt])
 }
+
+// ————— About Page People & Inauguration —————
+
+model AboutPerson {
+  id           String    @id @default(cuid())
+  name         String
+  designation  String
+  description  String?
+  eyebrow      String?   // e.g. "INAUGURATED BY"
+  image        String    // S3 URL or media path
+  imageKey     String?   // S3 Object key
+  imageAlt     String?   // Accessible alt text
+  type         String    @default("Inauguration") // Inauguration | Management | Official | Guest | Director | Founder
+  date         String?   // Optional event date
+  location     String?   // Optional location
+  displayOrder Int       @default(0)
+  active       Boolean   @default(true)
+
+  createdById String?
+  updatedById String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type, active, deletedAt])
+  @@index([displayOrder])
+}
+

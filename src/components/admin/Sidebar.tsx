@@ -55,6 +55,7 @@ const nav = [
       { label: "FAQs", href: "/admin/content/faqs", icon: HelpCircle, module: "faqs" as Module },
       { label: "Offers", href: "/admin/content/offers", icon: BadgePercent, module: "offers" as Module },
       { label: "Landing Pages", href: "/admin/content/landing-pages", icon: MapPin, module: "landingPages" as Module },
+      { label: "People & Guests", href: "/admin/content/about-people", icon: Users2, module: "aboutPeople" as Module },
     ],
   },
   {
