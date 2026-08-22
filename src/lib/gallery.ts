@@ -1,20 +1,18 @@
+import fs from "fs";
+import path from "path";
 import { prisma } from "@/lib/prisma";
 import { galleryImages } from "@/lib/demo-content";
 import type { DriftWallItem } from "@/components/ui/DriftWall";
 
-const arr = (v: unknown): string[] =>
-  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.length > 0) : [];
-
 /**
- * Fetch gallery items from the CMS database.
- * Priority:
- * 1. GalleryAlbum / GalleryItem records created in CMS
- * 2. Product images uploaded in CMS
- * 3. Fallback demo gallery images
+ * Fetch gallery items for the /gallery DriftWall.
+ * 1. Checks custom GalleryItem records in CMS DB.
+ * 2. Checks local files added in public/gallery directory.
+ * 3. Fallback to demo-content galleryImages array.
  */
 export async function getGalleryItems(): Promise<DriftWallItem[]> {
   try {
-    // 1. Check custom GalleryItems in CMS
+    // 1. Check custom GalleryItem records in CMS
     const cmsItems = await prisma.galleryItem.findMany({
       where: { deletedAt: null },
       orderBy: { sortOrder: "asc" },
@@ -25,45 +23,29 @@ export async function getGalleryItems(): Promise<DriftWallItem[]> {
     });
 
     if (cmsItems.length > 0) {
-      return cmsItems.map((item) => ({
+      return cmsItems.map((item, index) => ({
         image: item.url,
-        title: item.alt || "Prestige Gallery",
+        title: item.alt || `Prestige Surface ${index + 1}`,
       }));
-    }
-
-    // 2. Fetch product images from CMS catalogue
-    const products = await prisma.product.findMany({
-      where: { published: true, deletedAt: null },
-      select: {
-        name: true,
-        lifestyleImage: true,
-        textureImage: true,
-        images: true,
-      },
-      take: 30,
-    });
-
-    const productItems: DriftWallItem[] = [];
-    for (const p of products) {
-      if (p.lifestyleImage) {
-        productItems.push({ image: p.lifestyleImage, title: p.name });
-      }
-      if (p.textureImage && p.textureImage !== p.lifestyleImage) {
-        productItems.push({ image: p.textureImage, title: p.name });
-      }
-      const extraImages = arr(p.images);
-      for (const img of extraImages) {
-        if (!productItems.some((i) => i.image === img)) {
-          productItems.push({ image: img, title: p.name });
-        }
-      }
-    }
-
-    if (productItems.length > 0) {
-      return productItems;
     }
   } catch (e) {
     console.error("Error fetching CMS gallery items:", e);
+  }
+
+  // 2. Read images dynamically from public/gallery folder
+  try {
+    const galleryDir = path.join(process.cwd(), "public", "gallery");
+    if (fs.existsSync(galleryDir)) {
+      const files = fs.readdirSync(galleryDir).filter((f) => f.match(/\.(jpg|jpeg|png|webp|avif)$/i));
+      if (files.length > 0) {
+        return files.map((file, idx) => ({
+          image: `/gallery/${encodeURIComponent(file)}`,
+          title: `Prestige Gallery — Space ${idx + 1}`,
+        }));
+      }
+    }
+  } catch (err) {
+    console.error("Error reading public/gallery directory:", err);
   }
 
   // 3. Fallback to default gallery images
