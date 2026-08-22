@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Video, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { uploadMediaClient } from "@/lib/client-upload";
+
 interface VideoUploadFieldProps {
   label: string;
   value: string | null;
@@ -19,14 +21,7 @@ export function VideoUploadField({ label, value, onChange, aspect = "aspect-vide
   async function handleFile(file: File) {
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/media", { method: "POST", body: form });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Upload failed");
-      }
-      const data = await res.json();
+      const data = await uploadMediaClient(file, "videos");
       onChange(data.url);
       toast.success("Video uploaded");
     } catch (err) {

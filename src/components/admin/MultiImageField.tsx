@@ -5,6 +5,8 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Plus, X, Loader2, GripVertical } from "lucide-react";
 
+import { uploadMediaClient } from "@/lib/client-upload";
+
 interface MultiImageFieldProps {
   label: string;
   value: string[];
@@ -22,14 +24,7 @@ export function MultiImageField({ label, value, onChange }: MultiImageFieldProps
     try {
       const uploaded: string[] = [];
       for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch("/api/admin/media", { method: "POST", body: form });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Upload failed");
-        }
-        const data = await res.json();
+        const data = await uploadMediaClient(file, "images");
         uploaded.push(data.url);
       }
       onChange([...value, ...uploaded]);

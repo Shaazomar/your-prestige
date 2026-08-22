@@ -16,6 +16,8 @@ import {
 } from "./actions";
 import type { MediaFolder } from "@prisma/client";
 
+import { uploadMediaClient } from "@/lib/client-upload";
+
 export function MediaManager({ permissions }: { permissions: { create: boolean; edit: boolean; delete: boolean } }) {
   const [folderId, setFolderId] = useState<string | null | undefined>(undefined);
   const list = useAdminList<MediaRow>(
@@ -34,16 +36,16 @@ export function MediaManager({ permissions }: { permissions: { create: boolean; 
   async function handleUpload(files: FileList) {
     setUploading(true);
     let success = 0;
+    let lastError = "";
     const total = files.length;
     for (let i = 0; i < total; i++) {
       const file = files[i];
       toast.loading(`Uploading "${file.name}" (${i + 1}/${total})…`, { id: "media-upload" });
       try {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch("/api/admin/media", { method: "POST", body: form });
-        if (res.ok) success++;
+        await uploadMediaClient(file, "media");
+        success++;
       } catch (err) {
+        lastError = err instanceof Error ? err.message : "Upload failed";
         console.error(err);
       }
     }
@@ -53,7 +55,7 @@ export function MediaManager({ permissions }: { permissions: { create: boolean; 
       toast.success(`${success}/${total} file${success > 1 ? "s" : ""} uploaded successfully`);
       list.refresh();
     } else {
-      toast.error("Upload failed");
+      toast.error(lastError || "Upload failed");
     }
   }
 
