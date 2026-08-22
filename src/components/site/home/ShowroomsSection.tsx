@@ -15,7 +15,15 @@ export async function ShowroomsSection() {
   const showrooms = await getShowrooms();
   if (showrooms.length === 0) return null;
 
-  const cities = Array.from(new Set(showrooms.map((s) => s.city)));
+  const cities = Array.from(
+    new Set(
+      showrooms.map((s) => {
+        const c = s.city.toLowerCase();
+        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
+        return s.city;
+      })
+    )
+  );
 
   return (
     <section className="bg-ivory py-28 md:py-40">

@@ -13,7 +13,15 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const showrooms = await getShowrooms();
-  const cities = Array.from(new Set(showrooms.map((s) => s.city))).join(", ");
+  const cities = Array.from(
+    new Set(
+      showrooms.map((s) => {
+        const c = s.city.toLowerCase();
+        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
+        return s.city;
+      })
+    )
+  ).join(", ");
   return {
     title: "Our Showrooms",
     description: `Visit any of our ${showrooms.length} showrooms across ${cities}. Full tile and sanitaryware displays, design consultation and directions.`,
@@ -23,7 +31,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ShowroomsPage() {
   const [showrooms, business] = await Promise.all([getShowrooms(), getBusiness()]);
-  const cities = Array.from(new Set(showrooms.map((s) => s.city)));
+  const cities = Array.from(
+    new Set(
+      showrooms.map((s) => {
+        const c = s.city.toLowerCase();
+        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
+        return s.city;
+      })
+    )
+  );
 
   return (
     <>

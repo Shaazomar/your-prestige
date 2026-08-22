@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Stats } from "@/components/site/home/Stats";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
+import { InaugurationSection } from "@/components/site/about/InaugurationSection";
 import { PeopleSection } from "@/components/site/about/PeopleSection";
 import { seedInitialInauguration } from "@/app/admin/(dashboard)/content/about-people/actions";
 
@@ -17,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  // Ensure seed is initialized and updated
+  // Ensure default Inauguration record exists
   await seedInitialInauguration();
 
-  const people = await prisma.aboutPerson.findMany({
+  const allPeople = await prisma.aboutPerson.findMany({
     where: { active: true, deletedAt: null },
     orderBy: [
       { displayOrder: "asc" },
@@ -28,24 +29,32 @@ export default async function AboutPage() {
     ],
   });
 
+  const inauguration =
+    allPeople.find(
+      (p) =>
+        p.type === "INAUGURATION" ||
+        p.eyebrow === "INAUGURATED BY" ||
+        p.name === "U. T. Khader"
+    ) || null;
+
   return (
-    <>
+    <main className="min-h-screen bg-white">
       <PageHero
         eyebrow="The Prestige Story"
         title="Fifteen years of shaping beautiful spaces."
         description="From a single storefront to coastal Karnataka's most trusted destination for luxury surfaces — this is how we built Your Prestige."
       />
 
-      {/* Dynamic People & Guests Section */}
-      <PeopleSection
-        people={people}
-        title="Distinguished Guests"
-        eyebrow="PEOPLE WHO HAVE BEEN PART OF OUR JOURNEY"
-      />
+      {/* 1. MAIN HIGHLIGHT: Inauguration Section */}
+      <InaugurationSection inauguration={inauguration} />
 
+      {/* 2. SECONDARY SECTION: Additional People & Leadership (TiltedCard Grid) */}
+      <PeopleSection people={allPeople} />
+
+      {/* 3. Company Stats */}
       <Stats />
 
-      {/* CTA */}
+      {/* 4. CTA */}
       <section className="bg-porcelain py-24 md:py-32">
         <Container className="text-center">
           <SectionHeading
@@ -63,6 +72,6 @@ export default async function AboutPage() {
           </Reveal>
         </Container>
       </section>
-    </>
+    </main>
   );
 }

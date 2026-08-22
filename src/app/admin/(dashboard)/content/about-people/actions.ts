@@ -78,19 +78,27 @@ export async function listAboutPeople(params?: {
 export async function seedInitialInauguration() {
   try {
     const existing = await prisma.aboutPerson.findFirst({
-      where: { name: "U. T. Khader", deletedAt: null },
+      where: {
+        OR: [
+          { name: "U. T. Khader", deletedAt: null },
+          { type: "INAUGURATION", deletedAt: null },
+          { eyebrow: "INAUGURATED BY", deletedAt: null }
+        ]
+      },
     });
+
     if (existing) {
-      if (existing.designation !== "Minister of Health and Family Welfare of Karnataka") {
-        await prisma.aboutPerson.update({
-          where: { id: existing.id },
-          data: {
-            designation: "Minister of Health and Family Welfare of Karnataka",
-            description: "Minister of Health and Family Welfare of Karnataka who has been part of our journey.",
-          },
-        });
-      }
-      return existing;
+      const updated = await prisma.aboutPerson.update({
+        where: { id: existing.id },
+        data: {
+          name: "U. T. Khader",
+          eyebrow: "INAUGURATED BY",
+          designation: "Minister of Health and Family Welfare of Karnataka",
+          type: "INAUGURATION",
+          imageAlt: "U. T. Khader at Prestige Tiles inauguration",
+        },
+      });
+      return updated;
     }
 
     const localImagePath = path.join(process.cwd(), "public", "about", "imaugratedbyUT.jpeg");
@@ -108,12 +116,12 @@ export async function seedInitialInauguration() {
       data: {
         name: "U. T. Khader",
         designation: "Minister of Health and Family Welfare of Karnataka",
-        description: "Minister of Health and Family Welfare of Karnataka who has been part of our journey.",
-        eyebrow: "PEOPLE WHO HAVE BEEN PART OF OUR JOURNEY",
+        description: null,
+        eyebrow: "INAUGURATED BY",
         image: imageUrl,
         imageKey: imageKey,
         imageAlt: "U. T. Khader at Prestige Tiles inauguration",
-        type: "Inauguration",
+        type: "INAUGURATION",
         displayOrder: 0,
         active: true,
       },

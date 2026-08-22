@@ -1,7 +1,9 @@
+"use client";
+
+import React from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
-import { Reveal } from "@/components/motion/Reveal";
-import { Parallax } from "@/components/motion/Parallax";
 import type { AboutPerson } from "@prisma/client";
 
 interface InaugurationSectionProps {
@@ -12,90 +14,101 @@ export function InaugurationSection({ inauguration }: InaugurationSectionProps) 
   // If disabled or missing, don't render section
   if (!inauguration || !inauguration.active) return null;
 
-  const eyebrow = inauguration.eyebrow || "DISTINGUISHED GUEST";
-  const title = inauguration.name;
-  const designation = inauguration.designation;
-  const description =
-    inauguration.description ||
-    "We are honored to have had our landmark flagship showroom inaugurated by Hon'ble Speaker of the Karnataka Legislative Assembly, U. T. Khader, marking a landmark moment in coastal Karnataka's luxury interior landscape.";
+  const eyebrow = inauguration.eyebrow || "INAUGURATED BY";
+  const name = inauguration.name || "U. T. Khader";
+  const designation =
+    inauguration.designation ||
+    "Minister of Health and Family Welfare of Karnataka";
   const imageAlt =
-    inauguration.imageAlt || `${title} inaugurating Prestige Tiles`;
+    inauguration.imageAlt || `${name} - ${designation}`;
+
+  // Only render description if it doesn't duplicate the designation
+  const showDescription =
+    inauguration.description &&
+    inauguration.description.trim().toLowerCase() !== designation.trim().toLowerCase() &&
+    !inauguration.description.includes(designation);
 
   return (
-    <section className="relative overflow-hidden bg-porcelain py-24 md:py-36 border-y border-gold/15">
-      {/* Decorative subtle ambient background */}
-      <div className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-gold/5 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-slate-warm/5 blur-3xl" />
-
+    <section className="relative bg-[#faf9f6] py-20 md:py-32 border-y border-stone-200/70">
       <Container size="wide">
-        <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
-          {/* Left Column: Photograph */}
-          <div className="lg:col-span-6">
-            <Parallax speed={0.04} className="group relative">
-              {/* Outer frame styling */}
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-slate-100 shadow-2xl transition-all duration-700 hover:shadow-gold/10">
-                <Image
-                  src={inauguration.image}
-                  alt={imageAlt}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 45vw"
-                  className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                  quality={92}
-                  unoptimized={inauguration.image.startsWith("/uploads")}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 transition-opacity group-hover:opacity-40" />
-              </div>
-
-              {/* Accent corner design element */}
-              <div className="absolute -bottom-3 -right-3 -z-10 h-full w-full rounded-3xl border border-gold/25 bg-gold/5 transition-transform duration-500 group-hover:translate-x-1 group-hover:translate-y-1" />
-            </Parallax>
+        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-16">
+          {/* Left Column: Large Editorial Photograph (58% width on desktop) */}
+          <div className="lg:col-span-7">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="relative aspect-[16/11] md:aspect-[16/10] w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/80 shadow-[0_16px_50px_rgba(0,0,0,0.06)]"
+            >
+              <Image
+                src={inauguration.image}
+                alt={imageAlt}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className="object-cover object-center"
+                unoptimized={inauguration.image.startsWith("/uploads")}
+              />
+            </motion.div>
           </div>
 
-          {/* Right Column: Editorial Text */}
-          <div className="lg:col-span-6 lg:pl-6 space-y-6">
-            <Reveal delay={0.1}>
-              <div className="inline-flex items-center gap-2 rounded-full bg-gold/10 px-4 py-1.5 border border-gold/25">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-[0.25em] text-gold">
-                  {eyebrow}
-                </span>
-              </div>
-            </Reveal>
+          {/* Right Column: Architectural Typography Column (42% width on desktop) */}
+          <div className="lg:col-span-5 space-y-5 lg:pl-2">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-amber-800/80">
+                {eyebrow}
+              </span>
+            </motion.div>
 
-            <Reveal delay={0.2}>
-              <h2 className="text-4xl font-serif font-bold text-ink sm:text-5xl md:text-6xl tracking-tight leading-[1.1]">
-                {title}
-              </h2>
-            </Reveal>
+            <motion.h2
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="text-4xl font-serif font-bold text-stone-900 sm:text-5xl md:text-6xl tracking-tight leading-[1.08]"
+            >
+              {name}
+            </motion.h2>
 
-            <Reveal delay={0.3}>
-              <p className="text-lg font-medium text-slate-warm/90 md:text-xl border-l-2 border-gold pl-4 py-1 italic">
-                {designation}
-              </p>
-            </Reveal>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="text-base sm:text-lg md:text-xl font-sans font-normal text-stone-600 leading-relaxed max-w-lg"
+            >
+              {designation}
+            </motion.p>
 
-            <Reveal delay={0.4}>
-              <p className="text-base leading-relaxed text-slate-warm md:text-lg">
-                {description}
-              </p>
-            </Reveal>
+            {showDescription && (
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="text-sm md:text-base leading-relaxed text-stone-500 pt-2"
+              >
+                {inauguration.description}
+              </motion.p>
+            )}
 
             {(inauguration.date || inauguration.location) && (
-              <Reveal delay={0.5}>
-                <div className="flex flex-wrap gap-4 pt-2 text-xs font-semibold text-slate-warm/70 uppercase tracking-wider">
-                  {inauguration.date && (
-                    <span className="rounded-xl bg-ivory px-3 py-1.5 border border-slate-warm/15">
-                      📅 {inauguration.date}
-                    </span>
-                  )}
-                  {inauguration.location && (
-                    <span className="rounded-xl bg-ivory px-3 py-1.5 border border-slate-warm/15">
-                      📍 {inauguration.location}
-                    </span>
-                  )}
-                </div>
-              </Reveal>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="pt-6 mt-6 border-t border-stone-200/60 flex flex-wrap items-center gap-6 text-xs uppercase tracking-widest font-mono text-stone-400"
+              >
+                {inauguration.date && <span>Date: {inauguration.date}</span>}
+                {inauguration.location && <span>Location: {inauguration.location}</span>}
+              </motion.div>
             )}
           </div>
         </div>
