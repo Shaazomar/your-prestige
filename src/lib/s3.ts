@@ -23,7 +23,11 @@ export async function uploadBufferToS3(
   const cleanFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   const key = `${folder}/${Date.now()}-${cleanFilename}`;
 
-  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  if (
+    process.env.AWS_ACCESS_KEY_ID?.trim() &&
+    process.env.AWS_SECRET_ACCESS_KEY?.trim() &&
+    !process.env.AWS_ACCESS_KEY_ID.includes("your_")
+  ) {
     try {
       const command = new PutObjectCommand({
         Bucket: S3_BUCKET,

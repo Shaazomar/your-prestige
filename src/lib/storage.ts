@@ -32,7 +32,9 @@ const cloudinaryConfigured = !!(
 
 const s3Configured = !!(
   process.env.AWS_ACCESS_KEY_ID &&
-  process.env.AWS_SECRET_ACCESS_KEY
+  process.env.AWS_SECRET_ACCESS_KEY &&
+  process.env.AWS_ACCESS_KEY_ID.trim() !== "" &&
+  !process.env.AWS_ACCESS_KEY_ID.includes("your_")
 );
 
 const ROOT_FOLDER = "prestige";
@@ -58,14 +60,23 @@ function safeFolder(folder?: string): string {
  */
 export async function uploadFile(file: File, opts?: UploadOptions): Promise<UploadResult> {
   if (s3Configured) {
-    return uploadToS3(file, opts);
+    try {
+      return await uploadToS3(file, opts);
+    } catch (s3Err) {
+      console.warn("AWS S3 Upload Error:", s3Err);
+      if (!process.env.VERCEL) {
+        console.log("S3 upload failed in local dev; falling back to local disk storage.");
+        return uploadToLocalDisk(file, opts);
+      }
+      throw s3Err;
+    }
   }
   if (cloudinaryConfigured) {
     return uploadToCloudinary(file, opts);
   }
   if (process.env.VERCEL) {
     throw new Error(
-      "Media upload requires AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production."
+      "Media upload requires valid AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production."
     );
   }
   return uploadToLocalDisk(file, opts);
