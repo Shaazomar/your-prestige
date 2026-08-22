@@ -136,13 +136,12 @@ export async function Footer() {
         </div>
       </div>
 
-      {/* Closing wordmark. Clipped at the baseline so it reads as a mark
-          printed on the page rather than another line of content. */}
+      {/* Closing wordmark — 100% fully visible, crisp, bold sign-off */}
       <div
         aria-hidden="true"
-        className="select-none overflow-hidden px-6 pb-[clamp(0.5rem,2vw,1.75rem)] sm:px-8 lg:px-14"
+        className="select-none px-6 pt-10 pb-10 sm:px-8 lg:px-14 text-center overflow-hidden border-t border-white/10"
       >
-        <span className="block translate-y-[0.14em] whitespace-nowrap text-center font-serif text-[clamp(3.5rem,15.5vw,15rem)] font-medium leading-[0.8] tracking-[-0.045em] text-white/[0.07]">
+        <span className="block uppercase whitespace-nowrap text-center font-serif text-[clamp(1.75rem,5.2vw,5.2rem)] font-bold tracking-tight text-white/90">
           {business.name}
         </span>
       </div>

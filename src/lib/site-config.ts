@@ -69,7 +69,6 @@ export interface NavLink {
 export const primaryNav: readonly NavLink[] = [
   { label: "Shop", href: "/products" },
   { label: "Collections", href: "/collections" },
-  { label: "Projects", href: "/projects" },
   { label: "Gallery", href: "/gallery" },
   { label: "About", href: "/about" },
 ];
@@ -87,7 +86,6 @@ export const megaMenu = {
     { label: "Applications", href: "/applications", hint: "Room by room" },
     { label: "Brands", href: "/brands", hint: "Who we partner with" },
     { label: "Gallery", href: "/gallery", hint: "Installed work" },
-    { label: "Projects", href: "/projects", hint: "Case studies" },
     { label: "Downloads", href: "/catalogue", hint: "Catalogues & specs" },
     { label: "Contact", href: "/contact", hint: "Talk to us" },
   ] satisfies NavLink[],
@@ -129,7 +127,6 @@ export const footerNav = {
   explore: [
     { label: "Collections", href: "/collections" },
     { label: "Products", href: "/products" },
-    { label: "Projects", href: "/projects" },
     { label: "Gallery", href: "/gallery" },
   ] satisfies NavLink[],
 
