@@ -150,13 +150,15 @@ export async function syncCatalogProductsToDb(): Promise<SyncReport> {
           report.newProductsCount++;
           report.details.push(`CREATED: ${item.name} (${item.slug})`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         report.failedRecordsCount++;
-        report.details.push(`FAILED (${item.slug}): ${err?.message || err}`);
+        const msg = err instanceof Error ? err.message : String(err);
+        report.details.push(`FAILED (${item.slug}): ${msg}`);
       }
     }
-  } catch (globalErr: any) {
-    report.details.push(`GLOBAL SYNC ERROR: ${globalErr?.message || globalErr}`);
+  } catch (globalErr: unknown) {
+    const msg = globalErr instanceof Error ? globalErr.message : String(globalErr);
+    report.details.push(`GLOBAL SYNC ERROR: ${msg}`);
   }
 
   return report;

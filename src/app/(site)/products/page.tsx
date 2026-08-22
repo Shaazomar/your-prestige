@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
 import { getCatalogProducts, CATALOG_CLIENT_LIMIT } from "@/lib/products";

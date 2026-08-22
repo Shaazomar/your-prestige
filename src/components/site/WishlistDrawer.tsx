@@ -16,7 +16,7 @@ interface WishlistDrawerProps {
   onOpenQuote: () => void;
 }
 
-export function WishlistDrawer({ isOpen, onClose, onOpenQuote }: WishlistDrawerProps) {
+export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
   const { items, remove, clear } = useLocalCollection(WISHLIST_KEY, 24);
 
   if (!isOpen) return null;

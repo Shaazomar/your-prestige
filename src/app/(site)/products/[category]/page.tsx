@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PageHero } from "@/components/site/PageHero";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
 import type { CatalogProduct } from "@/lib/catalog";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";

@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
-import { SizeChip } from "@/components/site/catalog/SizeChip";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
 import { RecentlyViewed } from "@/components/site/catalog/RecentlyViewed";
@@ -26,7 +25,6 @@ import { ProductInfoActions } from "@/components/site/catalog/ProductInfoActions
 import { TechnicalAccordion } from "@/components/site/catalog/TechnicalAccordion";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
-import { getBusiness } from "@/lib/business";
 import { getWhatsAppOrderingNumber } from "@/lib/whatsapp";
 import { SafeImage } from "@/components/ui/SafeImage";
 
@@ -63,7 +61,6 @@ export default async function ProductPage({
   const product = await getCatalogProduct(slug);
   if (!product) notFound();
 
-  const biz = await getBusiness();
   const whatsappNumber = await getWhatsAppOrderingNumber();
   const related = await getRelatedProducts(product, 4);
 

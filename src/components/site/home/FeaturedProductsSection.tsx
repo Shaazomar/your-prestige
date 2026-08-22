@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Heart, Plus } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 
@@ -62,7 +61,6 @@ const showcaseProducts = [
 ];
 
 export function FeaturedProductsSection() {
-  const [scrollIndex, setScrollIndex] = useState(0);
 
   return (
     <section className="bg-white py-20 lg:py-28">

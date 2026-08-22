@@ -12,7 +12,7 @@ import {
   rejectInventoryBlock,
   type InventoryRow,
 } from "./actions";
-import { Check, X, ShieldAlert, Package, Lock, Plus } from "lucide-react";
+import { Check, X, Lock, Plus } from "lucide-react";
 
 interface InventoryManagerProps {
   canEdit: boolean;
@@ -56,8 +56,8 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       setBlockRemarks("");
       setShowBlockForm(false);
       list.refresh();
-    } catch (err: any) {
-      alert(err?.message || "Failed to create block");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to create block");
     } finally {
       setActionLoading(false);
     }
@@ -68,8 +68,8 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
     try {
       await approveInventoryBlock(blockId);
       list.refresh();
-    } catch (err: any) {
-      alert(err?.message || "Failed to approve block");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to approve block");
     } finally {
       setActionLoading(false);
     }
@@ -80,8 +80,8 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
     try {
       await rejectInventoryBlock(blockId);
       list.refresh();
-    } catch (err: any) {
-      alert(err?.message || "Failed to reject block");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to reject block");
     } finally {
       setActionLoading(false);
     }

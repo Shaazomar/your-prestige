@@ -4,8 +4,8 @@ import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, SlidersHorizontal, X, LayoutGrid, List, Check, RotateCcw } from "lucide-react";
-import type { Application, CatalogProduct } from "@/lib/catalog";
+import { Search, SlidersHorizontal, X, LayoutGrid, List, RotateCcw } from "lucide-react";
+import type { CatalogProduct } from "@/lib/catalog";
 import { ProductCard } from "@/components/site/catalog/ProductCard";
 import { CatalogueHero } from "@/components/site/catalog/CatalogueHero";
 import { cn } from "@/lib/utils";
@@ -22,12 +22,6 @@ const ROOM_OPTIONS = [
   "Outdoor",
   "Restaurant",
 ];
-
-const categoryLabels: Record<CatalogProduct["category"], string> = {
-  tiles: "Tiles",
-  sanitary: "Sanitaryware",
-  "designer-picks": "Designer Picks",
-};
 
 interface CatalogExplorerProps {
   products: CatalogProduct[];

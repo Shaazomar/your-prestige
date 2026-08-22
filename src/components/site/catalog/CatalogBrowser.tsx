@@ -7,7 +7,6 @@ import { Search, X, SlidersHorizontal, Loader2 } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "./ProductCard";
 import { FilterChip } from "./FilterChip";
-import type { CatalogProduct } from "@/lib/catalog";
 import type { CatalogSearchResult } from "@/lib/catalog-search";
 
 /**
