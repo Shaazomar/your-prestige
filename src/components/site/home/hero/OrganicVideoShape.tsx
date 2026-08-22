@@ -12,14 +12,24 @@ interface OrganicVideoShapeProps {
   children?: React.ReactNode;
 }
 
+const DEFAULT_FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop";
+
 export function OrganicVideoShape({
   posterImage,
   videoSrc,
   children,
 }: OrganicVideoShapeProps) {
   const [videoReady, setVideoReady] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(posterImage || DEFAULT_FALLBACK_IMAGE);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoInfo = parseVideoUrl(videoSrc);
+
+  useEffect(() => {
+    setImgSrc(posterImage || DEFAULT_FALLBACK_IMAGE);
+  }, [posterImage]);
 
   useEffect(() => {
     if (videoInfo.type === "native" && videoRef.current && videoRef.current.readyState >= 3) {
@@ -27,7 +37,7 @@ export function OrganicVideoShape({
     }
   }, [videoInfo.type]);
 
-  const showVideo = videoInfo.type !== "none";
+  const showVideo = videoInfo.type !== "none" && !videoError;
 
   return (
     <div className="relative w-full h-full group">
@@ -70,14 +80,12 @@ export function OrganicVideoShape({
       >
         {/* Poster Image (shown immediately before video loads or when no video is set) */}
         <Image
-          src={
-            posterImage ||
-            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop"
-          }
+          src={imgSrc}
           alt="Luxury architectural tile showroom preview"
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
+          onError={() => setImgSrc(DEFAULT_FALLBACK_IMAGE)}
           className={cn(
             "object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
             showVideo && videoReady ? "opacity-0" : "opacity-100"
@@ -96,6 +104,7 @@ export function OrganicVideoShape({
             preload="metadata"
             onCanPlay={() => setVideoReady(true)}
             onLoadedData={() => setVideoReady(true)}
+            onError={() => setVideoError(true)}
             className={cn(
               "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
               videoReady ? "opacity-100" : "opacity-0"

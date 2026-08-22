@@ -30,9 +30,14 @@ const cloudinaryConfigured = !!(
   process.env.CLOUDINARY_API_SECRET
 );
 
+const s3Configured = !!(
+  process.env.AWS_ACCESS_KEY_ID &&
+  process.env.AWS_SECRET_ACCESS_KEY
+);
+
 const ROOT_FOLDER = "prestige";
 
-/** Strip anything that could escape the uploads dir or upset Cloudinary. */
+/** Strip anything that could escape the uploads dir or upset storage. */
 function safeSegment(s: string): string {
   return s
     .toLowerCase()
@@ -48,21 +53,56 @@ function safeFolder(folder?: string): string {
 }
 
 /**
- * Storage adapter — uploads to Cloudinary when configured (production),
- * falls back to local disk under public/uploads (dev only; most hosts,
- * including Vercel, have an ephemeral/read-only filesystem in production,
- * so Cloudinary credentials are a hard requirement before deploying).
+ * Storage adapter — uploads to AWS S3 or Cloudinary when configured (production),
+ * falls back to local disk under public/uploads (dev only).
  */
 export async function uploadFile(file: File, opts?: UploadOptions): Promise<UploadResult> {
+  if (s3Configured) {
+    return uploadToS3(file, opts);
+  }
   if (cloudinaryConfigured) {
     return uploadToCloudinary(file, opts);
   }
   if (process.env.VERCEL) {
     throw new Error(
-      "Media upload requires Cloudinary credentials in production (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) — the local-disk fallback only works in local development."
+      "Media upload requires AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production."
     );
   }
   return uploadToLocalDisk(file, opts);
+}
+
+async function uploadToS3(file: File, opts?: UploadOptions): Promise<UploadResult> {
+  const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
+  const bucket = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || "your-prestige-in";
+  const region = process.env.S3_REGION || process.env.AWS_REGION || "ap-south-1";
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_S3_BUCKET_URL || `https://${bucket}.s3.${region}.amazonaws.com`
+  ).replace(/\/$/, "");
+
+  const client = new S3Client({
+    region,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const folder = safeFolder(opts?.folder);
+  const cleanName = (opts?.filename || file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
+  const key = `${folder}/${Date.now()}-${cleanName}`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: buffer,
+    ContentType: file.type || "application/octet-stream",
+  });
+
+  await client.send(command);
+  const url = `${baseUrl}/${key}`;
+  return { url, publicId: key };
 }
 
 async function uploadToCloudinary(file: File, opts?: UploadOptions): Promise<UploadResult> {
