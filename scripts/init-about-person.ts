@@ -1,3 +1,6 @@
+import { loadEnvConfig } from "@next/env";
+loadEnvConfig(process.cwd());
+
 import { prisma } from "../src/lib/prisma";
 
 async function main() {

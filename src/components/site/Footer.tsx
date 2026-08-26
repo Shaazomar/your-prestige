@@ -142,7 +142,7 @@ export async function Footer() {
         className="select-none px-6 pt-10 pb-10 sm:px-8 lg:px-14 text-center overflow-hidden border-t border-white/10"
       >
         <span className="block uppercase whitespace-nowrap text-center font-serif text-[clamp(1.75rem,5.2vw,5.2rem)] font-bold tracking-tight text-white/90">
-          {business.name}
+          YOUR PRESTIGE
         </span>
       </div>
     </footer>
