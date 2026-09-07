@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AField, ASelect, ATextArea } from "@/components/admin/FormField";
 import { updateInventory, getInventoryHistory, type InventoryRow } from "./actions";
+import { STOCK_STATUSES, STOCK_STATUS_LABELS, normalizeStockStatus } from "@/lib/inventory-status";
 
 interface HistoryItem {
   id: string;
@@ -11,6 +12,31 @@ interface HistoryItem {
   type: string;
   notes: string | null;
   createdAt: Date;
+}
+
+function safeStatus(value: string): string {
+  try {
+    return normalizeStockStatus(value);
+  } catch {
+    return "OUT_OF_STOCK";
+  }
+}
+
+function formValues(row: InventoryRow) {
+  const inv = row.inventory;
+  return {
+    totalStock: inv?.totalStock ?? 0,
+    availableStock: inv?.availableStock ?? 0,
+    reservedStock: inv?.reservedStock ?? 0,
+    damagedStock: inv?.damagedStock ?? 0,
+    transitStock: inv?.transitStock ?? 0,
+    minimumStock: inv?.minimumStock ?? 0,
+    maximumStock: inv?.maximumStock ?? 0,
+    // Legacy rows may still hold the CMS's old vocabulary (IN_STOCK, …);
+    // normalise so the select has something to match on.
+    stockStatus: inv?.stockStatus ? safeStatus(inv.stockStatus) : "OUT_OF_STOCK",
+    notes: "",
+  };
 }
 
 export function InventoryForm({
@@ -21,23 +47,38 @@ export function InventoryForm({
   onSuccess: () => void;
 }) {
   const inv = row.inventory;
-  const [values, setValues] = useState({
-    totalStock: inv?.totalStock ?? 0,
-    availableStock: inv?.availableStock ?? 0,
-    reservedStock: inv?.reservedStock ?? 0,
-    damagedStock: inv?.damagedStock ?? 0,
-    transitStock: inv?.transitStock ?? 0,
-    minimumStock: inv?.minimumStock ?? 0,
-    maximumStock: inv?.maximumStock ?? 0,
-    stockStatus: inv?.stockStatus ?? "OUT_OF_STOCK",
-    notes: "",
-  });
+  const [values, setValues] = useState(() => formValues(row));
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Approving a block changes the stock behind an open drawer. Without this
+  // resync the form still held the pre-approval numbers and writing them back
+  // silently undid the approval's deduction.
+  const invStamp = inv ? `${inv.id}:${new Date(inv.updatedAt).getTime()}` : "none";
   useEffect(() => {
-    getInventoryHistory(row.id).then((data) => setHistory(data as HistoryItem[]));
-  }, [row.id]);
+    setValues(formValues(row));
+    // Re-seed only when the underlying inventory row actually changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invStamp]);
+
+  useEffect(() => {
+    let active = true;
+    getInventoryHistory(row.id)
+      .then((data) => {
+        if (!active) return;
+        setHistory(data as HistoryItem[]);
+        setHistoryError(null);
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        setHistory([]);
+        setHistoryError(err instanceof Error ? err.message : "Could not load stock history.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [row.id, invStamp]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,6 +101,7 @@ export function InventoryForm({
           <AField
             label="Available Stock"
             type="number"
+            min={0}
             value={values.availableStock}
             onChange={(e) => setValues((v) => ({ ...v, availableStock: Number(e.target.value) }))}
             required
@@ -68,6 +110,7 @@ export function InventoryForm({
           <AField
             label="Reserved Stock"
             type="number"
+            min={0}
             value={values.reservedStock}
             onChange={(e) => setValues((v) => ({ ...v, reservedStock: Number(e.target.value) }))}
             required
@@ -79,6 +122,7 @@ export function InventoryForm({
           <AField
             label="Damaged Stock"
             type="number"
+            min={0}
             value={values.damagedStock}
             onChange={(e) => setValues((v) => ({ ...v, damagedStock: Number(e.target.value) }))}
             required
@@ -86,6 +130,7 @@ export function InventoryForm({
           <AField
             label="Transit Stock"
             type="number"
+            min={0}
             value={values.transitStock}
             onChange={(e) => setValues((v) => ({ ...v, transitStock: Number(e.target.value) }))}
             required
@@ -94,6 +139,7 @@ export function InventoryForm({
           <AField
             label="Total Physical Stock"
             type="number"
+            min={0}
             value={values.totalStock}
             onChange={(e) => setValues((v) => ({ ...v, totalStock: Number(e.target.value) }))}
             required
@@ -105,6 +151,7 @@ export function InventoryForm({
           <AField
             label="Min Stock Warning"
             type="number"
+            min={0}
             value={values.minimumStock}
             onChange={(e) => setValues((v) => ({ ...v, minimumStock: Number(e.target.value) }))}
             required
@@ -112,6 +159,7 @@ export function InventoryForm({
           <AField
             label="Max Capacity"
             type="number"
+            min={0}
             value={values.maximumStock}
             onChange={(e) => setValues((v) => ({ ...v, maximumStock: Number(e.target.value) }))}
             required
@@ -123,10 +171,11 @@ export function InventoryForm({
           value={values.stockStatus}
           onChange={(e) => setValues((v) => ({ ...v, stockStatus: e.target.value }))}
         >
-          <option value="IN_STOCK">IN STOCK</option>
-          <option value="LIMITED_STOCK">LIMITED STOCK</option>
-          <option value="OUT_OF_STOCK">OUT OF STOCK</option>
-          <option value="COMING_SOON">COMING SOON</option>
+          {STOCK_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {STOCK_STATUS_LABELS[status]}
+            </option>
+          ))}
         </ASelect>
 
         <ATextArea
@@ -148,7 +197,9 @@ export function InventoryForm({
       {/* History log */}
       <div className="border-t border-white/8 pt-5">
         <h4 className="text-sm font-medium text-white/70 mb-3">Stock Movement History</h4>
-        {history.length === 0 ? (
+        {historyError ? (
+          <p className="text-xs text-red-300">Stock history unavailable: {historyError}</p>
+        ) : history.length === 0 ? (
           <p className="text-xs text-white/30">No inventory movements recorded yet.</p>
         ) : (
           <div className="space-y-3 max-h-48 overflow-y-auto pr-1">

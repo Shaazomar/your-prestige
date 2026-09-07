@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { GalleryManager } from "./GalleryManager";
 
 export const metadata = { title: "Gallery" };
 
 export default async function GalleryPage() {
+  await requirePermission("gallery", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

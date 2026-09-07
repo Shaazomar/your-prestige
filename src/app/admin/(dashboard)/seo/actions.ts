@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { seoSchema, type SeoInput, redirectSchema, type RedirectInput } from "./schema";
 import type { Prisma, Seo, Redirect } from "@prisma/client";
+import { safePaging } from "@/lib/list-params";
 
 // ————— Per-page SEO —————
 
@@ -15,7 +16,7 @@ export async function listSeoPages(params: ListParams): Promise<ListResult<Seo>>
   const where: Prisma.SeoWhereInput = params.search ? { path: { contains: params.search, mode: "insensitive" } } : {};
 
   const [rows, total] = await Promise.all([
-    prisma.seo.findMany({ where, orderBy: { [params.sortBy === "path" ? "path" : "updatedAt"]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.seo.findMany({ where, orderBy: { [params.sortBy === "path" ? "path" : "updatedAt"]: params.sortDir }, ...safePaging(params.page, params.pageSize) }),
     prisma.seo.count({ where }),
   ]);
   return { rows, total };
@@ -68,7 +69,7 @@ export async function listRedirects(params: ListParams): Promise<ListResult<Redi
   const where: Prisma.RedirectWhereInput = params.search ? { fromPath: { contains: params.search, mode: "insensitive" } } : {};
 
   const [rows, total] = await Promise.all([
-    prisma.redirect.findMany({ where, orderBy: { fromPath: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.redirect.findMany({ where, orderBy: { fromPath: params.sortDir }, ...safePaging(params.page, params.pageSize) }),
     prisma.redirect.count({ where }),
   ]);
   return { rows, total };

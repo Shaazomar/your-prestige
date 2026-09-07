@@ -8,6 +8,7 @@ import { composeDraft, linkSection } from "@/lib/blog/compose";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { postSchema, type PostInput } from "./schema";
 import type { Prisma, Post } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type PostRow = Post & { status: "draft" | "scheduled" | "published" };
 
@@ -42,7 +43,7 @@ export async function listPosts(params: ListParams): Promise<ListResult<PostRow>
   };
 
   const [rows, total] = await Promise.all([
-    prisma.post.findMany({ where, orderBy: { [params.sortBy]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.post.findMany({ where, orderBy: safeOrderBy("Post", params.sortBy, params.sortDir, "createdAt"), ...safePaging(params.page, params.pageSize) }),
     prisma.post.count({ where }),
   ]);
 

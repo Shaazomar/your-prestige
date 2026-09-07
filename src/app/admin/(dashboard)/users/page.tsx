@@ -1,11 +1,13 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { PermissionMatrix } from "@/components/admin/PermissionMatrix";
 import { UsersManager } from "./UsersManager";
 
 export const metadata = { title: "Users & Roles" };
 
 export default async function UsersPage() {
+  await requirePermission("users", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

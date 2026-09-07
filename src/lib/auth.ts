@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
-import type { Prisma, Role, UserStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Direct audit write for auth events — cannot use the shared logAudit()
@@ -19,31 +19,6 @@ async function logAuthEvent(action: "auth.login" | "auth.login_failed", meta: Pr
     });
   } catch (err) {
     console.error("logAuthEvent failed:", err);
-  }
-}
-
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      role: Role;
-      status: UserStatus;
-      name: string;
-      email: string;
-    };
-  }
-  interface User {
-    id: string;
-    role: Role;
-    status: UserStatus;
-  }
-}
-
-declare module "@auth/core/jwt" {
-  interface JWT {
-    id: string;
-    role: Role;
-    status: UserStatus;
   }
 }
 
@@ -67,44 +42,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        let user = null;
-        try {
-          const defaultEmail = (process.env.SEED_ADMIN_EMAIL || "owner@yourprestige.in").toLowerCase();
-          user = await prisma.user.findUnique({ where: { email: defaultEmail } });
-          if (!user) {
-            user = await prisma.user.findFirst({
-              where: {
-                role: { in: ["SUPER_ADMIN", "MANAGER"] },
-                status: "ACTIVE",
-              },
-            });
-          }
-          if (!user) {
-            user = await prisma.user.findFirst({
-              where: { status: "ACTIVE" },
-            });
-          }
-
-          if (user) {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { lastLogin: new Date() },
-            });
-            await logAuthEvent("auth.login", { email: user.email }, user.id);
-          }
-        } catch (dbError) {
-          console.error("Database query failed during authorize, falling back to mock user:", dbError);
+        // A database fault must not become a login. This used to fall through
+        // to a hard-coded `admin-fallback` SUPER_ADMIN whenever the query
+        // threw, so an outage handed full admin rights to anyone holding the
+        // passkey — and every audit row it then wrote pointed at a user id
+        // that does not exist. Fail closed instead.
+        const defaultEmail = (process.env.SEED_ADMIN_EMAIL || "owner@yourprestige.in").toLowerCase();
+        let user = await prisma.user.findUnique({ where: { email: defaultEmail } });
+        if (!user) {
+          user = await prisma.user.findFirst({
+            where: {
+              role: { in: ["SUPER_ADMIN", "MANAGER"] },
+              status: "ACTIVE",
+            },
+          });
+        }
+        if (!user) {
+          user = await prisma.user.findFirst({ where: { status: "ACTIVE" } });
         }
 
         if (!user) {
-          return {
-            id: "admin-fallback",
-            email: "owner@yourprestige.in",
-            name: "Showroom Owner",
-            role: "SUPER_ADMIN" as Role,
-            status: "ACTIVE" as UserStatus,
-          };
+          await logAuthEvent("auth.login_failed", { reason: "no_active_admin_account" });
+          return null;
         }
+
+        // Deactivated and suspended accounts must not be able to sign in even
+        // when they are the only account the lookup finds.
+        if (user.status !== "ACTIVE") {
+          await logAuthEvent("auth.login_failed", { reason: "inactive_account", email: user.email }, user.id);
+          return null;
+        }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() },
+        });
+        await logAuthEvent("auth.login", { email: user.email }, user.id);
 
         return {
           id: user.id,
@@ -116,20 +89,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.status = user.status;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      session.user.status = token.status;
-      return session;
-    },
-  },
 });

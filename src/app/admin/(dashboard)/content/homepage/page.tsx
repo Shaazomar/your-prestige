@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { HomepageManager } from "./HomepageManager";
 
 export const metadata = { title: "Homepage Editor" };
 
 export default async function HomepagePage() {
+  await requirePermission("homepage", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

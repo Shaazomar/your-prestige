@@ -49,8 +49,8 @@ export function WhatsAppManager({ initialSettings, analytics }: Props) {
     try {
       await saveBusinessSettings(settings);
       toast.success("WhatsApp Commerce settings saved successfully! Frontend updated.");
-    } catch {
-      toast.error("Failed to save settings.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save settings");
     } finally {
       setSaving(false);
     }

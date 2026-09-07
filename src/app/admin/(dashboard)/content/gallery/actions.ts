@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { albumSchema, type AlbumInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type AlbumRow = Prisma.GalleryAlbumGetPayload<{ include: { _count: { select: { items: true } } } }>;
 export type GalleryItemRow = Prisma.GalleryItemGetPayload<Record<string, never>>;
@@ -22,9 +23,8 @@ export async function listAlbums(params: ListParams): Promise<ListResult<AlbumRo
     prisma.galleryAlbum.findMany({
       where,
       include: { _count: { select: { items: true } } },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("GalleryAlbum", params.sortBy, params.sortDir, "sortOrder"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.galleryAlbum.count({ where }),
   ]);

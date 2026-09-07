@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import { findMediaUsage, findUnusedMedia } from "@/lib/media/organise";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import type { Prisma, Media, MediaFolder } from "@prisma/client";
+import { safePaging } from "@/lib/list-params";
 
 export type MediaRow = Media & { folder: { name: string } | null };
 
@@ -25,8 +26,7 @@ export async function listMedia(params: ListParams & { folderId?: string | null 
       where,
       include: { folder: { select: { name: true } } },
       orderBy: { [params.sortBy === "filename" ? "filename" : "createdAt"]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.media.count({ where }),
   ]);

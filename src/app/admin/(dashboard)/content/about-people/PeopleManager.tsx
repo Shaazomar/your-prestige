@@ -4,7 +4,8 @@ import { useEffect, useState, useTransition, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import {
-  Plus, Search, ArrowUp, ArrowDown, Trash2, Edit3, Eye, EyeOff, Sparkles, CheckCircle2, XCircle
+  Plus, Search, ArrowUp, ArrowDown, Trash2, Edit3, Eye, EyeOff, Sparkles, CheckCircle2, XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   listAboutPeople,
@@ -26,6 +27,7 @@ interface PeopleManagerProps {
 export function PeopleManager({ permissions }: PeopleManagerProps) {
   const [people, setPeople] = useState<AboutPerson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState("ALL");
   const [editingPerson, setEditingPerson] = useState<AboutPerson | null>(null);
@@ -36,8 +38,17 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
   const fetchList = useCallback(() => {
     setLoading(true);
     listAboutPeople({ search, type: selectedType })
-      .then(setPeople)
-      .catch((err) => console.error(err))
+      .then((rows) => {
+        setPeople(rows);
+        setLoadError(null);
+      })
+      .catch((err: unknown) => {
+        // Never fall through to the empty state on a failed load — an empty
+        // grid reads as "no records yet" and hides a real backend fault.
+        console.error("Failed to load About people:", err);
+        setPeople([]);
+        setLoadError(err instanceof Error ? err.message : "Unknown error");
+      })
       .finally(() => setLoading(false));
   }, [search, selectedType]);
 
@@ -61,8 +72,8 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
         await toggleActiveAboutPerson(person.id);
         toast.success(`Status updated for "${person.name}"`);
         fetchList();
-      } catch {
-        toast.error("Failed to toggle status");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to toggle status");
       }
     });
   }
@@ -75,8 +86,8 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
         await deleteAboutPerson(person.id);
         toast.success(`Deleted "${person.name}"`);
         fetchList();
-      } catch {
-        toast.error("Failed to delete record");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete record");
       }
     });
   }
@@ -86,8 +97,8 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
       try {
         await reorderAboutPeople(person.id, direction);
         fetchList();
-      } catch {
-        toast.error("Failed to reorder");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to reorder");
       }
     });
   }
@@ -153,6 +164,18 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
       {/* Table / Grid */}
       {loading ? (
         <div className="py-16 text-center text-white/40">Loading records...</div>
+      ) : loadError ? (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-12 text-center">
+          <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-red-400/80" />
+          <h3 className="text-lg font-semibold text-red-200">These records could not be loaded</h3>
+          <p className="mx-auto mt-2 max-w-xl break-words font-mono text-xs text-white/45">{loadError}</p>
+          <button
+            onClick={fetchList}
+            className="mt-5 inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:border-gold hover:text-gold"
+          >
+            Retry
+          </button>
+        </div>
       ) : people.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
           <Sparkles className="mx-auto h-8 w-8 text-gold/40 mb-3" />

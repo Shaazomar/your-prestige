@@ -43,8 +43,8 @@ function SeoPagesTab({ permissions }: { permissions: { create: boolean; edit: bo
       await deleteSeoPage(deleting.id);
       toast.success("SEO entry deleted");
       list.refresh();
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setDeleting(null);
     }
@@ -72,6 +72,7 @@ function SeoPagesTab({ permissions }: { permissions: { create: boolean; edit: bo
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={false}
         onTrashToggle={() => {}}
@@ -108,8 +109,8 @@ function RedirectsTab({ permissions }: { permissions: { create: boolean; edit: b
       await deleteRedirect(deleting.id);
       toast.success("Redirect deleted");
       list.refresh();
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setDeleting(null);
     }
@@ -138,6 +139,7 @@ function RedirectsTab({ permissions }: { permissions: { create: boolean; edit: b
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={false}
         onTrashToggle={() => {}}

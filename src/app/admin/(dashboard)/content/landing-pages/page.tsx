@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { LandingPagesManager } from "./LandingPagesManager";
 
 export const metadata = { title: "Landing Pages" };
 
 export default async function LandingPagesPage() {
+  await requirePermission("landingPages", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

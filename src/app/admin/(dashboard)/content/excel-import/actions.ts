@@ -109,12 +109,12 @@ export async function importProductRow(data: ImportRowData) {
         productId: product.id,
         totalStock: data.stock,
         availableStock: data.stock,
-        stockStatus: data.stock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+        stockStatus: data.stock > 0 ? "AVAILABLE" : "OUT_OF_STOCK",
       },
       update: {
         totalStock: data.stock,
         availableStock: data.stock,
-        stockStatus: data.stock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+        stockStatus: data.stock > 0 ? "AVAILABLE" : "OUT_OF_STOCK",
       },
     });
 

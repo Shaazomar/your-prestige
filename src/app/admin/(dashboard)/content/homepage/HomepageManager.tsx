@@ -37,8 +37,8 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
       await saveHomepageDraft(parsed.data);
       setPublished(false);
       toast.success("Draft saved");
-    } catch {
-      toast.error("Save failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
@@ -50,8 +50,8 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
       await publishHomepage();
       setPublished(true);
       toast.success("Homepage published — live now");
-    } catch {
-      toast.error("Publish failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Publish failed");
     } finally {
       setPublishing(false);
     }

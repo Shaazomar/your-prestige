@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { testimonialSchema, type TestimonialInput } from "./schema";
 import type { Prisma, Testimonial } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export async function listTestimonials(params: ListParams): Promise<ListResult<Testimonial>> {
   await requirePermission("testimonials", "view");
@@ -18,7 +19,7 @@ export async function listTestimonials(params: ListParams): Promise<ListResult<T
   };
 
   const [rows, total] = await Promise.all([
-    prisma.testimonial.findMany({ where, orderBy: { [params.sortBy]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.testimonial.findMany({ where, orderBy: safeOrderBy("Testimonial", params.sortBy, params.sortDir, "createdAt"), ...safePaging(params.page, params.pageSize) }),
     prisma.testimonial.count({ where }),
   ]);
   return { rows, total };

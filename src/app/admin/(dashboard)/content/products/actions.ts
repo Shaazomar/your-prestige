@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { productSchema, type ProductInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type ProductRow = Prisma.ProductGetPayload<{
   include: { category: { select: { name: true } }; brand: { select: { name: true } } };
@@ -31,9 +32,8 @@ export async function listProducts(params: ListParams): Promise<ListResult<Produ
     prisma.product.findMany({
       where,
       include: { category: { select: { name: true } }, brand: { select: { name: true } } },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Product", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.product.count({ where }),
   ]);

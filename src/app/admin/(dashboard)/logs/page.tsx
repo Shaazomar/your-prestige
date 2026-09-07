@@ -1,8 +1,11 @@
 import { LogsManager } from "./LogsManager";
+import { requirePermission } from "@/lib/rbac";
 
 export const metadata = { title: "Audit Logs" };
 
-export default function LogsPage() {
+export default async function LogsPage() {
+  await requirePermission("logs", "view");
+
   return (
     <div className="space-y-6">
       <div>

@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { showroomSchema, type ShowroomInput } from "./schema";
 import type { Prisma, Showroom } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type ShowroomRow = Showroom;
 
@@ -30,9 +31,8 @@ export async function listShowrooms(params: ListParams): Promise<ListResult<Show
   const [rows, total] = await Promise.all([
     prisma.showroom.findMany({
       where,
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Showroom", params.sortBy, params.sortDir, "sortOrder"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.showroom.count({ where }),
   ]);

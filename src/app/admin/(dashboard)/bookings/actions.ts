@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { bookingSchema, type BookingInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type BookingRow = Prisma.BookingGetPayload<{
   include: { assignedConsultant: { select: { id: true; name: true } } };
@@ -27,9 +28,8 @@ export async function listBookings(params: ListParams): Promise<ListResult<Booki
     prisma.booking.findMany({
       where,
       include: { assignedConsultant: { select: { id: true, name: true } } },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Booking", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.booking.count({ where }),
   ]);

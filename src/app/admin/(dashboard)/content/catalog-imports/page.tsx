@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { ImportsManager } from "./ImportsManager";
 
 export const metadata = { title: "Catalog Imports" };
@@ -8,6 +8,8 @@ export const metadata = { title: "Catalog Imports" };
 export const maxDuration = 60;
 
 export default async function CatalogImportsPage() {
+  await requirePermission("catalogImports", "view");
+
   const session = await auth();
   const role = session!.user.role;
 
