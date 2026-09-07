@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { parseVideoUrl } from "./HeroVideo";
 
 interface OrganicVideoShapeProps {
@@ -20,7 +19,6 @@ export function OrganicVideoShape({
   videoSrc,
   children,
 }: OrganicVideoShapeProps) {
-  const [videoReady, setVideoReady] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [imgSrc, setImgSrc] = useState(posterImage || DEFAULT_FALLBACK_IMAGE);
 
@@ -30,12 +28,6 @@ export function OrganicVideoShape({
   useEffect(() => {
     setImgSrc(posterImage || DEFAULT_FALLBACK_IMAGE);
   }, [posterImage]);
-
-  useEffect(() => {
-    if (videoInfo.type === "native" && videoRef.current && videoRef.current.readyState >= 3) {
-      setVideoReady(true);
-    }
-  }, [videoInfo.type]);
 
   const showVideo = videoInfo.type !== "none" && !videoError;
 
@@ -78,19 +70,18 @@ export function OrganicVideoShape({
           WebkitClipPath: "url(#hero-organic-clip)",
         }}
       >
-        {/* Poster Image (shown immediately before video loads or when no video is set) */}
-        <Image
-          src={imgSrc}
-          alt="Luxury architectural tile showroom preview"
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          onError={() => setImgSrc(DEFAULT_FALLBACK_IMAGE)}
-          className={cn(
-            "object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            showVideo && videoReady ? "opacity-0" : "opacity-100"
-          )}
-        />
+        {/* Poster Image (shown only when no video is set or video fails to load) */}
+        {!showVideo && (
+          <Image
+            src={imgSrc}
+            alt="Luxury architectural tile showroom preview"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            onError={() => setImgSrc(DEFAULT_FALLBACK_IMAGE)}
+            className="object-cover object-center"
+          />
+        )}
 
         {/* Render Native Video Source */}
         {videoInfo.type === "native" && (
@@ -101,14 +92,9 @@ export function OrganicVideoShape({
             muted
             loop
             playsInline
-            preload="metadata"
-            onCanPlay={() => setVideoReady(true)}
-            onLoadedData={() => setVideoReady(true)}
+            preload="auto"
             onError={() => setVideoError(true)}
-            className={cn(
-              "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              videoReady ? "opacity-100" : "opacity-0"
-            )}
+            className="absolute inset-0 w-full h-full object-cover object-center"
           />
         )}
 
@@ -119,7 +105,6 @@ export function OrganicVideoShape({
             title="Background Video"
             className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-150 border-0"
             allow="autoplay; encrypted-media"
-            onLoad={() => setVideoReady(true)}
           />
         )}
 

@@ -9,6 +9,7 @@ import { Testimonials } from "@/components/site/home/Testimonials";
 import { ShowroomsSection } from "@/components/site/home/ShowroomsSection";
 import { CtaSection } from "@/components/site/home/CtaSection";
 import { getPublishedHomepageHero, getHomepageDraft } from "@/app/admin/(dashboard)/content/homepage/actions";
+import { getCatalogProducts } from "@/lib/products";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,8 @@ export default async function HomePage({
     hero = await getPublishedHomepageHero();
   }
 
+  const featuredProducts = await getCatalogProducts({ limit: 12 });
+
   return (
     <main className="min-h-screen bg-white">
       {preview === "1" && (
@@ -37,7 +40,7 @@ export default async function HomePage({
       )}
       <Hero data={hero} />
       <Collections />
-      <FeaturedProductsSection />
+      <FeaturedProductsSection products={featuredProducts} />
       <StatsSection />
       <ApplicationsSection />
       <AboutEditorial data={hero} />

@@ -92,7 +92,6 @@ export default async function ShowroomDetailPage({
               muted
               loop
               playsInline
-              poster={s.heroImage ?? undefined}
               className="h-full w-full object-cover"
             >
               <source src={s.video} type="video/mp4" />
