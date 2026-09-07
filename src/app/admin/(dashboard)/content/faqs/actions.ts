@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { faqSchema, type FaqInput } from "./schema";
 import type { Prisma, Faq } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export async function listFaqs(params: ListParams): Promise<ListResult<Faq>> {
   await requirePermission("faqs", "view");
@@ -16,7 +17,7 @@ export async function listFaqs(params: ListParams): Promise<ListResult<Faq>> {
   };
 
   const [rows, total] = await Promise.all([
-    prisma.faq.findMany({ where, orderBy: { [params.sortBy]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.faq.findMany({ where, orderBy: safeOrderBy("Faq", params.sortBy, params.sortDir, "sortOrder"), ...safePaging(params.page, params.pageSize) }),
     prisma.faq.count({ where }),
   ]);
   return { rows, total };

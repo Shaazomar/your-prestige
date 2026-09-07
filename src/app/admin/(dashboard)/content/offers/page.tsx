@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { OffersManager } from "./OffersManager";
 
 export const metadata = { title: "Offers" };
 
 export default async function OffersPage() {
+  await requirePermission("offers", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

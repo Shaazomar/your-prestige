@@ -9,7 +9,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
 import { InaugurationSection } from "@/components/site/about/InaugurationSection";
 import { PeopleSection } from "@/components/site/about/PeopleSection";
-import { seedInitialInauguration } from "@/app/admin/(dashboard)/content/about-people/actions";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -18,9 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  // Ensure default Inauguration record exists
-  await seedInitialInauguration();
-
+  // Read-only. This page used to call the About-people seed action on every
+  // request, which wrote to the database during render and exposed that
+  // action to unauthenticated callers. People are managed in the CMS.
   const allPeople = await prisma.aboutPerson.findMany({
     where: { active: true, deletedAt: null },
     orderBy: [

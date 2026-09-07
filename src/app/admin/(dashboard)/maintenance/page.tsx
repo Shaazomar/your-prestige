@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { MaintenanceManager } from "./MaintenanceManager";
 
 export const metadata = { title: "Maintenance" };
 
 export default async function MaintenancePage() {
+  await requirePermission("maintenance", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

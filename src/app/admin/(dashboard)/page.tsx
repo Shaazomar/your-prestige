@@ -4,10 +4,13 @@ import {
   MessageSquare, Box, Eye, AlertTriangle, Layers, ArrowUpRight
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
+  await requirePermission("dashboard", "view");
+
   // Query all stats
   const [
     totalProducts,

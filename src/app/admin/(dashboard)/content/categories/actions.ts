@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { categorySchema, type CategoryInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type CategoryRow = Prisma.CategoryGetPayload<{
   include: { parent: { select: { name: true } }; _count: { select: { products: true; children: true } } };
@@ -30,9 +31,8 @@ export async function listCategories(params: ListParams): Promise<ListResult<Cat
     prisma.category.findMany({
       where,
       include: { parent: { select: { name: true } }, _count: { select: { products: true, children: true } } },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Category", params.sortBy, params.sortDir, "sortOrder"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.category.count({ where }),
   ]);

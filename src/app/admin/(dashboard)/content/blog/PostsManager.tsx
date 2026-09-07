@@ -99,6 +99,7 @@ export function PostsManager({ permissions }: { permissions: { create: boolean; 
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={list.trash}
         onTrashToggle={list.setTrash}

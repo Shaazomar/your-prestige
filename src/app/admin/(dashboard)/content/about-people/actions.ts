@@ -1,12 +1,11 @@
 "use server";
 
-import fs from "fs";
-import path from "path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { uploadBufferToS3, deleteS3Object } from "@/lib/s3";
+import { deleteS3Object } from "@/lib/s3";
+import { ensureInaugurationRecord } from "@/lib/about-people-seed";
 
 import { Prisma } from "@prisma/client";
 
@@ -60,79 +59,40 @@ export async function listAboutPeople(params?: {
     ],
   });
 
-  // If table is completely empty, seed the initial Inauguration entry for U. T. Khader
-  if (people.length === 0) {
-    await seedInitialInauguration();
-    return prisma.aboutPerson.findMany({
-      where,
-      orderBy: [
-        { displayOrder: "asc" },
-        { createdAt: "asc" },
-      ],
-    });
+  // Seed the launch inauguration record on a genuinely empty table only.
+  // Keying this off an empty *result* meant a search that matched nothing
+  // re-ran the seed, which then overwrote the admin's edits to that person.
+  const isUnfiltered = !params?.search?.trim() && (!params?.type || params.type === "ALL") && !params?.activeOnly;
+  if (people.length === 0 && isUnfiltered) {
+    const seeded = await ensureInaugurationRecord();
+    if (seeded) {
+      revalidatePath("/about");
+      return [seeded];
+    }
   }
 
   return people;
 }
 
-export async function seedInitialInauguration() {
-  try {
-    const existing = await prisma.aboutPerson.findFirst({
-      where: {
-        OR: [
-          { name: "U. T. Khader", deletedAt: null },
-          { type: "INAUGURATION", deletedAt: null },
-          { eyebrow: "INAUGURATED BY", deletedAt: null }
-        ]
-      },
+/**
+ * Explicit, permission-checked seed of the launch inauguration record.
+ * Exposed so an admin can restore it from the CMS; no longer reachable
+ * unauthenticated the way the previous exported action was.
+ */
+export async function seedInaugurationRecord() {
+  await requirePermission("aboutPeople", "create");
+  const seeded = await ensureInaugurationRecord();
+  if (seeded) {
+    await logAudit({
+      action: "aboutPerson.seed_inauguration",
+      entity: "AboutPerson",
+      entityId: seeded.id,
+      newValue: seeded,
     });
-
-    if (existing) {
-      const updated = await prisma.aboutPerson.update({
-        where: { id: existing.id },
-        data: {
-          name: "U. T. Khader",
-          eyebrow: "INAUGURATED BY",
-          designation: "Minister of Health and Family Welfare of Karnataka",
-          type: "INAUGURATION",
-          imageAlt: "U. T. Khader at Prestige Tiles inauguration",
-        },
-      });
-      return updated;
-    }
-
-    const localImagePath = path.join(process.cwd(), "public", "about", "imaugratedbyUT.jpeg");
-    let imageUrl = "/about/imaugratedbyUT.jpeg";
-    let imageKey: string | null = null;
-
-    if (fs.existsSync(localImagePath)) {
-      const buffer = fs.readFileSync(localImagePath);
-      const s3Res = await uploadBufferToS3(buffer, "imaugratedbyUT.jpeg", "image/jpeg", "about");
-      imageUrl = s3Res.url;
-      imageKey = s3Res.key;
-    }
-
-    const seeded = await prisma.aboutPerson.create({
-      data: {
-        name: "U. T. Khader",
-        designation: "Minister of Health and Family Welfare of Karnataka",
-        description: null,
-        eyebrow: "INAUGURATED BY",
-        image: imageUrl,
-        imageKey: imageKey,
-        imageAlt: "U. T. Khader at Prestige Tiles inauguration",
-        type: "INAUGURATION",
-        displayOrder: 0,
-        active: true,
-      },
-    });
-
     revalidatePath("/about");
-    return seeded;
-  } catch (err) {
-    console.error("Failed to seed initial inauguration record:", err);
-    return null;
+    revalidatePath("/admin/content/about-people");
   }
+  return seeded;
 }
 
 export async function getAboutPerson(id: string) {

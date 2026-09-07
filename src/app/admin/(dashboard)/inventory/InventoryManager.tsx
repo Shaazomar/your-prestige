@@ -12,6 +12,7 @@ import {
   rejectInventoryBlock,
   type InventoryRow,
 } from "./actions";
+import { toast } from "sonner";
 import { Check, X, Lock, Plus } from "lucide-react";
 
 interface InventoryManagerProps {
@@ -21,7 +22,11 @@ interface InventoryManagerProps {
 export function InventoryManager({ canEdit }: InventoryManagerProps) {
   const list = useAdminList<InventoryRow>(listInventory, { initialSortBy: "name", initialSortDir: "asc" });
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<InventoryRow | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // Read the open row back out of the freshly-fetched list rather than
+  // holding a snapshot — the drawer used to keep showing pre-mutation
+  // quantities and block statuses until it was closed and reopened.
+  const editing = editingId ? list.rows.find((r) => r.id === editingId) ?? null : null;
 
   // New Block Form state
   const [showBlockForm, setShowBlockForm] = useState(false);
@@ -31,13 +36,14 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
   const [actionLoading, setActionLoading] = useState(false);
 
   function openEdit(row: InventoryRow) {
-    setEditing(row);
+    setEditingId(row.id);
     setShowBlockForm(false);
     setDrawerOpen(true);
   }
 
   function onFormSuccess() {
     setDrawerOpen(false);
+    setEditingId(null);
     list.refresh();
   }
 
@@ -55,9 +61,10 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       setBlockedBy("");
       setBlockRemarks("");
       setShowBlockForm(false);
+      toast.success("Block request submitted for approval");
       list.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to create block");
+      toast.error(err instanceof Error ? err.message : "Failed to create block");
     } finally {
       setActionLoading(false);
     }
@@ -67,9 +74,10 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
     setActionLoading(true);
     try {
       await approveInventoryBlock(blockId);
+      toast.success("Block approved — stock moved to reserved");
       list.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to approve block");
+      toast.error(err instanceof Error ? err.message : "Failed to approve block");
     } finally {
       setActionLoading(false);
     }
@@ -79,9 +87,10 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
     setActionLoading(true);
     try {
       await rejectInventoryBlock(blockId);
+      toast.success("Block rejected");
       list.refresh();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to reject block");
+      toast.error(err instanceof Error ? err.message : "Failed to reject block");
     } finally {
       setActionLoading(false);
     }
@@ -96,7 +105,7 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs font-bold text-amber-400">
-          {row.sku || row.productCode || `PT-${row.id.substring(0, 4).toUpperCase()}`}
+          {row.sku || row.productCode || "—"}
         </span>
       ),
     },
@@ -105,13 +114,13 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       label: "Size",
       render: (row) => {
         const sizes = Array.isArray(row.sizes) ? (row.sizes as string[]) : [];
-        return <span className="text-xs text-white/80 font-medium">{row.size || sizes[0] || "600×1200"}</span>;
+        return <span className="text-xs text-white/80 font-medium">{row.size || sizes[0] || "—"}</span>;
       },
     },
     {
       key: "brand",
       label: "Brand",
-      render: (row) => <span className="text-xs text-white/70 font-semibold">{row.brand?.name || "Prestige"}</span>,
+      render: (row) => <span className="text-xs text-white/70 font-semibold">{row.brand?.name || "—"}</span>,
     },
     {
       key: "name",
@@ -120,29 +129,35 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       render: (row) => (
         <div>
           <p className="text-sm font-semibold text-white">{row.name}</p>
-          <p className="text-[10px] text-white/40">{row.collection || "Standard Range"}</p>
+          <p className="text-[10px] text-white/40">{row.collection || "—"}</p>
         </div>
       ),
     },
     {
       key: "available",
       label: "Stock Available",
-      render: (row) => (
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-sm font-bold text-emerald-400">
-            {row.inventory?.availableStock ?? 450} Boxes
-          </span>
-        </div>
-      ),
+      render: (row) =>
+        row.inventory ? (
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-sm font-bold text-emerald-400">
+              {row.inventory.availableStock} Boxes
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-white/25">Not tracked</span>
+        ),
     },
     {
       key: "transit",
       label: "In-Transit",
-      render: (row) => (
-        <span className="font-mono text-xs text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-          {row.inventory?.transitStock ?? 120} Boxes
-        </span>
-      ),
+      render: (row) =>
+        row.inventory ? (
+          <span className="font-mono text-xs text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+            {row.inventory.transitStock} Boxes
+          </span>
+        ) : (
+          <span className="text-xs text-white/25">—</span>
+        ),
     },
     {
       key: "blockedBy",
@@ -212,6 +227,7 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={false}
         onTrashToggle={() => {}}
@@ -223,7 +239,10 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
       {/* Inventory Detail & Block Workflow Drawer */}
       <Drawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditingId(null);
+        }}
         title={editing ? `Internal Inventory — ${editing.name}` : "Inventory Details"}
         description={editing ? `Product No: ${editing.sku || editing.productCode || editing.id}` : ""}
       >
@@ -234,14 +253,14 @@ export function InventoryManager({ canEdit }: InventoryManagerProps) {
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Available</p>
                 <p className="mt-1 font-mono text-xl font-bold text-emerald-300">
-                  {editing.inventory?.availableStock ?? 450}
+                  {editing.inventory?.availableStock ?? 0}
                 </p>
                 <p className="text-[9px] text-emerald-400/70">Boxes</p>
               </div>
               <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400">In Transit</p>
                 <p className="mt-1 font-mono text-xl font-bold text-blue-300">
-                  {editing.inventory?.transitStock ?? 120}
+                  {editing.inventory?.transitStock ?? 0}
                 </p>
                 <p className="text-[9px] text-blue-400/70">Boxes</p>
               </div>

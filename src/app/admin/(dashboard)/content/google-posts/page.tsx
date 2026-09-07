@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { GooglePostsManager } from "./GooglePostsManager";
 
 export const metadata = { title: "Google Business Posts" };
 
 export default async function GooglePostsPage() {
+  await requirePermission("showrooms", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

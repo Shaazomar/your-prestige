@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { googlePostSchema, type GooglePostInput } from "./schema";
 import type { GooglePost, Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type GooglePostRow = GooglePost;
 
@@ -33,9 +34,8 @@ export async function listGooglePosts(params: ListParams): Promise<ListResult<Go
   const [rows, total] = await Promise.all([
     prisma.googlePost.findMany({
       where,
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("GooglePost", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.googlePost.count({ where }),
   ]);

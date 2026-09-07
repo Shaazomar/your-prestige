@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import type { AuditLog, Prisma } from "@prisma/client";
+import { safePaging } from "@/lib/list-params";
 
 export type AuditLogRow = AuditLog & { user: { name: string; email: string } | null };
 
@@ -33,8 +34,7 @@ export async function listAuditLogs(
       where,
       include: { user: { select: { name: true, email: true } } },
       orderBy: { createdAt: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.auditLog.count({ where }),
   ]);

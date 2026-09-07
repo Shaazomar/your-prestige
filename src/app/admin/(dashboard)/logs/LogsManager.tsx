@@ -11,7 +11,7 @@ export function LogsManager() {
   const [entityFilter, setEntityFilter] = useState("");
   const list = useAdminList<AuditLogRow>(
     (params) => listAuditLogs({ ...params, entity: entityFilter || undefined }),
-    { initialSortBy: "createdAt", initialSortDir: "desc" }
+    { initialSortBy: "createdAt", initialSortDir: "desc", deps: [entityFilter] }
   );
   const [entities, setEntities] = useState<string[]>([]);
   const [viewing, setViewing] = useState<AuditLogRow | null>(null);
@@ -61,6 +61,7 @@ export function LogsManager() {
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={false}
         onTrashToggle={() => {}}

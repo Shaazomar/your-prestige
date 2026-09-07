@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Images, Package, XCircle } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { ImportRunner } from "../ImportRunner";
 import { ReviewGrid } from "../ReviewGrid";
@@ -18,6 +18,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ImportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission("catalogImports", "view");
+
   const { id } = await params;
   const session = await auth();
   const role = session!.user.role;

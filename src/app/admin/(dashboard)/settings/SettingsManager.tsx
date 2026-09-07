@@ -29,8 +29,8 @@ export function SettingsManager({ canEdit }: { canEdit: boolean }) {
     try {
       await saveBusinessSettings(business);
       toast.success("Settings saved successfully");
-    } catch {
-      toast.error("Save failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSavingBusiness(false);
     }
@@ -43,8 +43,8 @@ export function SettingsManager({ canEdit }: { canEdit: boolean }) {
     try {
       await saveThemeSettings(theme);
       toast.success("Theme saved");
-    } catch {
-      toast.error("Save failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSavingTheme(false);
     }

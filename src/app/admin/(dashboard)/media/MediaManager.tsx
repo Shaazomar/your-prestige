@@ -22,7 +22,7 @@ export function MediaManager({ permissions }: { permissions: { create: boolean; 
   const [folderId, setFolderId] = useState<string | null | undefined>(undefined);
   const list = useAdminList<MediaRow>(
     (params) => listMedia({ ...params, folderId }),
-    { pageSize: 24, initialSortBy: "createdAt" }
+    { pageSize: 24, initialSortBy: "createdAt", deps: [folderId] }
   );
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -73,8 +73,8 @@ export function MediaManager({ permissions }: { permissions: { create: boolean; 
       await softDeleteMedia(deleting.id);
       toast.success("Moved to trash");
       list.refresh();
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     } finally {
       setDeleting(null);
     }

@@ -50,8 +50,8 @@ export function UsersManager({ currentUserId, permissions }: { currentUserId: st
     try {
       await resendInvite(row.id);
       toast.success(`Invite resent to ${row.email}`);
-    } catch {
-      toast.error("Failed to resend invite");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resend invite");
     }
   }
 
@@ -59,8 +59,8 @@ export function UsersManager({ currentUserId, permissions }: { currentUserId: st
     try {
       await sendPasswordReset(row.id);
       toast.success(`Password reset link sent to ${row.email}`);
-    } catch {
-      toast.error("Failed to send reset link");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send reset link");
     }
   }
 
@@ -97,6 +97,7 @@ export function UsersManager({ currentUserId, permissions }: { currentUserId: st
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={false}
         onTrashToggle={() => {}}

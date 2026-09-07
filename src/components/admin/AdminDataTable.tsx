@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import {
   Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight,
-  Trash2, RotateCcw, Loader2, Inbox,
+  Trash2, RotateCcw, Loader2, Inbox, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +29,8 @@ interface AdminDataTableProps<T> {
   onSort: (column: string) => void;
   loading: boolean;
   initialLoad: boolean;
+  /** Message from a failed list query — rendered instead of the empty state. */
+  error?: string | null;
   getId: (row: T) => string;
   trash: boolean;
   onTrashToggle: (trash: boolean) => void;
@@ -56,6 +58,7 @@ export function AdminDataTable<T>({
   onSort,
   loading,
   initialLoad,
+  error,
   getId,
   trash,
   onTrashToggle,
@@ -151,6 +154,16 @@ export function AdminDataTable<T>({
               <tr>
                 <td colSpan={columns.length + 1} className="px-4 py-16 text-center">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin text-white/30" />
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={columns.length + 1} className="px-4 py-16 text-center">
+                  <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-red-400/70" />
+                  <p className="text-sm font-medium text-red-300">This list could not be loaded.</p>
+                  <p className="mx-auto mt-2 max-w-lg break-words font-mono text-xs text-white/40">
+                    {error}
+                  </p>
                 </td>
               </tr>
             ) : rows.length === 0 ? (

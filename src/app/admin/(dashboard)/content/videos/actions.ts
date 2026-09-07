@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { videoSchema, type VideoInput } from "./schema";
 import type { Prisma, Video } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export async function listVideos(params: ListParams): Promise<ListResult<Video>> {
   await requirePermission("videos", "view");
@@ -16,7 +17,7 @@ export async function listVideos(params: ListParams): Promise<ListResult<Video>>
   };
 
   const [rows, total] = await Promise.all([
-    prisma.video.findMany({ where, orderBy: { [params.sortBy]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.video.findMany({ where, orderBy: safeOrderBy("Video", params.sortBy, params.sortDir, "sortOrder"), ...safePaging(params.page, params.pageSize) }),
     prisma.video.count({ where }),
   ]);
   return { rows, total };
