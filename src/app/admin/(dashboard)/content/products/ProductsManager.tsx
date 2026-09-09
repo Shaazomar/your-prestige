@@ -84,9 +84,9 @@ export function ProductsManager({ permissions }: { permissions: { create: boolea
       sortable: true,
       render: (row) => (
         <div className="flex items-center gap-3">
-          {row.lifestyleImage ? (
+          {row.thumbUrl ? (
             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white/5">
-              <Image src={row.lifestyleImage} alt="" fill sizes="44px" className="object-cover" />
+              <Image src={row.thumbUrl} alt="" fill sizes="44px" className="object-cover" />
             </div>
           ) : (
             <div className="h-11 w-11 shrink-0 rounded-lg bg-white/5" />
