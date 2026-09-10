@@ -24,11 +24,12 @@ export async function uploadMediaClient(
     if (presignedRes.ok) {
       const s3Data = await presignedRes.json();
       if (s3Data.directUpload && s3Data.uploadUrl) {
+        const contentType = s3Data.contentType || file.type || "application/octet-stream";
         // Step 2: Direct browser PUT to S3 bucket
         const putRes = await fetch(s3Data.uploadUrl, {
           method: "PUT",
           headers: {
-            "Content-Type": file.type || "application/octet-stream",
+            "Content-Type": contentType,
           },
           body: file,
         });

@@ -30,12 +30,21 @@ const cloudinaryConfigured = !!(
   process.env.CLOUDINARY_API_SECRET
 );
 
-const s3Configured = !!(
-  process.env.AWS_ACCESS_KEY_ID &&
-  process.env.AWS_SECRET_ACCESS_KEY &&
-  process.env.AWS_ACCESS_KEY_ID.trim() !== "" &&
-  !process.env.AWS_ACCESS_KEY_ID.includes("your_")
-);
+const accessKeyId = (
+  process.env.AWS_ACCESS_KEY_ID ||
+  process.env.AWS_S3_ACCESS_KEY_ID ||
+  process.env.S3_ACCESS_KEY_ID ||
+  ""
+).trim();
+
+const secretAccessKey = (
+  process.env.AWS_SECRET_ACCESS_KEY ||
+  process.env.AWS_S3_SECRET_ACCESS_KEY ||
+  process.env.S3_SECRET_ACCESS_KEY ||
+  ""
+).trim();
+
+const s3Configured = !!(accessKeyId && secretAccessKey && !accessKeyId.includes("your_"));
 
 const ROOT_FOLDER = "prestige";
 
@@ -93,8 +102,8 @@ async function uploadToS3(file: File, opts?: UploadOptions): Promise<UploadResul
   const client = new S3Client({
     region,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      accessKeyId,
+      secretAccessKey,
     },
   });
 
@@ -183,12 +192,12 @@ export const isCloudinaryConfigured = cloudinaryConfigured;
  * 100-page run fails at upload time with a clear message, rather than 40 pages in.
  */
 export function canUploadMedia(): { ok: boolean; reason?: string } {
-  if (cloudinaryConfigured) return { ok: true };
+  if (s3Configured || cloudinaryConfigured) return { ok: true };
   if (process.env.VERCEL) {
     return {
       ok: false,
       reason:
-        "Media storage is not configured. Catalog imports write hundreds of images, which needs Cloudinary credentials (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) in production.",
+        "Media storage is not configured. Catalog imports and file uploads require AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production.",
     };
   }
   return { ok: true };
