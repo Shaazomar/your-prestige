@@ -17,6 +17,7 @@ import { ShowroomJsonLd } from "@/components/site/JsonLd";
 import { getShowrooms, getShowroomBySlug, formatAddress, directionsHref } from "@/lib/showrooms";
 import { telHref, waHref } from "@/lib/business";
 import { siteUrl } from "@/lib/site-config";
+import { resolveImageRef } from "@/lib/s3-url";
 
 export const revalidate = 300;
 
@@ -64,7 +65,13 @@ export default async function ShowroomDetailPage({
   const featuredProducts = s.featuredProductIds.length
     ? await prisma.product.findMany({
         where: { id: { in: s.featuredProductIds }, published: true, deletedAt: null },
-        select: { slug: true, name: true, collection: true, lifestyleImage: true, category: { select: { slug: true } } },
+        select: {
+          slug: true, name: true, collection: true, lifestyleImage: true,
+          // Depot-imported products carry their photography as an S3 object
+          // key, not a URL — without these the strip rendered no image at all.
+          image_key: true, thumbnail_key: true,
+          category: { select: { slug: true } },
+        },
       })
     : [];
 
@@ -345,7 +352,12 @@ export default async function ShowroomDetailPage({
               className="mb-14"
             />
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((p: { slug: string; name: string; collection?: string | null; lifestyleImage?: string | null; category?: { slug: string } | null }) => (
+              {featured.map((p: { slug: string; name: string; collection?: string | null; lifestyleImage?: string | null; image_key?: string | null; thumbnail_key?: string | null; category?: { slug: string } | null }) => {
+                const image =
+                  resolveImageRef(p.lifestyleImage) ||
+                  resolveImageRef(p.image_key) ||
+                  resolveImageRef(p.thumbnail_key);
+                return (
                 <Link
 
                   key={p.slug}
@@ -353,9 +365,9 @@ export default async function ShowroomDetailPage({
                   className="group block"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-stone-100">
-                    {p.lifestyleImage && (
+                    {image && (
                       <Image
-                        src={p.lifestyleImage}
+                        src={image}
                         alt={p.name}
                         fill
                         sizes="(max-width: 640px) 100vw, 25vw"
@@ -368,7 +380,8 @@ export default async function ShowroomDetailPage({
                   </p>
                   {p.collection && <p className="text-sm text-stone-400">{p.collection}</p>}
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </Container>
         </section>

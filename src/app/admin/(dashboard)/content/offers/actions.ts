@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { offerSchema, type OfferInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type OfferRow = Prisma.OfferGetPayload<{
   include: {
@@ -31,9 +32,8 @@ export async function listOffers(params: ListParams): Promise<ListResult<OfferRo
         collection: { select: { name: true } },
         category: { select: { name: true } },
       },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Offer", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.offer.count({ where }),
   ]);

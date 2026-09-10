@@ -16,6 +16,7 @@ import {
 } from "./schema";
 import type { ImportProgress } from "@/lib/import/types";
 import type { CatalogImport, Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type ImportRow = CatalogImport;
 export type ExtractedRow = Prisma.ExtractedProductGetPayload<{
@@ -42,9 +43,8 @@ export async function listImports(params: ListParams): Promise<ListResult<Import
   const [rows, total] = await Promise.all([
     prisma.catalogImport.findMany({
       where,
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("CatalogImport", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.catalogImport.count({ where }),
   ]);

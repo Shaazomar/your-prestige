@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { SettingsManager } from "./SettingsManager";
 
 export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
+  await requirePermission("settings", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

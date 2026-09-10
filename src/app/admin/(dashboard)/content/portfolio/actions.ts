@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { projectSchema, type ProjectInput } from "./schema";
 import type { Prisma, Project } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type ProjectRow = Project;
 
@@ -28,9 +29,8 @@ export async function listProjects(params: ListParams): Promise<ListResult<Proje
   const [rows, total] = await Promise.all([
     prisma.project.findMany({
       where,
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Project", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.project.count({ where }),
   ]);

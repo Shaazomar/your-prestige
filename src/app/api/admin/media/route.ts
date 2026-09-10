@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { uploadFile } from "@/lib/storage";
-
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+import { assertAllowedUpload, MAX_UPLOAD_BYTES, UploadValidationError } from "@/lib/upload-validation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,9 +14,7 @@ export async function POST(req: NextRequest) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File exceeds 15MB limit" }, { status: 413 });
-    }
+    assertAllowedUpload(file.name, file.type, file.size, { maxBytes: MAX_UPLOAD_BYTES });
 
     const result = await uploadFile(file);
 
@@ -38,8 +35,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: media.id, url: media.url }, { status: 201 });
   } catch (err) {
+    if (err instanceof UploadValidationError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Upload failed";
     const status = message === "UNAUTHENTICATED" ? 401 : message === "FORBIDDEN" ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    if (status === 500) console.error("media upload failed:", err);
+    return NextResponse.json(
+      { error: status === 500 ? "Upload failed. Check the server log." : message },
+      { status }
+    );
   }
 }

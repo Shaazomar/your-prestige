@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { inviteUserSchema, type InviteUserInput, editUserSchema, type EditUserInput } from "./schema";
 import type { Prisma, User } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type UserRow = Omit<User, "password" | "inviteToken" | "resetToken">;
 
@@ -27,7 +28,7 @@ export async function listUsers(params: ListParams): Promise<ListResult<UserRow>
     : {};
 
   const [rows, total] = await Promise.all([
-    prisma.user.findMany({ where, orderBy: { [params.sortBy]: params.sortDir }, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),
+    prisma.user.findMany({ where, orderBy: safeOrderBy("User", params.sortBy, params.sortDir, "createdAt"), ...safePaging(params.page, params.pageSize) }),
     prisma.user.count({ where }),
   ]);
 

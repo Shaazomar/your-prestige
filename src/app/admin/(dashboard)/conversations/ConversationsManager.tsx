@@ -49,8 +49,8 @@ export function ConversationsManager({ permissions }: { permissions: { edit: boo
       a.download = `conversations-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      toast.error("Export failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
     } finally {
       setExporting(false);
     }
@@ -105,6 +105,7 @@ export function ConversationsManager({ permissions }: { permissions: { edit: boo
         onSort={list.toggleSort}
         loading={list.loading}
         initialLoad={list.initialLoad}
+        error={list.error}
         getId={(row) => row.id}
         trash={list.trash}
         onTrashToggle={list.setTrash}

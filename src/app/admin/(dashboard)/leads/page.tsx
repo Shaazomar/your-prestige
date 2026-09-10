@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { LeadsKanban, type LeadItem } from "@/components/admin/LeadsKanban";
+import { requirePermission } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Leads" };
 
 export default async function AdminLeadsPage() {
+  await requirePermission("leads", "view");
+
   const leads = await prisma.lead.findMany({
     orderBy: { createdAt: "desc" },
     take: 200,

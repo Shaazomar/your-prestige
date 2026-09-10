@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { SeoManager } from "./SeoManager";
 
 export const metadata = { title: "SEO Studio" };
 
 export default async function SeoPage() {
+  await requirePermission("seo", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

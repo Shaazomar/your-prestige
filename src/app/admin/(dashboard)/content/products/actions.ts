@@ -6,10 +6,19 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { productSchema, type ProductInput } from "./schema";
 import type { Prisma } from "@prisma/client";
+import { safeOrderBy, safePaging } from "@/lib/list-params";
+import { resolveImageRef } from "@/lib/s3-url";
 
 export type ProductRow = Prisma.ProductGetPayload<{
   include: { category: { select: { name: true } }; brand: { select: { name: true } } };
-}>;
+}> & {
+  /**
+   * List thumbnail, resolved server-side. Depot-imported products hold their
+   * photography as an S3 object key in `image_key`, so a row rendered straight
+   * from `lifestyleImage` showed an empty grey square in the CMS.
+   */
+  thumbUrl: string | null;
+};
 
 export async function listProducts(params: ListParams): Promise<ListResult<ProductRow>> {
   await requirePermission("products", "view");
@@ -31,14 +40,22 @@ export async function listProducts(params: ListParams): Promise<ListResult<Produ
     prisma.product.findMany({
       where,
       include: { category: { select: { name: true } }, brand: { select: { name: true } } },
-      orderBy: { [params.sortBy]: params.sortDir },
-      skip: (params.page - 1) * params.pageSize,
-      take: params.pageSize,
+      orderBy: safeOrderBy("Product", params.sortBy, params.sortDir, "createdAt"),
+      ...safePaging(params.page, params.pageSize),
     }),
     prisma.product.count({ where }),
   ]);
 
-  return { rows, total };
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      thumbUrl:
+        resolveImageRef(row.lifestyleImage) ||
+        resolveImageRef(row.image_key) ||
+        resolveImageRef(row.thumbnail_key),
+    })),
+    total,
+  };
 }
 
 export async function getProductFormOptions(excludeId?: string) {

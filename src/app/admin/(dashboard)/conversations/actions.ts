@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { Prisma } from "@prisma/client";
 import type { Conversation } from "@prisma/client";
+import { safePaging } from "@/lib/list-params";
 
 interface StoredMessage {
   role: "user" | "assistant";
@@ -32,11 +33,13 @@ export async function listConversations(params: ListParams): Promise<ListResult<
   const sortColumn = ["createdAt", "updatedAt"].includes(params.sortBy) ? params.sortBy : "updatedAt";
   const orderClause = params.sortDir === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
 
+  const { skip, take } = safePaging(params.page, params.pageSize);
+
   const rows = await prisma.$queryRaw<Conversation[]>(Prisma.sql`
     SELECT * FROM "Conversation"
     WHERE ${deletedClause} ${searchClause}
     ORDER BY "${Prisma.raw(sortColumn)}" ${orderClause}
-    LIMIT ${params.pageSize} OFFSET ${(params.page - 1) * params.pageSize}
+    LIMIT ${take} OFFSET ${skip}
   `);
 
   const countResult = await prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`

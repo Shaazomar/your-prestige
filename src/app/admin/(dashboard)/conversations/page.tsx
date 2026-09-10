@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { ConversationsManager } from "./ConversationsManager";
 
 export const metadata = { title: "AI Conversations" };
 
 export default async function ConversationsPage() {
+  await requirePermission("conversations", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

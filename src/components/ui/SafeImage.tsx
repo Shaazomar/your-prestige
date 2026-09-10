@@ -5,6 +5,16 @@ import Image, { type ImageProps } from "next/image";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./Skeleton";
 
+/**
+ * `toCatalogProduct` substitutes this local asset when a product has no
+ * photography at all, because `CatalogProduct.lifestyleImage` is a required
+ * string that several call sites hand straight to `next/image` or to
+ * OpenGraph metadata. It is the brand's social banner, though — rendered
+ * inside a product tile it reads as the wrong product, not as a gap — so on
+ * visual surfaces it resolves to the placeholder below instead.
+ */
+const BRAND_FALLBACK_IMAGE = "/brand/og-image.png";
+
 interface SafeImageProps extends Omit<ImageProps, "onLoad" | "onError"> {
   lightSkeleton?: boolean;
   /** Short label drawn into the placeholder when there is no image. */
@@ -47,7 +57,7 @@ export function SafeImage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  if (error || !src) {
+  if (error || !src || src === BRAND_FALLBACK_IMAGE) {
     const tone = PLACEHOLDER_TONES[toneOf(String(alt || placeholderLabel || "prestige"))];
     return (
       <div

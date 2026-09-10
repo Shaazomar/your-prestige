@@ -19,8 +19,14 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+      // Virtual-hosted style: <bucket>.s3.<region>.amazonaws.com
       { protocol: "https" as const, hostname: "*.s3.ap-south-1.amazonaws.com" },
       { protocol: "https" as const, hostname: "*.s3.amazonaws.com" },
+      // Path-style: s3.<region>.amazonaws.com/<bucket>/<key>. The wildcards
+      // above need a subdomain label, so a path-style URL was rejected by the
+      // image optimizer with a 400 and rendered as a broken image.
+      { protocol: "https" as const, hostname: "s3.ap-south-1.amazonaws.com" },
+      { protocol: "https" as const, hostname: "s3.amazonaws.com" },
     ],
     formats: ["image/avif", "image/webp"],
   },

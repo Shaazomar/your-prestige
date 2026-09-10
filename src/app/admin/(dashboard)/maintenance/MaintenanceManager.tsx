@@ -23,8 +23,8 @@ export function MaintenanceManager({ canEdit }: { canEdit: boolean }) {
       await saveMaintenanceSettings({ ...settings, password: password || undefined });
       toast.success("Maintenance settings saved");
       setPassword("");
-    } catch {
-      toast.error("Save failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }

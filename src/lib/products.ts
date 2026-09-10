@@ -2,6 +2,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { products as fallbackProducts, type CatalogProduct } from "@/lib/catalog";
 import { toApplications } from "@/lib/applications";
+import { resolveImageRef } from "@/lib/s3-url";
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -37,8 +38,16 @@ type ProductRow = Prisma.ProductGetPayload<{ include: typeof PRODUCT_INCLUDE }>;
  */
 export const CATALOG_CLIENT_LIMIT = 300;
 
-/** Local asset, so a product with no imagery never renders a broken tile. */
-const FALLBACK_IMAGE = "/brand/og-image.png";
+/**
+ * Local asset, so a product with no imagery never renders a broken tile, and
+ * `CatalogProduct.lifestyleImage` can stay a required string for the call
+ * sites that hand it straight to `next/image` or to OpenGraph metadata.
+ *
+ * On visual surfaces this exact value is recognised by `SafeImage`, which
+ * swaps in its designed "photography coming soon" swatch — showing the brand's
+ * social banner in a product tile reads as a broken listing.
+ */
+export const FALLBACK_IMAGE = "/brand/og-image.png";
 
 const CATEGORY_SLUGS: CatalogProduct["category"][] = ["tiles", "sanitary", "designer-picks"];
 const TAGS: NonNullable<CatalogProduct["tag"]>[] = [
@@ -73,9 +82,32 @@ export function toCatalogProduct(row: ProductRow): CatalogProduct {
   const sizes = arr(row.sizes);
   const applications = toApplications(row.applications);
 
-  const lifestyleImage = row.lifestyleImage || images[0] || row.textureImage || FALLBACK_IMAGE;
-  const textureImage = row.textureImage || images[1] || images[0] || lifestyleImage;
-  const gallery = images.filter((i) => i !== lifestyleImage && i !== textureImage);
+  // `image_key` / `thumbnail_key` hold S3 object keys written by the depot's
+  // master import. They were never read, so a product whose only photography
+  // arrived that way fell straight through to FALLBACK_IMAGE and rendered the
+  // brand's OG banner in place of the tile.
+  const keyImage = resolveImageRef(row.image_key);
+  const keyThumb = resolveImageRef(row.thumbnail_key);
+
+  const lifestyleImage =
+    resolveImageRef(row.lifestyleImage) ||
+    resolveImageRef(images[0]) ||
+    keyImage ||
+    keyThumb ||
+    resolveImageRef(row.textureImage) ||
+    FALLBACK_IMAGE;
+
+  const textureImage =
+    resolveImageRef(row.textureImage) ||
+    resolveImageRef(images[1]) ||
+    resolveImageRef(images[0]) ||
+    keyThumb ||
+    keyImage ||
+    lifestyleImage;
+
+  const gallery = images
+    .map((i) => resolveImageRef(i))
+    .filter((i): i is string => !!i && i !== lifestyleImage && i !== textureImage);
 
   const finish = row.finish?.trim() || row.surface?.trim() || row.material?.trim() || "Standard";
   const color = row.color?.trim() || "Natural";

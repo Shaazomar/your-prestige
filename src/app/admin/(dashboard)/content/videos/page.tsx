@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { VideosManager } from "./VideosManager";
 
 export const metadata = { title: "Videos" };
 
 export default async function VideosPage() {
+  await requirePermission("videos", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

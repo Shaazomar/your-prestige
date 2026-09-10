@@ -186,18 +186,30 @@ async function uploadToLocalDisk(file: File, opts?: UploadOptions): Promise<Uplo
 }
 
 export const isCloudinaryConfigured = cloudinaryConfigured;
+export const isS3Configured = s3Configured;
+
+/** Which backend uploadFile() will actually use, for operator-facing copy. */
+export function activeStorageProvider(): "s3" | "cloudinary" | "local" {
+  if (s3Configured) return "s3";
+  if (cloudinaryConfigured) return "cloudinary";
+  return "local";
+}
 
 /**
  * Can we write media at all right now? Catalog imports call this up front so a
  * 100-page run fails at upload time with a clear message, rather than 40 pages in.
  */
 export function canUploadMedia(): { ok: boolean; reason?: string } {
+  // S3 has to count here. uploadFile() prefers S3 over Cloudinary, but this
+  // pre-flight only looked at Cloudinary — so on a Vercel deployment that
+  // stores media in S3 (this app's actual setup) it refused every catalog
+  // import with a message telling the operator to configure Cloudinary.
   if (s3Configured || cloudinaryConfigured) return { ok: true };
   if (process.env.VERCEL) {
     return {
       ok: false,
       reason:
-        "Media storage is not configured. Catalog imports and file uploads require AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production.",
+        "Media storage is not configured. Catalog imports write hundreds of images, which needs AWS S3 credentials (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) or Cloudinary credentials (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) in production.",
     };
   }
   return { ok: true };

@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { PortfolioManager } from "./PortfolioManager";
 
 export const metadata = { title: "Portfolio" };
 
 export default async function PortfolioPage() {
+  await requirePermission("portfolio", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

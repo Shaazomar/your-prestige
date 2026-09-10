@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { ShowroomsManager } from "./ShowroomsManager";
 
 export const metadata = { title: "Showrooms" };
 
 export default async function ShowroomsPage() {
+  await requirePermission("showrooms", "view");
+
   const session = await auth();
   const role = session!.user.role;
 

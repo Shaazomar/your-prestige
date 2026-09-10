@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, requirePermission } from "@/lib/rbac";
 import { CollectionsManager } from "./CollectionsManager";
 
 export const metadata = { title: "Collections" };
 
 export default async function CollectionsPage() {
+  await requirePermission("collections", "view");
+
   const session = await auth();
   const role = session!.user.role;
 
