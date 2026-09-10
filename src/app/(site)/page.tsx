@@ -2,7 +2,6 @@ import { Hero } from "@/components/site/home/Hero";
 import { Collections } from "@/components/site/home/Collections";
 import { FeaturedProductsSection } from "@/components/site/home/FeaturedProductsSection";
 import { StatsSection } from "@/components/site/home/StatsSection";
-import { ApplicationsSection } from "@/components/site/home/ApplicationsSection";
 import { AboutEditorial } from "@/components/site/home/AboutEditorial";
 import { WhyChooseUs } from "@/components/site/home/WhyChooseUs";
 import { Testimonials } from "@/components/site/home/Testimonials";
@@ -42,7 +41,6 @@ export default async function HomePage({
       <Collections />
       <FeaturedProductsSection products={featuredProducts} />
       <StatsSection />
-      <ApplicationsSection />
       <AboutEditorial data={hero} />
       <WhyChooseUs />
       <ShowroomsSection />
