@@ -13,11 +13,17 @@ const nextConfig: NextConfig = {
       // at a CloudFront domain later needs no change here.
       ...(process.env.NEXT_PUBLIC_S3_BUCKET_URL
         ? [
-            {
-              protocol: "https" as const,
-              hostname: new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL).hostname,
-            },
-          ]
+            (() => {
+              try {
+                return {
+                  protocol: "https" as const,
+                  hostname: new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL).hostname,
+                };
+              } catch {
+                return null;
+              }
+            })(),
+          ].filter((item): item is { protocol: "https"; hostname: string } => item !== null)
         : []),
       // Virtual-hosted style: <bucket>.s3.<region>.amazonaws.com
       { protocol: "https" as const, hostname: "*.s3.ap-south-1.amazonaws.com" },
