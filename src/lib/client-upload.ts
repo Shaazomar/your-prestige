@@ -5,14 +5,6 @@
  * If S3 is configured, uploads directly from browser -> S3 (bypassing Vercel's 4.5MB payload limit).
  * Otherwise falls back to server-side endpoint /api/admin/media.
  */
-/** A file the server refused (wrong type, too large) — never retried. */
-export class UploadRejectedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UploadRejectedError";
-  }
-}
-
 export async function uploadMediaClient(
   file: File,
   folder = "uploads"
@@ -25,27 +17,18 @@ export async function uploadMediaClient(
       body: JSON.stringify({
         filename: file.name,
         contentType: file.type || "application/octet-stream",
-        size: file.size,
         folder,
       }),
     });
 
-    if (!presignedRes.ok && (presignedRes.status === 400 || presignedRes.status === 413 || presignedRes.status === 415)) {
-      // A rejected file type or an oversize file is a real answer, not a
-      // reason to retry the other upload path with the same file.
-      const data = await presignedRes.json().catch(() => ({}));
-      throw new UploadRejectedError(data.error || "This file was rejected.");
-    }
-
     if (presignedRes.ok) {
       const s3Data = await presignedRes.json();
       if (s3Data.directUpload && s3Data.uploadUrl) {
-        const contentType = s3Data.contentType || file.type || "application/octet-stream";
         // Step 2: Direct browser PUT to S3 bucket
         const putRes = await fetch(s3Data.uploadUrl, {
           method: "PUT",
           headers: {
-            "Content-Type": contentType,
+            "Content-Type": file.type || "application/octet-stream",
           },
           body: file,
         });
@@ -58,7 +41,6 @@ export async function uploadMediaClient(
       }
     }
   } catch (err) {
-    if (err instanceof UploadRejectedError) throw err;
     console.warn("Direct S3 upload check failed, using API endpoint fallback:", err);
   }
 
