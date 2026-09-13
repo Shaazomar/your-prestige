@@ -47,6 +47,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Category-first browsing moved to top-level URLs as part of the
+      // brand-first catalog restructure — preserve existing links/SEO.
+      { source: "/products/tiles", destination: "/tiles", permanent: true },
+      { source: "/products/sanitary", destination: "/bathware", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

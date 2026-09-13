@@ -8,7 +8,8 @@ import { PageHero } from "@/components/site/PageHero";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
-import { getBrands, getBrandBySlug, getBrandCollections } from "@/lib/brands";
+import { Breadcrumbs } from "@/components/site/Breadcrumbs";
+import { getBrands, getBrandBySlug, getBrandCollections, getBrandCategories } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
 import { siteUrl } from "@/lib/site-config";
 
@@ -59,13 +60,20 @@ export default async function BrandPage({
   if (!brand) notFound();
 
   const sp = await searchParams;
-  const [collections, result] = await Promise.all([
+  const [categories, collections, result] = await Promise.all([
+    getBrandCategories(slug),
     getBrandCollections(slug),
     searchCatalog({ ...parseFilters(sp), brand: brand.name }),
   ]);
 
   return (
     <>
+      <section className="pb-2 pt-8">
+        <Container size="wide">
+          <Breadcrumbs items={[{ label: "Brands", href: "/brands" }, { label: brand.name }]} />
+        </Container>
+      </section>
+
       <PageHero
         eyebrow="Authorised Partner"
         title={brand.name}
@@ -115,6 +123,32 @@ export default async function BrandPage({
           </div>
         </Container>
       </section>
+
+      {categories.length > 1 && (
+        <section className="pb-8">
+          <Container>
+            <Reveal>
+              <p className="text-eyebrow mb-4 flex items-center gap-2 text-ink/40">
+                <Layers className="h-3.5 w-3.5" /> Categories
+              </p>
+            </Reveal>
+            <RevealStagger className="flex flex-wrap gap-3">
+              {categories.map((c) => (
+                <RevealItem key={c.slug}>
+                  <Link
+                    href={`/brands/${brand.slug}/${c.slug}`}
+                    className="group inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-5 py-2.5 text-sm transition-colors hover:border-gold/50"
+                  >
+                    {c.name}
+                    <span className="text-ink/35">{c.count}</span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-gold opacity-0 transition-opacity group-hover:opacity-100" />
+                  </Link>
+                </RevealItem>
+              ))}
+            </RevealStagger>
+          </Container>
+        </section>
+      )}
 
       {collections.length > 1 && (
         <section className="pb-8">

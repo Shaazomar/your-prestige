@@ -22,6 +22,13 @@ import type { CatalogProduct } from "@/lib/catalog";
 export interface CatalogFilters {
   q?: string;
   category?: string;
+  /**
+   * A parent category slug (e.g. "bathware") — matches that category itself
+   * plus every child underneath it, for umbrella pages like `/bathware` that
+   * span the whole tree rather than one leaf category. Independent of
+   * `category`, which is an exact-slug match used by leaf pages.
+   */
+  categoryGroup?: string;
   brand?: string;
   collection?: string;
   finish?: string;
@@ -59,7 +66,7 @@ export interface CatalogSearchResult {
 export const DEFAULT_PER_PAGE = 24;
 
 const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true } },
+  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
   brand: { select: { name: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -90,6 +97,9 @@ function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
   const and: Prisma.ProductWhereInput[] = [{ published: true, deletedAt: null }];
 
   if (f.category) and.push({ category: { slug: f.category } });
+  if (f.categoryGroup) {
+    and.push({ category: { OR: [{ slug: f.categoryGroup }, { parent: { slug: f.categoryGroup } }] } });
+  }
   if (f.brand) and.push({ brand: { name: { equals: f.brand, mode: "insensitive" } } });
   if (f.collection) and.push({ collection: { equals: f.collection, mode: "insensitive" } });
   if (f.finish) and.push({ finish: { equals: f.finish, mode: "insensitive" } });

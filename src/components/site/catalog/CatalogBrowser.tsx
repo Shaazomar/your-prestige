@@ -26,12 +26,20 @@ import { CatalogueHero } from "./CatalogueHero";
 export function CatalogBrowser({
   result,
   lockedCategory,
+  lockedBrand,
   eyebrow,
   title,
   description,
 }: {
   result: CatalogSearchResult;
   lockedCategory?: string;
+  /**
+   * Set on brand-scoped pages (e.g. `/brands/jaquar/faucets`) where the brand
+   * is fixed by the URL and re-applied server-side regardless of query
+   * params — hides the Brand facet group so it can't look clickable without
+   * actually doing anything.
+   */
+  lockedBrand?: string;
   eyebrow?: string;
   title?: string;
   description?: string;
@@ -70,7 +78,7 @@ export function CatalogBrowser({
 
   const groups: { key: string; label: string; options: { value: string; count: number }[] }[] = [
     { key: "room", label: "Room", options: facets.applications },
-    { key: "brand", label: "Brand", options: facets.brands },
+    { key: "brand", label: "Brand", options: lockedBrand ? [] : facets.brands },
     { key: "collection", label: "Collection", options: facets.collections },
     { key: "finish", label: "Finish", options: facets.finishes },
     { key: "material", label: "Material", options: facets.materials },

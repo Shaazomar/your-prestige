@@ -78,6 +78,23 @@ export const getBrandBySlug = cache(async (slug: string): Promise<BrandView | nu
   }
 });
 
+/**
+ * The real bathware category labels (Faucets, Showers, ...) — see
+ * `getBrandCategories` below. Several brand-website imports (Jaquar, Artize,
+ * Essco) stored this exact label in the legacy `collection` string column
+ * before real `Category` rows existed for it. Now that `categoryId` carries
+ * that meaning, a `collection` value identical to a category label is a
+ * leftover duplicate, not a genuine named range — excluded here so the
+ * "Collections" rail only ever surfaces true product ranges (Navia, Iris
+ * Stone, ...).
+ */
+const CATEGORY_LABELS = new Set(
+  [
+    "Faucets", "Showers", "Sanitaryware", "Bath Fittings", "Wellness",
+    "Flushing Systems", "Water Heaters", "Shower Enclosures", "Accessories", "Lighting",
+  ].map((s) => s.toLowerCase())
+);
+
 /** Collections this brand has in the catalogue — the spine of its library page. */
 export const getBrandCollections = cache(
   async (brandSlug: string): Promise<{ name: string; count: number }[]> => {
@@ -89,8 +106,79 @@ export const getBrandCollections = cache(
       });
       return rows
         .filter((r): r is typeof r & { collection: string } => !!r.collection)
+        .filter((r) => !CATEGORY_LABELS.has(r.collection.trim().toLowerCase()))
         .map((r) => ({ name: r.collection, count: r._count._all }))
         .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    } catch {
+      return [];
+    }
+  }
+);
+
+/** This brand's category breakdown — the spine of its `/brands/[slug]` navigation. */
+export const getBrandCategories = cache(
+  async (brandSlug: string): Promise<{ slug: string; name: string; count: number }[]> => {
+    try {
+      const rows = await prisma.product.groupBy({
+        by: ["categoryId"],
+        where: { published: true, deletedAt: null, brand: { slug: brandSlug } },
+        _count: { _all: true },
+      });
+      const categoryIds = rows.map((r) => r.categoryId).filter((id): id is string => !!id);
+      if (categoryIds.length === 0) return [];
+
+      const cats = await prisma.category.findMany({
+        where: { id: { in: categoryIds } },
+        select: { id: true, slug: true, name: true },
+      });
+      const byId = new Map(cats.map((c) => [c.id, c]));
+
+      return rows
+        .map((r) => {
+          const cat = r.categoryId ? byId.get(r.categoryId) : undefined;
+          return cat ? { slug: cat.slug, name: cat.name, count: r._count._all } : null;
+        })
+        .filter((x): x is { slug: string; name: string; count: number } => x !== null)
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    } catch {
+      return [];
+    }
+  }
+);
+
+/**
+ * The live "Bathware" category tree (children of the `bathware` parent, with
+ * published-product counts) — the single source of truth for `/bathware`
+ * navigation and route generation. No hardcoded category list anywhere.
+ */
+export const getBathwareCategories = cache(
+  async (): Promise<{ slug: string; name: string; count: number }[]> => {
+    try {
+      const parent = await prisma.category.findUnique({ where: { slug: "bathware" }, select: { id: true } });
+      if (!parent) return [];
+
+      const children = await prisma.category.findMany({
+        where: { parentId: parent.id, published: true, deletedAt: null },
+        select: { id: true, slug: true, name: true, sortOrder: true },
+        orderBy: { sortOrder: "asc" },
+      });
+      if (children.length === 0) return [];
+
+      const counts = await prisma.product.groupBy({
+        by: ["categoryId"],
+        where: {
+          published: true,
+          deletedAt: null,
+          categoryId: { in: children.map((c) => c.id) },
+        },
+        _count: { _all: true },
+      });
+      const countById = new Map(counts.map((c) => [c.categoryId, c._count._all]));
+
+      return children
+        .map((c) => ({ slug: c.slug, name: c.name, count: countById.get(c.id) ?? 0 }))
+        .filter((c) => c.count > 0)
+        .sort((a, b) => b.count - a.count);
     } catch {
       return [];
     }

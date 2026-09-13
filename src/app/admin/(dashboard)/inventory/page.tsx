@@ -14,9 +14,11 @@ export default async function AdminInventoryPage() {
   const session = await auth();
   const role = session!.user.role;
 
-  // Query actual stats from the database
-  const totalSkus = await prisma.product.count({ where: { deletedAt: null } });
-  
+  // Query actual stats from the database. "Total SKUs Tracked" must count
+  // inventory-managed products only — catalog-only products (no Inventory
+  // row) are a website listing, not stock, and don't belong in this figure.
+  const totalSkus = await prisma.inventory.count();
+
   const inventories = await prisma.inventory.findMany({
     select: { availableStock: true, minimumStock: true }
   });

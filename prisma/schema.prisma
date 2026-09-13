@@ -10,6 +10,16 @@
 //   resolved to a name/avatar in application code, and every mutation is
 //   additionally written to AuditLog (a real FK) for a durable trail even
 //   if the acting user is later deleted.
+// - THIS FILE IS STALE relative to the live DB: prestige-inv (a separate app,
+//   same Postgres instance) is the schema's actual source of truth and has
+//   added tables/columns this file doesn't declare (ProductType, the chat
+//   system, BlockOrder, etc.) `prisma migrate diff --from-url $DIRECT_URL
+//   --to-schema-datamodel prisma/schema.prisma --script` shows the drift.
+//   NEVER run `prisma migrate dev` / `db push` from this repo — Prisma would
+//   generate a migration that drops everything below that this file doesn't
+//   know about. Any DDL here must be hand-written, additive-only SQL applied
+//   directly (e.g. `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` via
+//   `$executeRawUnsafe`), with `prisma generate` after to refresh the client.
 
 generator client {
   provider = "prisma-client-js"
@@ -219,6 +229,22 @@ model Product {
   /// S3 object keys, resolved through the S3 helper rather than stored as URLs.
   image_key     String?
   thumbnail_key String?
+
+  // — Brand-website catalogue import provenance (one-time scrapes) —
+  // Added via a hand-written additive ALTER TABLE, not `prisma migrate`, because
+  // this file is stale relative to the live DB (shared with prestige-inv, which
+  // owns the authoritative schema) — see the datasource comment at the top.
+  sourceWebsite    String? // e.g. "artize", "essco", "jaquar"
+  sourceProductUrl String? // original product page this row was imported from
+  sourceImageUrl   String? // original hero image URL before re-hosting to S3
+
+  // — Catalog classification workflow —
+  // Added the same additive way as the block above. Set true by the one-time
+  // brand-catalog classification pass when a product's category couldn't be
+  // determined with confidence; surfaced in an admin review queue rather than
+  // guessed. `reviewReason` records which rule failed to match.
+  needsReview  Boolean @default(false)
+  reviewReason String?
 
   seo Seo?
   inventory Inventory?

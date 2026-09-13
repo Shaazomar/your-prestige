@@ -91,8 +91,9 @@ export const megaMenu = {
   ] satisfies NavLink[],
 
   catalogue: [
-    { label: "Premium Tiles", href: "/products/tiles" },
-    { label: "Sanitaryware", href: "/products/sanitary" },
+    { label: "Brands", href: "/brands", hint: "Shop by maker" },
+    { label: "Tiles", href: "/tiles" },
+    { label: "Bathware", href: "/bathware" },
     { label: "Designer Picks", href: "/products/designer-picks" },
     { label: "Compare Products", href: "/compare" },
     { label: "Saved Items", href: "/wishlist" },
