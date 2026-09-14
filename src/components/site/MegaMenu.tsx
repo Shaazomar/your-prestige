@@ -8,6 +8,7 @@ import { X, Search, ArrowUpRight, Phone, MessageCircle } from "lucide-react";
 import { megaMenu, type NavLink } from "@/lib/site-config";
 import { telHref, waHref } from "@/lib/business";
 import { cn } from "@/lib/utils";
+import type { BrandNavGroups } from "@/lib/brands";
 
 export interface MegaMenuBusiness {
   name: string;
@@ -26,6 +27,7 @@ interface MegaMenuProps {
   onOpenQuote: () => void;
   onOpenWishlist: () => void;
   business: MegaMenuBusiness;
+  brandGroups: BrandNavGroups;
 }
 
 /** The house easing curve. Typed as a tuple — Framer rejects a plain number[]. */
@@ -55,6 +57,7 @@ export function MegaMenu({
   onOpenQuote,
   onOpenWishlist,
   business,
+  brandGroups,
 }: MegaMenuProps) {
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -220,13 +223,14 @@ export function MegaMenu({
               </nav>
 
               <div className="grid gap-10 sm:grid-cols-2">
-                <MenuColumn title="Catalogue" links={megaMenu.catalogue} index={0} onClose={onClose} />
-                <MenuColumn title="Spaces" links={megaMenu.spaces} index={1} onClose={onClose} />
-                <MenuColumn title="Company" links={megaMenu.company} index={2} onClose={onClose} />
-                <MenuColumn title="Visit & Enquire" links={megaMenu.visit} index={3} onClose={onClose} />
+                <BrandsMenuBlock groups={brandGroups} index={0} onClose={onClose} />
+                <MenuColumn title="Catalogue" links={megaMenu.catalogue} index={1} onClose={onClose} />
+                <MenuColumn title="Spaces" links={megaMenu.spaces} index={2} onClose={onClose} />
+                <MenuColumn title="Company" links={megaMenu.company} index={3} onClose={onClose} />
+                <MenuColumn title="Visit & Enquire" links={megaMenu.visit} index={4} onClose={onClose} />
 
                 <motion.div
-                  custom={4}
+                  custom={5}
                   variants={rise}
                   initial="hidden"
                   animate="show"
@@ -254,7 +258,7 @@ export function MegaMenu({
 
             {/* ——— Foot ——— */}
             <motion.div
-              custom={5}
+              custom={6}
               variants={rise}
               initial="hidden"
               animate="show"
@@ -302,6 +306,78 @@ export function MegaMenu({
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/**
+ * Grouped Brands section — Bathware / Tiles / Other, each a short real list
+ * from the DB (`getBrandNavGroups`), plus "View All Brands". Sits inside the
+ * existing fullscreen-menu grid rather than a new hover dropdown; this is the
+ * one surface in the design that holds everything, so brands get a proper
+ * home here instead of a single flat link.
+ */
+function BrandsMenuBlock({
+  groups,
+  index,
+  onClose,
+}: {
+  groups: BrandNavGroups;
+  index: number;
+  onClose: () => void;
+}) {
+  const columns = [
+    { title: "Bathware Brands", brands: groups.bathwareBrands },
+    { title: "Tile Brands", brands: groups.tileBrands },
+    { title: "Other Brands", brands: groups.otherBrands },
+  ].filter((c) => c.brands.length > 0);
+
+  if (columns.length === 0) {
+    return (
+      <motion.div custom={index} variants={rise} initial="hidden" animate="show">
+        <h2 className="text-eyebrow mb-5 text-faint">Brands</h2>
+        <Link
+          href="/brands"
+          onClick={onClose}
+          className="text-sm text-muted transition-colors duration-500 hover:text-gold"
+        >
+          View All Brands
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div custom={index} variants={rise} initial="hidden" animate="show" className="sm:col-span-2">
+      <h2 className="text-eyebrow mb-5 text-faint">Brands</h2>
+      <div className="grid gap-8 sm:grid-cols-3">
+        {columns.map((col) => (
+          <div key={col.title}>
+            <h3 className="mb-3 text-xs font-medium text-ink/50">{col.title}</h3>
+            <ul className="space-y-3">
+              {col.brands.slice(0, 6).map((b) => (
+                <li key={b.slug}>
+                  <Link
+                    href={`/brands/${b.slug}`}
+                    onClick={onClose}
+                    className="text-sm text-muted transition-colors duration-500 hover:text-gold"
+                  >
+                    {b.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <Link
+        href="/brands"
+        onClick={onClose}
+        className="mt-5 inline-flex items-center gap-1.5 text-sm text-text transition-colors duration-500 hover:text-gold"
+      >
+        View All Brands
+        <ArrowUpRight className="h-3.5 w-3.5" />
+      </Link>
+    </motion.div>
   );
 }
 

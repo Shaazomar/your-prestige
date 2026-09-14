@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, X, SlidersHorizontal, Loader2 } from "lucide-react";
@@ -30,6 +30,9 @@ export function CatalogBrowser({
   eyebrow,
   title,
   description,
+  brandStrip,
+  searchPlaceholder,
+  showCategoryOnCards = false,
 }: {
   result: CatalogSearchResult;
   lockedCategory?: string;
@@ -43,6 +46,11 @@ export function CatalogBrowser({
   eyebrow?: string;
   title?: string;
   description?: string;
+  /** Rendered between the hero and the search/filter toolbar — e.g. `/products`'s brand-first strip. Unset everywhere else. */
+  brandStrip?: ReactNode;
+  searchPlaceholder?: string;
+  /** Cards show a small category label when the category varies card-to-card (cross-category listings like `/products`, `/bathware`). */
+  showCategoryOnCards?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -72,7 +80,7 @@ export function CatalogBrowser({
     startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname));
   };
 
-  const activeFilters = ["brand", "collection", "finish", "material", "colour", "size", "room", "q"]
+  const activeFilters = ["brand", "collection", "finish", "material", "colour", "size", "surface", "room", "q"]
     .map((k) => ({ key: k, value: searchParams.get(k) }))
     .filter((f): f is { key: string; value: string } => !!f.value);
 
@@ -84,6 +92,7 @@ export function CatalogBrowser({
     { key: "material", label: "Material", options: facets.materials },
     { key: "colour", label: "Colour", options: facets.colors },
     { key: "size", label: "Size", options: facets.sizes },
+    { key: "surface", label: "Surface", options: facets.surfaces },
   ].filter((g) => g.options.length > 1);
 
   return (
@@ -91,6 +100,8 @@ export function CatalogBrowser({
       <CatalogueHero eyebrow={eyebrow} title={title} description={description} />
 
       <Container size="wide">
+        {brandStrip && <div className="relative z-20 mb-6">{brandStrip}</div>}
+
         {/* Search + filter toggle in floating container */}
         <div className="relative z-20 -mt-2 mb-10 rounded-3xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
           <div className="flex flex-wrap items-center gap-3">
@@ -105,7 +116,7 @@ export function CatalogBrowser({
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search tiles, collections, finishes…"
+                placeholder={searchPlaceholder ?? "Search tiles, collections, finishes…"}
                 className="w-full rounded-full border border-stone-200 bg-stone-50/70 py-2.5 pl-11 pr-4 text-xs font-medium outline-none transition-all focus:border-gold focus:bg-white"
               />
             </form>
@@ -202,18 +213,35 @@ export function CatalogBrowser({
         {/* Grid */}
         {products.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="text-lg text-ink/50">Nothing matches those filters yet.</p>
+            <p className="text-lg text-ink/50">No products found for these filters.</p>
             <button
               onClick={() => startTransition(() => router.push(pathname))}
               className="mt-4 text-sm text-gold underline underline-offset-4"
             >
-              Clear filters
+              Clear Filters
             </button>
+
+            {facets.brands.length > 0 && (
+              <div className="mt-10">
+                <p className="text-eyebrow mb-3 text-ink/40">Try another brand</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {facets.brands.slice(0, 6).map((b) => (
+                    <button
+                      key={b.value}
+                      onClick={() => apply((p) => p.set("brand", b.value))}
+                      className="rounded-full border border-ink/10 px-4 py-2 text-xs font-medium text-muted transition-colors hover:border-gold/50 hover:text-text"
+                    >
+                      {b.value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5 ${isPending ? "opacity-60" : ""} transition-opacity`}>
             {products.map((product) => (
-              <ProductCard key={product.slug} product={product} />
+              <ProductCard key={product.slug} product={product} showCategory={showCategoryOnCards} />
             ))}
           </div>
         )}

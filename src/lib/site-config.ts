@@ -91,7 +91,6 @@ export const megaMenu = {
   ] satisfies NavLink[],
 
   catalogue: [
-    { label: "Brands", href: "/brands", hint: "Shop by maker" },
     { label: "Tiles", href: "/tiles" },
     { label: "Bathware", href: "/bathware" },
     { label: "Designer Picks", href: "/products/designer-picks" },

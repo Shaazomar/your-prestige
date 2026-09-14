@@ -15,10 +15,13 @@ import { QuoteModal } from "./QuoteModal";
 import { MegaMenu, type MegaMenuBusiness } from "./MegaMenu";
 import { EnquiryListDrawer } from "./EnquiryListDrawer";
 import { useEnquiryList } from "@/lib/enquiry-store";
+import type { BrandNavGroups } from "@/lib/brands";
 
 interface HeaderProps {
   /** Contact + social details, resolved from the CMS by the site layout. */
   business: MegaMenuBusiness;
+  /** Brands grouped by dominant category, for the mega-menu's Brands section. */
+  brandGroups: BrandNavGroups;
 }
 
 /**
@@ -32,7 +35,7 @@ interface HeaderProps {
  * but it always carries a backdrop blur and a hairline, which is what keeps
  * near-black nav type legible over arbitrary page content underneath.
  */
-export function Header({ business }: HeaderProps) {
+export function Header({ business, brandGroups }: HeaderProps) {
   const [condensed, setCondensed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -200,6 +203,7 @@ export function Header({ business }: HeaderProps) {
           setWishlistOpen(true);
         }}
         business={business}
+        brandGroups={brandGroups}
       />
 
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

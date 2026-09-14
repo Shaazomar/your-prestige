@@ -185,6 +185,84 @@ export const getBathwareCategories = cache(
   }
 );
 
+export interface BrandNavItem {
+  slug: string;
+  name: string;
+}
+
+export interface BrandNavGroups {
+  bathwareBrands: BrandNavItem[];
+  tileBrands: BrandNavItem[];
+  otherBrands: BrandNavItem[];
+}
+
+/**
+ * Every brand with published products, bucketed by which top-level category
+ * dominates its catalogue — powers the grouped "Brands" mega-menu section.
+ * Data-driven rather than a hardcoded Bathware/Tile split, so a brand added
+ * through the CMS lands in the right column automatically.
+ */
+export const getBrandNavGroups = cache(async (): Promise<BrandNavGroups> => {
+  try {
+    const [brands, tilesCat, bathwareCat] = await Promise.all([
+      getBrands(),
+      prisma.category.findUnique({ where: { slug: "tiles" }, select: { id: true } }),
+      prisma.category.findUnique({ where: { slug: "bathware" }, select: { id: true } }),
+    ]);
+
+    const withProducts = brands.filter((b) => b.productCount > 0);
+    if (withProducts.length === 0) return { bathwareBrands: [], tileBrands: [], otherBrands: [] };
+
+    const [tileCounts, bathwareCounts] = await Promise.all([
+      tilesCat
+        ? prisma.product.groupBy({
+            by: ["brandId"],
+            where: { published: true, deletedAt: null, categoryId: tilesCat.id },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      bathwareCat
+        ? prisma.product.groupBy({
+            by: ["brandId"],
+            where: { published: true, deletedAt: null, category: { parentId: bathwareCat.id } },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    // Brand rows carry `slug`, not `id` — resolve ids once to match counts back up.
+    const brandIdRows = await prisma.brand.findMany({
+      where: { slug: { in: withProducts.map((b) => b.slug) } },
+      select: { id: true, slug: true },
+    });
+    const slugById = new Map(brandIdRows.map((b) => [b.id, b.slug]));
+    const countBySlug = (rows: { brandId: string | null; _count: { _all: number } }[]) => {
+      const map = new Map<string, number>();
+      for (const r of rows) {
+        const slug = slugById.get(r.brandId ?? "");
+        if (slug) map.set(slug, r._count._all);
+      }
+      return map;
+    };
+    const tileCountBySlug = countBySlug(tileCounts);
+    const bathwareCountBySlug = countBySlug(bathwareCounts);
+
+    const groups: BrandNavGroups = { bathwareBrands: [], tileBrands: [], otherBrands: [] };
+    for (const b of withProducts) {
+      const tiles = tileCountBySlug.get(b.slug) ?? 0;
+      const bathware = bathwareCountBySlug.get(b.slug) ?? 0;
+      const item = { slug: b.slug, name: b.name };
+      if (bathware === 0 && tiles === 0) groups.otherBrands.push(item);
+      else if (bathware >= tiles) groups.bathwareBrands.push(item);
+      else groups.tileBrands.push(item);
+    }
+
+    return groups;
+  } catch {
+    return { bathwareBrands: [], tileBrands: [], otherBrands: [] };
+  }
+});
+
 function fallbackBrands(): BrandView[] {
   return fallbackBrandNames.map((name) => ({
     slug: slugify(name),

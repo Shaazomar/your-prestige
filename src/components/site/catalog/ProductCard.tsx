@@ -1,18 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { Layers, ArrowUpRight } from "lucide-react";
+import { Layers, ArrowUpRight, Eye } from "lucide-react";
 import type { CatalogProduct } from "@/lib/catalog";
 import { WishlistButton } from "@/components/site/catalog/WishlistButton";
 import { useCompare } from "@/hooks/useCompare";
+import { useQuickView } from "@/components/site/catalog/QuickViewProvider";
 import { cn } from "@/lib/utils";
 import { SafeImage } from "@/components/ui/SafeImage";
+
+const CATEGORY_LABEL: Record<CatalogProduct["category"], string> = {
+  tiles: "Tiles",
+  sanitary: "Bathware",
+  "designer-picks": "Designer Pick",
+};
 
 interface ProductCardProps {
   product: CatalogProduct;
   className?: string;
   /** Only the first row of an above-the-fold grid should set this. */
   priority?: boolean;
+  /**
+   * Shows a small category label on the card — only worth it on listings
+   * that mix categories (`/products`, `/bathware`); everywhere else the page
+   * itself already says the category, so this stays off by default.
+   */
+  showCategory?: boolean;
 }
 
 /**
@@ -26,8 +39,9 @@ interface ProductCardProps {
  * Nothing about stock, warehouse or availability appears here, by design —
  * depot quantities are internal and never reach a public surface.
  */
-export function ProductCard({ product, className, priority = false }: ProductCardProps) {
+export function ProductCard({ product, className, priority = false, showCategory = false }: ProductCardProps) {
   const { has: isComparing, toggle: toggleCompare } = useCompare();
+  const { open: openQuickView } = useQuickView();
 
   const href = `/products/${product.category}/${product.slug}`;
   const compared = isComparing(product.slug);
@@ -81,6 +95,17 @@ export function ProductCard({ product, className, priority = false }: ProductCar
         >
           <button
             type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              openQuickView(product.slug);
+            }}
+            aria-label={`Quick view ${product.name}`}
+            className="grid h-9 w-9 place-items-center rounded-full bg-canvas/85 text-muted backdrop-blur-sm transition-colors duration-200 hover:text-text"
+          >
+            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
             onClick={() => toggleCompare(product.slug)}
             aria-label={compared ? `Remove ${product.name} from compare` : `Compare ${product.name}`}
             aria-pressed={compared}
@@ -99,8 +124,11 @@ export function ProductCard({ product, className, priority = false }: ProductCar
 
       {/* Information hangs off the image — no card, no separator box. */}
       <div className="flex flex-1 flex-col pt-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
           {product.brand}
+          {showCategory && (
+            <span className="text-ink/30">· {CATEGORY_LABEL[product.category]}</span>
+          )}
         </p>
 
         <h3 className="mt-1.5 text-[0.9375rem] font-medium leading-snug tracking-tight text-text">
@@ -113,6 +141,10 @@ export function ProductCard({ product, className, priority = false }: ProductCar
 
         {meta && (
           <p className="mt-0.5 line-clamp-1 text-[0.75rem] text-faint">{meta}</p>
+        )}
+
+        {product.sku && (
+          <p className="mt-0.5 text-[0.6875rem] text-faint/70">Code: {product.sku}</p>
         )}
 
         <span

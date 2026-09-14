@@ -69,7 +69,7 @@ export default async function BathwarePage({
         </section>
       )}
 
-      <CatalogBrowser result={result} />
+      <CatalogBrowser result={result} showCategoryOnCards />
     </main>
   );
 }
