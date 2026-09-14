@@ -110,7 +110,8 @@ model Category {
   slug        String  @unique
   name        String
   description String?
-  image       String?
+  image       String? // card image
+  bannerImage String? // wider hero-strip image, distinct from the card image
   icon        String?
   sortOrder   Int     @default(0)
   published   Boolean @default(true)
@@ -139,7 +140,7 @@ model Brand {
   slug        String  @unique
   name        String
   logo        String?
-  banner      String?
+  banner      String? // desktop cover image
   gallery     Json? // string[] of media URLs
   description String?
   website     String?
@@ -148,9 +149,21 @@ model Brand {
   sortOrder   Int     @default(0)
   published   Boolean @default(true)
 
+  // — Premium brand page media (additive, hand-written ALTER TABLE — see the
+  // datasource comment at the top for why) —
+  shortDescription String? // one-line strap under the brand name, distinct from the longer `description`
+  mobileCoverImage String? // portrait crop for the hero on small screens
+  heroVideo        String? // autoplay/muted/loop background video; falls back to mobileCoverImage/banner when unset
+  heroPoster       String? // poster frame shown before the video loads
+  /// string[] of Product ids — manually curated for the brand's hero page.
+  /// Falls back to that brand's top products by the usual featured/popular
+  /// sort when empty, so the section is never blank while unset.
+  featuredProductIds Json?
+
   products       Product[]
   catalogImports CatalogImport[]
   landingPages   LandingPage[]
+  collections    Collection[]
   seo            Seo?
 
   createdById String?
@@ -1124,6 +1137,14 @@ model Collection {
   products    Product[] @relation("CollectionProducts")
   seo         Seo?
   offers      Offer[]
+
+  // Optional brand scope — a "Featured Collection" curated within one
+  // brand's page (e.g. Jaquar's "Signature Bath"). Added the same additive,
+  // no-hard-FK way as the datasource comment at the top describes; left
+  // unassigned, a Collection behaves exactly as it always has.
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
   createdById String?
   updatedById String?
   deletedById String?
@@ -1132,6 +1153,7 @@ model Collection {
   updatedAt   DateTime  @updatedAt
 
   @@index([deletedAt])
+  @@index([brandId])
 }
 
 model Warehouse {

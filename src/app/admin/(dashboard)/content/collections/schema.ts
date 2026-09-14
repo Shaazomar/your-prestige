@@ -9,6 +9,7 @@ export const collectionSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
   description: z.string().max(2000).optional().or(z.literal("")),
   image: z.string().optional().or(z.literal("")),
+  brandId: z.string().optional().nullable(),
   sortOrder: z.coerce.number().int().default(0),
   published: z.boolean().default(true),
 });

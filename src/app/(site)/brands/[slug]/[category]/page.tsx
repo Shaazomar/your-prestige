@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
 import { getBrandBySlug, getBrandCategories } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
+import { getSeoForPath } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-config";
 
 /**
@@ -43,10 +44,15 @@ export async function generateMetadata({
   const categories = await getBrandCategories(slug);
   const cat = categories.find((c) => c.slug === category);
   if (!cat) return {};
+
+  const seo = await getSeoForPath(`/brands/${slug}/${category}`);
   return {
-    title: `${brand.name} ${cat.name} — Authorised Dealer in Mangaluru`,
-    description: `${cat.count} ${brand.name} ${cat.name.toLowerCase()} product${cat.count === 1 ? "" : "s"} at Prestige Tiles & Sanitary, Mangaluru.`,
+    title: seo?.title ?? `${brand.name} ${cat.name} | Prestige`,
+    description:
+      seo?.description ??
+      `${cat.count} ${brand.name} ${cat.name.toLowerCase()} product${cat.count === 1 ? "" : "s"} at Prestige Tiles & Sanitary, Mangaluru.`,
     alternates: { canonical: `${siteUrl}/brands/${brand.slug}/${cat.slug}` },
+    openGraph: { images: seo?.ogImage ? [seo.ogImage] : cat.image ? [cat.image] : undefined },
   };
 }
 
@@ -88,7 +94,11 @@ export default async function BrandCategoryPage({
         lockedBrand={brand.name}
         eyebrow={brand.name}
         title={`${brand.name} ${cat.name}`}
-        description={`${cat.count} ${cat.name.toLowerCase()} piece${cat.count === 1 ? "" : "s"} from ${brand.name}, displayed at full scale across our Mangaluru showrooms.`}
+        description={
+          cat.description ??
+          `${cat.count} ${cat.name.toLowerCase()} piece${cat.count === 1 ? "" : "s"} from ${brand.name}, displayed at full scale across our Mangaluru showrooms.`
+        }
+        heroImage={cat.image ?? undefined}
       />
     </main>
   );

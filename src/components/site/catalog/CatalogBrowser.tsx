@@ -33,6 +33,7 @@ export function CatalogBrowser({
   brandStrip,
   searchPlaceholder,
   showCategoryOnCards = false,
+  heroImage,
 }: {
   result: CatalogSearchResult;
   lockedCategory?: string;
@@ -51,6 +52,8 @@ export function CatalogBrowser({
   searchPlaceholder?: string;
   /** Cards show a small category label when the category varies card-to-card (cross-category listings like `/products`, `/bathware`). */
   showCategoryOnCards?: boolean;
+  /** Overrides the hero's stock photo — e.g. a category's own CMS image on a brand+category page. */
+  heroImage?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -97,7 +100,7 @@ export function CatalogBrowser({
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      <CatalogueHero eyebrow={eyebrow} title={title} description={description} />
+      <CatalogueHero eyebrow={eyebrow} title={title} description={description} heroImage={heroImage} />
 
       <Container size="wide">
         {brandStrip && <div className="relative z-20 mb-6">{brandStrip}</div>}

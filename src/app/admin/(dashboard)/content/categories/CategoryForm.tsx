@@ -22,6 +22,7 @@ const empty: CategoryInput = {
   slug: "",
   description: "",
   image: "",
+  bannerImage: "",
   icon: "",
   parentId: null,
   sortOrder: 0,
@@ -42,6 +43,7 @@ export function CategoryForm({
           slug: category.slug,
           description: category.description ?? "",
           image: category.image ?? "",
+          bannerImage: category.bannerImage ?? "",
           icon: category.icon ?? "",
           parentId: category.parentId,
           sortOrder: category.sortOrder,
@@ -117,9 +119,15 @@ export function CategoryForm({
         error={errors.description}
       />
       <ImageUploadField
-        label="Image"
+        label="Card Image"
         value={values.image || null}
         onChange={(url) => setValues((v) => ({ ...v, image: url ?? "" }))}
+      />
+      <ImageUploadField
+        label="Banner Image"
+        value={values.bannerImage || null}
+        onChange={(url) => setValues((v) => ({ ...v, bannerImage: url ?? "" }))}
+        aspect="aspect-[21/9]"
       />
       <AField
         label="Icon"

@@ -9,7 +9,7 @@ import type { Prisma } from "@prisma/client";
 import { safeOrderBy, safePaging } from "@/lib/list-params";
 
 export type CollectionRow = Prisma.CollectionGetPayload<{
-  include: { _count: { select: { products: true } } };
+  include: { _count: { select: { products: true } }; brand: { select: { name: true } } };
 }>;
 
 export async function listCollections(params: ListParams): Promise<ListResult<CollectionRow>> {
@@ -30,7 +30,7 @@ export async function listCollections(params: ListParams): Promise<ListResult<Co
   const [rows, total] = await Promise.all([
     prisma.collection.findMany({
       where,
-      include: { _count: { select: { products: true } } },
+      include: { _count: { select: { products: true } }, brand: { select: { name: true } } },
       orderBy: safeOrderBy("Collection", params.sortBy, params.sortDir, "sortOrder"),
       ...safePaging(params.page, params.pageSize),
     }),
@@ -50,6 +50,68 @@ export async function getCollectionOptions() {
   return collections;
 }
 
+/** Brands to assign a Collection to, for the brand-scoped "Featured Collections" feature. */
+export async function getCollectionBrandOptions() {
+  await requirePermission("collections", "view");
+  return prisma.brand.findMany({
+    where: { deletedAt: null },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+/** Products to assign to this Collection — scoped to the collection's brand when it has one, otherwise every product. */
+export async function getCollectionProductOptions(brandId?: string | null) {
+  await requirePermission("collections", "view");
+  return prisma.product.findMany({
+    where: { deletedAt: null, ...(brandId ? { brandId } : {}) },
+    select: { id: true, name: true, collection: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+/** Product ids currently in this collection — the checklist's initial selection. */
+export async function getCollectionProductIds(collectionId: string) {
+  await requirePermission("collections", "view");
+  const rows = await prisma.product.findMany({
+    where: { collectionId },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
+}
+
+/**
+ * Replaces this Collection's product membership in one go. A pure join-table
+ * operation (`products: { set: [...] }`) — it never creates, deletes or
+ * otherwise touches a Product row itself, so it can't duplicate or modify
+ * catalogue data.
+ */
+export async function setCollectionProducts(collectionId: string, productIds: string[]) {
+  const session = await requirePermission("collections", "edit");
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: { products: { set: productIds.map((id) => ({ id })) } },
+  });
+  await logAudit({
+    action: "collection.setProducts",
+    entity: "Collection",
+    entityId: collectionId,
+    meta: { by: session.user.id, count: productIds.length },
+  });
+}
+
+function toCollectionData(data: CollectionInput) {
+  return {
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    image: data.image || null,
+    sortOrder: data.sortOrder,
+    published: data.published,
+    brandId: data.brandId || null,
+  };
+}
+
 export async function createCollection(input: CollectionInput) {
   const session = await requirePermission("collections", "create");
   const data = collectionSchema.parse(input);
@@ -59,9 +121,7 @@ export async function createCollection(input: CollectionInput) {
 
   const collection = await prisma.collection.create({
     data: {
-      ...data,
-      image: data.image || null,
-      description: data.description || null,
+      ...toCollectionData(data),
       createdById: session.user.id,
       updatedById: session.user.id,
     },
@@ -82,9 +142,7 @@ export async function updateCollection(id: string, input: CollectionInput) {
   const collection = await prisma.collection.update({
     where: { id },
     data: {
-      ...data,
-      image: data.image || null,
-      description: data.description || null,
+      ...toCollectionData(data),
       updatedById: session.user.id,
     },
   });
