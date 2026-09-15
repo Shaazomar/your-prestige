@@ -136,7 +136,7 @@ export function CollectionForm({
         onChange={(e) => setValues((v) => ({ ...v, description: e.target.value }))}
         error={errors.description}
       />
-      <ImageUploadField
+      <ImageUploadField scope="collections" ownerId={collection?.id ?? null}
         label="Image"
         value={values.image || null}
         onChange={(url) => setValues((v) => ({ ...v, image: url ?? "" }))}

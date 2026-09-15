@@ -232,7 +232,7 @@ export function OfferForm({
         />
       </div>
 
-      <ImageUploadField
+      <ImageUploadField scope="offers"
         label="Offer Banner"
         value={values.banner || null}
         onChange={(url) => setValues((v) => ({ ...v, banner: url ?? "" }))}

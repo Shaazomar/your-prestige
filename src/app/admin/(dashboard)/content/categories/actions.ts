@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { revalidateCategory } from "@/lib/revalidate-content";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { categorySchema, type CategoryInput } from "./schema";
 import type { Prisma } from "@prisma/client";
@@ -71,6 +72,7 @@ export async function createCategory(input: CategoryInput) {
   });
 
   await logAudit({ action: "category.create", entity: "Category", entityId: category.id, newValue: category });
+  await revalidateCategoryById(category.id);
   return category;
 }
 
@@ -104,6 +106,7 @@ export async function updateCategory(id: string, input: CategoryInput) {
     oldValue: before,
     newValue: category,
   });
+  await revalidateCategoryById(id);
   return category;
 }
 
@@ -149,4 +152,15 @@ export async function restoreCategory(id: string) {
   });
   await logAudit({ action: "category.restore", entity: "Category", entityId: id, meta: { by: session.user.id } });
   return category;
+}
+
+/** Refresh the section pages a category's imagery appears on. */
+async function revalidateCategoryById(id: string) {
+  const row = await prisma.category.findUnique({
+    where: { id },
+    select: { slug: true, parent: { select: { slug: true, parent: { select: { slug: true } } } } },
+  });
+  if (!row) return;
+  const section = row.parent?.parent?.slug ?? row.parent?.slug ?? row.slug;
+  revalidateCategory(row.slug, section);
 }

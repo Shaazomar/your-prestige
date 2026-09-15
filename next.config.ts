@@ -15,15 +15,24 @@ const nextConfig: NextConfig = {
         ? [
             (() => {
               try {
+                const u = new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL!);
                 return {
-                  protocol: "https" as const,
-                  hostname: new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL).hostname,
+                  // Derived from the URL rather than hardcoded to https: a
+                  // bucket URL on a non-default port or a local S3-compatible
+                  // endpoint was silently registered under the wrong protocol,
+                  // so the optimizer rejected it and every image 400'd.
+                  protocol: u.protocol.replace(":", "") as "http" | "https",
+                  hostname: u.hostname,
+                  ...(u.port ? { port: u.port } : {}),
                 };
               } catch {
                 return null;
               }
             })(),
-          ].filter((item): item is { protocol: "https"; hostname: string } => item !== null)
+          ].filter(
+            (item): item is { protocol: "http" | "https"; hostname: string; port?: string } =>
+              item !== null
+          )
         : []),
       // Virtual-hosted style: <bucket>.s3.<region>.amazonaws.com
       { protocol: "https" as const, hostname: "*.s3.ap-south-1.amazonaws.com" },

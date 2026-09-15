@@ -72,7 +72,7 @@ export function PostForm({ post, onSuccess }: { post: PostRow | null; onSuccess:
       <AField label="Slug" required value={values.slug} onChange={(e) => { setSlugTouched(true); setValues((v) => ({ ...v, slug: e.target.value })); }} error={errors.slug} />
       <ATextArea label="Excerpt" value={values.excerpt} onChange={(e) => setValues((v) => ({ ...v, excerpt: e.target.value }))} />
       <ATextArea label="Content (Markdown)" required value={values.content} onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))} error={errors.content} className="min-h-64 font-mono text-xs" />
-      <ImageUploadField label="Cover Image" value={values.coverImage || null} onChange={(url) => setValues((v) => ({ ...v, coverImage: url ?? "" }))} />
+      <ImageUploadField scope="blog" label="Cover Image" value={values.coverImage || null} onChange={(url) => setValues((v) => ({ ...v, coverImage: url ?? "" }))} />
       <div className="grid grid-cols-2 gap-4">
         <AField label="Category" value={values.category} onChange={(e) => setValues((v) => ({ ...v, category: e.target.value }))} />
         <ASelect label="Status" value={values.status} onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as PostInput["status"] }))}>

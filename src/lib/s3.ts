@@ -7,21 +7,32 @@ export { isS3Configured };
 export function getS3Config() {
   const bucket = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || "your-prestige-in";
   const region = process.env.S3_REGION || process.env.AWS_REGION || "ap-south-1";
+  /**
+   * Custom endpoint, for an S3-compatible store or a local test double.
+   * Unset in production, where the AWS endpoint is derived from the region.
+   */
+  const endpoint = process.env.S3_ENDPOINT?.trim() || undefined;
   const baseUrl = (
-    process.env.NEXT_PUBLIC_S3_BUCKET_URL || `https://${bucket}.s3.${region}.amazonaws.com`
+    process.env.NEXT_PUBLIC_S3_BUCKET_URL ||
+    (endpoint ? `${endpoint.replace(/\/$/, "")}/${bucket}` : `https://${bucket}.s3.${region}.amazonaws.com`)
   ).replace(/\/$/, "");
-  return { bucket, region, baseUrl };
+  return { bucket, region, baseUrl, endpoint };
 }
 
 export function getS3Client(): S3Client {
-  const { region } = getS3Config();
+  const { region, endpoint } = getS3Config();
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
   const sessionToken = process.env.AWS_SESSION_TOKEN?.trim();
 
+  // Path-style addressing is required when an endpoint is set: a custom host
+  // has no per-bucket subdomain to address virtually.
+  const endpointOpts = endpoint ? { endpoint, forcePathStyle: true } : {};
+
   if (accessKeyId && secretAccessKey) {
     return new S3Client({
       region,
+      ...endpointOpts,
       credentials: {
         accessKeyId,
         secretAccessKey,
@@ -30,7 +41,7 @@ export function getS3Client(): S3Client {
     });
   }
 
-  return new S3Client({ region });
+  return new S3Client({ region, ...endpointOpts });
 }
 
 export const s3Client = new Proxy({} as S3Client, {
@@ -85,20 +96,35 @@ export async function uploadFileToS3(file: File, folder = "about"): Promise<{ ur
 
 /**
  * Generate a presigned URL for direct client-side S3 upload.
+ *
+ * @deprecated Use `presignUpload` from `@/lib/media/s3-service`, which scopes
+ * the key to its owning record. This remains only for the legacy
+ * `/api/admin/s3-presigned` route.
+ *
+ * Two corrections from the original. `signableHeaders` now pins `content-type`
+ * into the signature: without it `getSignedUrl` signs `host` alone, so the
+ * `ContentType` handed to `PutObjectCommand` did nothing at all and the URL
+ * would accept a PUT of any type — including `text/html` served back from the
+ * media origin. And the expiry is fifteen minutes rather than an hour, since
+ * the URL is used within seconds of being issued.
  */
 export async function getPresignedUploadUrl(filename: string, contentType: string, folder = "products") {
   const { bucket, baseUrl } = getS3Config();
+  const type = (contentType || "").split(";")[0].trim().toLowerCase();
   const key = `${folder}/${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: key,
-    ContentType: contentType,
+    ContentType: type,
   });
 
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  const uploadUrl = await getSignedUrl(s3Client, command, {
+    expiresIn: 900,
+    signableHeaders: new Set(["content-type"]),
+  });
   const objectUrl = `${baseUrl}/${key}`;
 
-  return { uploadUrl, objectUrl, key };
+  return { uploadUrl, objectUrl, key, contentType: type };
 }
 
 /**

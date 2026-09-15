@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { revalidateCollection } from "@/lib/revalidate-content";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { collectionSchema, type CollectionInput } from "./schema";
 import type { Prisma } from "@prisma/client";
@@ -128,6 +129,7 @@ export async function createCollection(input: CollectionInput) {
   });
 
   await logAudit({ action: "collection.create", entity: "Collection", entityId: collection.id, newValue: collection });
+  revalidateCollection(collection.slug);
   return collection;
 }
 
@@ -154,6 +156,7 @@ export async function updateCollection(id: string, input: CollectionInput) {
     oldValue: before,
     newValue: collection,
   });
+  revalidateCollection(collection.slug);
   return collection;
 }
 

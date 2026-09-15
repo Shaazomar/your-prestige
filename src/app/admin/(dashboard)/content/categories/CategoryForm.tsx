@@ -118,12 +118,12 @@ export function CategoryForm({
         onChange={(e) => setValues((v) => ({ ...v, description: e.target.value }))}
         error={errors.description}
       />
-      <ImageUploadField
+      <ImageUploadField scope="categories" ownerId={category?.id ?? null}
         label="Card Image"
         value={values.image || null}
         onChange={(url) => setValues((v) => ({ ...v, image: url ?? "" }))}
       />
-      <ImageUploadField
+      <ImageUploadField scope="categories" ownerId={category?.id ?? null}
         label="Banner Image"
         value={values.bannerImage || null}
         onChange={(url) => setValues((v) => ({ ...v, bannerImage: url ?? "" }))}
