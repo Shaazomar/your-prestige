@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
 
 /**
  * Grouped search-as-you-type suggestions: brands, products and categories in
  * one round trip, each a small indexed lookup — never the full catalogue.
  * Backs the debounced `GlobalSearchModal`.
  */
-
-const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
-  brand: { select: { name: true } },
-} satisfies Prisma.ProductInclude;
 
 export interface SuggestBrand {
   slug: string;
@@ -32,10 +27,19 @@ export interface SuggestResponse {
   categories: SuggestCategory[];
 }
 
-/** A category only ever resolves to a real, indexable page — never a dead link. */
-function categoryHref(c: { slug: string; parent: { slug: string } | null }): string | null {
+/**
+ * A category only ever resolves to a real, indexable page — never a dead link.
+ *
+ * Which section a category belongs to is a question about its whole ancestry:
+ * the tree is three deep, so checking the immediate parent alone dropped every
+ * third-level category (and, oddly, every tile category below the root) out of
+ * the suggestions entirely.
+ */
+function categoryHref(c: { slug: string; ancestors: string[] }): string | null {
   if (c.slug === "tiles") return "/tiles";
-  if (c.parent?.slug === "bathware") return `/bathware/${c.slug}`;
+  if (c.slug === "bathware") return "/bathware";
+  if (c.ancestors.includes("tiles")) return `/tiles/${c.slug}`;
+  if (c.ancestors.includes("bathware")) return `/bathware/${c.slug}`;
   return null;
 }
 
@@ -101,7 +105,11 @@ export async function GET(req: NextRequest) {
           name: { contains: q, mode: "insensitive" },
           products: { some: { published: true, deletedAt: null } },
         },
-        select: { slug: true, name: true, parent: { select: { slug: true } } },
+        select: {
+          slug: true,
+          name: true,
+          parent: { select: { slug: true, parent: { select: { slug: true, parent: { select: { slug: true } } } } } },
+        },
         take: 6,
       }),
     ]);
@@ -111,7 +119,13 @@ export async function GET(req: NextRequest) {
       products: products.map(toCatalogProduct),
       categories: categories
         .map((c) => {
-          const href = categoryHref(c);
+          const ancestors: string[] = [];
+          let node = c.parent as { slug: string; parent?: unknown } | null | undefined;
+          while (node && ancestors.length < 8) {
+            ancestors.push(node.slug);
+            node = node.parent as { slug: string; parent?: unknown } | null | undefined;
+          }
+          const href = categoryHref({ slug: c.slug, ancestors });
           return href ? { slug: c.slug, name: c.name, href } : null;
         })
         .filter((c): c is SuggestCategory => c !== null)

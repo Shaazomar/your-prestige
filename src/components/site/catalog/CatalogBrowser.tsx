@@ -27,6 +27,7 @@ export function CatalogBrowser({
   result,
   lockedCategory,
   lockedBrand,
+  lockedCollection,
   eyebrow,
   title,
   description,
@@ -44,6 +45,13 @@ export function CatalogBrowser({
    * actually doing anything.
    */
   lockedBrand?: string;
+  /**
+   * Set on `/collections/[slug]`, where the collection is fixed by the URL and
+   * re-applied server-side — the facet group is hidden for the same reason
+   * `lockedBrand` hides Brand: a chip that cannot change anything should not
+   * look clickable.
+   */
+  lockedCollection?: string;
   eyebrow?: string;
   title?: string;
   description?: string;
@@ -90,7 +98,7 @@ export function CatalogBrowser({
   const groups: { key: string; label: string; options: { value: string; count: number }[] }[] = [
     { key: "room", label: "Room", options: facets.applications },
     { key: "brand", label: "Brand", options: lockedBrand ? [] : facets.brands },
-    { key: "collection", label: "Collection", options: facets.collections },
+    { key: "collection", label: "Collection", options: lockedCollection ? [] : facets.collections },
     { key: "finish", label: "Finish", options: facets.finishes },
     { key: "material", label: "Material", options: facets.materials },
     { key: "colour", label: "Colour", options: facets.colors },

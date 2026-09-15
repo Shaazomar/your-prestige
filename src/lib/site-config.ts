@@ -47,7 +47,12 @@ export const business = {
   },
 } as const;
 
-export const siteUrl = "https://prestigetiles.in";
+/**
+ * Re-exported from seo-config, which resolves it from the environment so a
+ * preview deployment does not emit production canonicals. Kept as a named
+ * export here because most of the site already imports it from this module.
+ */
+export { SITE_URL as siteUrl } from "@/lib/seo-config";
 
 /**
  * ————— Navigation —————

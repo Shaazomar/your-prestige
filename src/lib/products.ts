@@ -23,8 +23,38 @@ import type { Prisma } from "@prisma/client";
  *    `ApplicationBadge`'s icon map as an unknown key.
  */
 
-const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
+/**
+ * The catalogue tree is three levels deep (bathware > wellness > spa-systems),
+ * so a product's section can only be decided by walking its *whole* ancestry.
+ * Selecting a single `parent` classified every grandchild as a tile — see
+ * `resolveCategory`. Four levels of `parent` cover the current tree with a
+ * level to spare; `categoryTrail` simply stops at whatever depth it is given.
+ */
+const CATEGORY_SELECT = {
+  slug: true,
+  name: true,
+  parent: {
+    select: {
+      slug: true,
+      name: true,
+      parent: {
+        select: {
+          slug: true,
+          name: true,
+          parent: { select: { slug: true, name: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.CategorySelect;
+
+/**
+ * Exported because `toCatalogProduct` is only correct for a row fetched this
+ * way — a shallower `category` select silently changes which section a product
+ * resolves to. Any query whose rows reach `toCatalogProduct` must use it.
+ */
+export const PRODUCT_INCLUDE = {
+  category: { select: CATEGORY_SELECT },
   brand: { select: { name: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -64,20 +94,55 @@ function slugHash(slug: string): number {
   return Math.abs(h);
 }
 
-function resolveCategory(row: ProductRow): CatalogProduct["category"] {
-  const slug = row.category?.slug;
-  const parentSlug = row.category?.parent?.slug;
+/** One node of the selected category chain, at any depth. */
+interface CategoryNode {
+  slug: string;
+  name: string;
+  parent?: CategoryNode | null;
+}
+
+/**
+ * A product's categories from most specific to the section root, e.g.
+ * `[spa-systems, wellness, bathware]`.
+ */
+export function categoryTrail(row: {
+  category?: CategoryNode | null;
+}): { slug: string; name: string }[] {
+  const trail: { slug: string; name: string }[] = [];
+  let node: CategoryNode | null | undefined = row.category;
+  // The select is finite, so this terminates; the guard is only against a
+  // cycle accidentally introduced in the category table.
+  while (node && trail.length < 8) {
+    trail.push({ slug: node.slug, name: node.name });
+    node = node.parent;
+  }
+  return trail;
+}
+
+/**
+ * Which of the three public sections a product belongs to.
+ *
+ * This reads the whole ancestry rather than the product's own category and its
+ * immediate parent. The taxonomy is three deep — `bathware > wellness >
+ * spa-systems` — so the old single-parent check saw `wellness`, not
+ * `bathware`, and dropped 832 of the fixture's 2,626 bathware products into
+ * "tiles". That was not only a wrong breadcrumb and a wrong canonical bucket:
+ * the product page gates its vitrified-tile packaging figures and material
+ * copy on this value, so a spa system was being described as a fired slab with
+ * a water absorption figure.
+ */
+export function resolveCategory(row: {
+  designerPick?: boolean | null;
+  category?: CategoryNode | null;
+}): CatalogProduct["category"] {
   if (row.designerPick) return "designer-picks";
-  if (slug === "tiles") return "tiles";
-  // The real bathware taxonomy (faucets, showers, wellness, lighting, ...)
-  // all live as children of the "bathware" category — checking ancestry
-  // instead of guessing from the slug string is what makes this robust to
-  // adding more granular categories later without silently miscategorising
-  // them as "tiles".
-  if (slug === "sanitary" || parentSlug === "bathware") return "sanitary";
-  // Legacy fallback for any other loosely-named category that predates the
-  // bathware tree.
-  if (slug && /sanitary|bath|faucet|shower|basin/.test(slug)) return "sanitary";
+
+  const trail = categoryTrail(row).map((c) => c.slug);
+  if (trail.includes("bathware") || trail.includes("sanitary")) return "sanitary";
+  if (trail.includes("tiles")) return "tiles";
+  // Legacy fallback for any loosely-named category that predates the tree and
+  // hangs off no section root.
+  if (trail.some((s) => /sanitary|bath|faucet|shower|basin/.test(s))) return "sanitary";
   return "tiles";
 }
 
@@ -149,6 +214,9 @@ export function toCatalogProduct(row: ProductRow): CatalogProduct {
     aspect,
     featured: row.featured,
     sku: row.sku || row.productCode || undefined,
+    packing: row.packing?.trim() || undefined,
+    coverage: row.coverage?.trim() || undefined,
+    weight: row.weight?.trim() || undefined,
   };
 }
 
@@ -264,4 +332,49 @@ export async function getCatalogParams(limit = 100): Promise<{ category: string;
 
 function filterCategory(list: CatalogProduct[], category?: CatalogProduct["category"]) {
   return category ? list.filter((p) => p.category === category) : list;
+}
+
+/**
+ * Variants for one product, for the page's ProductGroup structured data.
+ *
+ * Kept out of `CatalogProduct` deliberately: that shape is shipped to client
+ * components for every card in a grid, and variant rows would multiply those
+ * payloads for data only the product page uses.
+ */
+export const getProductVariants = cache(async (slug: string) => {
+  try {
+    return await prisma.productVariant.findMany({
+      where: { active: true, product: { slug, published: true, deletedAt: null } },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true, sku: true, name: true, size: true, finish: true, color: true },
+    });
+  } catch {
+    return [];
+  }
+});
+
+/**
+ * The product's real category ancestry, most specific first.
+ *
+ * Queried separately rather than carried on `CatalogProduct`: that shape is
+ * serialised to the browser for every card in a grid, and only the product
+ * page needs the trail.
+ */
+export const getProductCategoryTrail = cache(
+  async (slug: string): Promise<{ slug: string; name: string }[]> => {
+    try {
+      const row = await prisma.product.findFirst({
+        where: { slug, published: true, deletedAt: null },
+        select: { category: { select: CATEGORY_SELECT } },
+      });
+      return row ? categoryTrail(row) : [];
+    } catch {
+      return [];
+    }
+  }
+);
+
+/** The product's real category name, for metadata that reads naturally. */
+export async function getProductCategoryName(slug: string): Promise<string | null> {
+  return (await getProductCategoryTrail(slug))[0]?.name ?? null;
 }

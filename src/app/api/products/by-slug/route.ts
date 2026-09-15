@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
 
 /**
  * Look up published products by slug.
@@ -26,10 +26,7 @@ export async function GET(req: NextRequest) {
   try {
     const rows = await prisma.product.findMany({
       where: { slug: { in: slugs }, published: true, deletedAt: null },
-      include: {
-        category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
-        brand: { select: { name: true } },
-      },
+      include: PRODUCT_INCLUDE,
     });
 
     // Preserve the order the caller asked for — that's the visitor's own

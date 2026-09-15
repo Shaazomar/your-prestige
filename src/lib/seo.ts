@@ -53,7 +53,15 @@ export const getSeoForPath = cache(async (path: string): Promise<SeoOverride | n
 export function applySeo(base: Metadata, override: SeoOverride | null, path: string): Metadata {
   if (!override) return base;
 
-  const title = override.title || base.title;
+  const title = override.title ? { absolute: override.title } : base.title;
+  // `title` may be a string, or { absolute } from a metadata generator — Open
+  // Graph needs the plain string either way.
+  const titleText =
+    typeof title === "string"
+      ? title
+      : title && typeof title === "object" && "absolute" in title
+        ? (title.absolute as string)
+        : undefined;
   const description = override.description || base.description;
   const images = override.ogImage
     ? [override.ogImage]
@@ -70,7 +78,7 @@ export function applySeo(base: Metadata, override: SeoOverride | null, path: str
     },
     openGraph: {
       ...base.openGraph,
-      title: typeof title === "string" ? title : undefined,
+      title: titleText,
       description: typeof description === "string" ? description : undefined,
       url: `${siteUrl}${path}`,
       ...(images ? { images: images as string[] } : {}),
@@ -117,5 +125,81 @@ export function productJsonLd(p: {
     ...(p.color ? { color: p.color } : {}),
     ...(p.material ? { material: p.material } : {}),
     ...(additionalProperty.length ? { additionalProperty } : {}),
+  };
+}
+
+/**
+ * ProductGroup JSON-LD for a product that has variants.
+ *
+ * Google's product-variant guidance models one page holding several buyable
+ * versions as a ProductGroup whose `hasVariant` entries are Products, with
+ * `variesBy` naming the axes that differ. That is exactly our shape: one
+ * Product row, N ProductVariant rows, one canonical URL — so variants never
+ * become separate indexable pages competing with their parent.
+ *
+ * `offers` is omitted here for the same reason it is omitted from
+ * productJsonLd: this is a showroom catalogue with no published prices, and an
+ * Offer without a real price is misleading structured data.
+ *
+ * Returns null when there are no variants, so a caller can fall back to plain
+ * Product markup rather than emitting an empty group.
+ */
+export function productGroupJsonLd(p: {
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  brand: string;
+  images: string[];
+  productCode?: string | null;
+  variants: {
+    id: string;
+    sku?: string | null;
+    name?: string | null;
+    size?: string | null;
+    finish?: string | null;
+    color?: string | null;
+  }[];
+}): Record<string, unknown> | null {
+  const active = p.variants.filter((v) => v.sku || v.name || v.size);
+  if (active.length === 0) return null;
+
+  // Only declare an axis that genuinely differs between variants — claiming a
+  // product "varies by colour" when every variant is white is a false signal.
+  const varies = (key: "size" | "finish" | "color") => {
+    const values = new Set(active.map((v) => v[key]).filter(Boolean));
+    return values.size > 1;
+  };
+  const variesBy = [
+    varies("size") ? "size" : null,
+    varies("color") ? "color" : null,
+    // schema.org has no "finish" property; pattern is the closest published
+    // axis for a surface treatment.
+    varies("finish") ? "pattern" : null,
+  ].filter(Boolean);
+
+  const url = `${siteUrl}/products/${p.category}/${p.slug}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProductGroup",
+    name: p.name,
+    description: p.description,
+    image: p.images.filter(Boolean),
+    brand: { "@type": "Brand", name: p.brand },
+    category: p.category,
+    url,
+    productGroupID: p.productCode || p.slug,
+    ...(variesBy.length ? { variesBy } : {}),
+    hasVariant: active.map((v) => ({
+      "@type": "Product",
+      name: v.name?.trim() || [p.name, v.size, v.finish].filter(Boolean).join(" "),
+      // Every variant resolves to the group's single canonical page.
+      url,
+      ...(v.sku ? { sku: v.sku } : {}),
+      ...(v.size ? { size: v.size } : {}),
+      ...(v.color ? { color: v.color } : {}),
+      ...(v.finish ? { pattern: v.finish } : {}),
+    })),
   };
 }

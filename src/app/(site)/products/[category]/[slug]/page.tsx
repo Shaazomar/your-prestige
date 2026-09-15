@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   Download,
   Ruler,
@@ -14,7 +14,13 @@ import {
   Compass,
   MapPin,
 } from "lucide-react";
-import { getCatalogProduct, getRelatedProducts, getCatalogParams } from "@/lib/products";
+import {
+  getCatalogProduct,
+  getRelatedProducts,
+  getCatalogParams,
+  getProductVariants,
+  getProductCategoryTrail,
+} from "@/lib/products";
 import { Container } from "@/components/ui/Container";
 import { ApplicationBadge } from "@/components/site/catalog/ApplicationBadge";
 import { RelatedProducts } from "@/components/site/catalog/RelatedProducts";
@@ -24,7 +30,8 @@ import { ProductGallery } from "@/components/site/catalog/ProductGallery";
 import { ProductInfoActions } from "@/components/site/catalog/ProductInfoActions";
 import { TechnicalAccordion } from "@/components/site/catalog/TechnicalAccordion";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
-import { applySeo, getSeoForPath, productJsonLd } from "@/lib/seo";
+import { applySeo, getSeoForPath, productJsonLd, productGroupJsonLd } from "@/lib/seo";
+import { buildProductMetadata } from "@/lib/seo-metadata";
 import { getWhatsAppOrderingNumber } from "@/lib/whatsapp";
 import { SafeImage } from "@/components/ui/SafeImage";
 
@@ -43,11 +50,30 @@ export async function generateMetadata({
   const product = await getCatalogProduct(slug);
   if (!product) return {};
 
+  // One product, one canonical URL. `product.category` is the section the
+  // product resolves to, which is what every link on the site, the sitemap and
+  // `generateStaticParams` all emit — so a request arriving under any other
+  // category segment still canonicalises here (and is redirected here by the
+  // page below).
   const path = `/products/${product.category}/${product.slug}`;
-  const base: Metadata = {
-    title: `${product.name} — ${product.sizes[0] || ""} | Prestige Tiles`,
-    description: `${product.name} by ${product.brand}. ${product.finish} surface in ${product.color}, designed for contemporary interiors. Experience at Prestige Tiles.`,
-  };
+
+  // Built from this product's own attributes rather than one template, so
+  // 6,000 products do not share a description. "Prestige Tiles" is not used as
+  // the site name here — the catalogue is not tile-only.
+  const base = buildProductMetadata({
+    name: product.name,
+    slug: product.slug,
+    categorySlug: product.category,
+    categoryName: (await getProductCategoryTrail(product.slug))[0]?.name ?? null,
+    brand: product.brand,
+    description: product.description,
+    sku: product.sku,
+    finish: product.finish,
+    material: product.texture,
+    color: product.color,
+    size: product.sizes[0],
+    image: product.lifestyleImage,
+  });
 
   return applySeo(base, await getSeoForPath(path), path);
 }
@@ -57,9 +83,19 @@ export default async function ProductPage({
 }: {
   params: Promise<{ slug: string; category: string }>;
 }) {
-  const { slug } = await params;
+  const { slug, category } = await params;
   const product = await getCatalogProduct(slug);
   if (!product) notFound();
+
+  // The page is keyed on the slug alone, so before this every category segment
+  // served the same product at HTTP 200 — /products/tiles/x and
+  // /products/wellness/x were two indexable URLs for one product, both
+  // pointing their canonical at a third. A permanent redirect collapses them
+  // onto the one canonical URL instead of relying on the canonical tag to
+  // undo a duplicate we served ourselves.
+  if (category !== product.category) {
+    permanentRedirect(`/products/${product.category}/${product.slug}`);
+  }
 
   const whatsappNumber = await getWhatsAppOrderingNumber();
   const related = await getRelatedProducts(product, 4);
@@ -71,32 +107,76 @@ export default async function ProductPage({
         ? "Designer Picks"
         : "Tiles";
 
+  // Category crumbs link into the section tree that owns them —
+  // /bathware/wellness, /tiles/gvt — so the section comes from the trail's own
+  // root rather than from `product.category`: a Designer Pick is curated
+  // across sections but still lives in one real category. A product filed
+  // outside both trees gets no category crumbs rather than a dead link.
+  const fullTrail = await getProductCategoryTrail(slug);
+  const rootSlug = fullTrail[fullTrail.length - 1]?.slug;
+  const sectionHref =
+    rootSlug === "tiles" ? "/tiles" : rootSlug === "bathware" ? "/bathware" : null;
+  const trail = sectionHref
+    ? fullTrail.filter((c) => c.slug !== rootSlug).reverse()
+    : [];
+
+  // `/products/tiles` and `/products/sanitary` both 308 to the section pages,
+  // so linking them here would send every visitor — and every crawler — through
+  // a redirect on the way out of a product. Designer Picks has no section tree
+  // and keeps its own listing.
+  const sectionLink =
+    product.category === "designer-picks"
+      ? "/products/designer-picks"
+      : (sectionHref ?? `/products/${product.category}`);
+
   const productNo = product.sku || `PT-${slug.slice(0, 6).toUpperCase()}`;
 
-  // Packaging figures (pieces/box, water absorption, etc.) and the tile-story
-  // copy below are true of vitrified tiles specifically — showing them on a
-  // sanitaryware product (a faucet, a towel rail) would be a wrong factual
-  // claim, not just off-brand copy, so both are gated on category.
-  const isTile = product.category !== "sanitary";
+  // The tile-story copy below is true of vitrified tiles specifically — under a
+  // faucet or a towel rail it is a wrong factual claim, not just off-brand
+  // copy. The section root decides it, so a Designer Pick that happens to be a
+  // shower is not described as a fired slab.
+  const isTile = rootSlug ? rootSlug === "tiles" : product.category !== "sanitary";
 
+  // Packaging figures, and only the ones this product actually carries. These
+  // were four hardcoded constants — "2 Pcs", "15.5 Sq.Ft", "31.5 Kg", "< 0.05%
+  // water absorption" — rendered identically on every tile page regardless of
+  // format or supplier. A 600x600 and a 1200x2400 slab do not share a box
+  // weight, so the panel now comes from the record or does not render.
   const packingDetails = [
-    { label: "Pieces per Box", value: "2 Pcs" },
-    { label: "Coverage per Box", value: "15.5 Sq.Ft (1.44 Sq.M)" },
-    { label: "Average Box Weight", value: "31.5 Kg" },
-    { label: "Water Absorption", value: "< 0.05% (Vitrified)" },
-  ];
+    product.packing ? { label: "Packing", value: product.packing } : null,
+    product.coverage ? { label: "Coverage per Box", value: product.coverage } : null,
+    product.weight ? { label: "Box Weight", value: product.weight } : null,
+  ].filter((d): d is { label: string; value: string } => d !== null);
 
-  const jsonLd = productJsonLd({
-    name: product.name,
-    slug: product.slug,
-    category: product.category,
-    description: product.description,
-    brand: product.brand,
-    images: [product.lifestyleImage, product.textureImage, ...product.gallery],
-    color: product.color,
-    material: product.texture,
-    sizes: product.sizes,
-  });
+  // A product with variants is one ProductGroup, not N competing pages: the
+  // variants all resolve to this single canonical URL. Without variants the
+  // plain Product markup is correct.
+  const variants = await getProductVariants(slug);
+  const images = [product.lifestyleImage, product.textureImage, ...product.gallery];
+
+  const jsonLd =
+    productGroupJsonLd({
+      name: product.name,
+      slug: product.slug,
+      category: product.category,
+      description: product.description,
+      brand: product.brand,
+      images,
+      productCode: product.sku,
+      variants,
+    }) ??
+    productJsonLd({
+      name: product.name,
+      slug: product.slug,
+      category: product.category,
+      description: product.description,
+      brand: product.brand,
+      images,
+      color: product.color,
+      material: product.texture,
+      productCode: product.sku,
+      sizes: product.sizes,
+    });
 
   return (
     <div className="bg-canvas text-text pt-24 pb-20 md:pt-28 md:pb-32">
@@ -112,13 +192,20 @@ export default async function ProductPage({
             <Breadcrumbs
               items={[
                 { label: "Products", href: "/products" },
-                { label: categoryLabel, href: `/products/${product.category}` },
+                { label: categoryLabel, href: sectionLink },
+                // The real categories between the section and the product, so
+                // a spa system reads Products › Sanitaryware › Wellness › Spa
+                // Systems instead of stopping at the section.
+                ...trail.map((c) => ({
+                  label: c.name,
+                  href: `${sectionHref}/${c.slug}`,
+                })),
                 { label: product.name },
               ]}
             />
 
             <Link
-              href={`/products/${product.category}`}
+              href={sectionLink}
               className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:text-gold"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -281,11 +368,10 @@ export default async function ProductPage({
               </div>
             </div>
 
-            {/* Packaging & Logistics Details — box/coverage/absorption figures
-                are specific to tiles; showing them under a faucet or fitting
-                would be a wrong factual claim, not just off-brand copy. */}
+            {/* Packaging & Logistics Details — rendered only for the figures
+                this product actually carries; see `packingDetails`. */}
             <div className="mt-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-              {isTile && (
+              {packingDetails.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text mb-3">
                     <Box className="h-4 w-4 text-gold" />
@@ -499,7 +585,7 @@ export default async function ProductPage({
                 </h2>
               </div>
               <Link
-                href={`/products/${product.category}`}
+                href={sectionLink}
                 className="text-xs font-bold uppercase tracking-wider text-text hover:text-gold transition-colors"
               >
                 View All {categoryLabel} →

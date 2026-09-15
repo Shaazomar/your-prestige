@@ -59,6 +59,14 @@ export interface CatalogProduct {
   aspect: "portrait" | "square" | "landscape";
   featured?: boolean;
   sku?: string;
+  /**
+   * Packaging figures as the supplier published them. Optional because most
+   * rows do not carry them — the product page omits the whole panel rather
+   * than filling it with a plausible-looking number.
+   */
+  packing?: string;
+  coverage?: string;
+  weight?: string;
 }
 
 export const products: CatalogProduct[] = [
