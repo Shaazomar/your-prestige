@@ -69,6 +69,11 @@ export function CollectionsManager({ permissions }: CollectionsManagerProps) {
       ),
     },
     {
+      key: "brand",
+      label: "Brand",
+      render: (row) => <span className="text-white/60">{row.brand?.name ?? <span className="text-white/25">Unassigned</span>}</span>,
+    },
+    {
       key: "products",
       label: "Products",
       render: (row) => <span className="text-white/60">{row._count.products}</span>,

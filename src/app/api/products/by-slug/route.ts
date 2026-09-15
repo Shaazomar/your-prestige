@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
   try {
     const rows = await prisma.product.findMany({
       where: { slug: { in: slugs }, published: true, deletedAt: null },
-      include: { category: { select: { slug: true, name: true } }, brand: { select: { name: true } } },
+      include: {
+        category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
+        brand: { select: { name: true } },
+      },
     });
 
     // Preserve the order the caller asked for — that's the visitor's own

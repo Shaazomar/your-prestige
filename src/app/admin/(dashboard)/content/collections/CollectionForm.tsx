@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AField, ATextArea, AToggle } from "@/components/admin/FormField";
+import { AField, ATextArea, AToggle, ASelect } from "@/components/admin/FormField";
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { collectionSchema, type CollectionInput } from "./schema";
-import { createCollection, updateCollection } from "./actions";
+import {
+  createCollection,
+  updateCollection,
+  getCollectionBrandOptions,
+  getCollectionProductOptions,
+  getCollectionProductIds,
+  setCollectionProducts,
+} from "./actions";
 import type { CollectionRow } from "./actions";
 
 import { Loader2 } from "lucide-react";
@@ -24,6 +31,7 @@ const empty: CollectionInput = {
   slug: "",
   description: "",
   image: "",
+  brandId: null,
   sortOrder: 0,
   published: true,
 };
@@ -42,6 +50,7 @@ export function CollectionForm({
           slug: collection.slug,
           description: collection.description ?? "",
           image: collection.image ?? "",
+          brandId: collection.brandId,
           sortOrder: collection.sortOrder,
           published: collection.published,
         }
@@ -50,6 +59,26 @@ export function CollectionForm({
   const [slugTouched, setSlugTouched] = useState(!!collection);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+  const [products, setProducts] = useState<{ id: string; name: string; collection: string | null }[]>([]);
+  const [productIds, setProductIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    getCollectionBrandOptions().then(setBrands);
+  }, []);
+
+  // Product options are scoped to the selected brand — reload whenever it changes.
+  useEffect(() => {
+    getCollectionProductOptions(values.brandId).then(setProducts);
+  }, [values.brandId]);
+
+  useEffect(() => {
+    if (collection) getCollectionProductIds(collection.id).then(setProductIds);
+  }, [collection]);
+
+  function toggleProduct(id: string) {
+    setProductIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,13 +94,11 @@ export function CollectionForm({
     setErrors({});
     setSaving(true);
     try {
-      if (collection) {
-        await updateCollection(collection.id, parsed.data);
-        toast.success("Collection updated");
-      } else {
-        await createCollection(parsed.data);
-        toast.success("Collection created");
-      }
+      const saved = collection
+        ? await updateCollection(collection.id, parsed.data)
+        : await createCollection(parsed.data);
+      await setCollectionProducts(saved.id, productIds);
+      toast.success(collection ? "Collection updated" : "Collection created");
       onSuccess();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -114,6 +141,44 @@ export function CollectionForm({
         value={values.image || null}
         onChange={(url) => setValues((v) => ({ ...v, image: url ?? "" }))}
       />
+      <ASelect
+        label="Brand"
+        value={values.brandId ?? ""}
+        onChange={(e) => setValues((v) => ({ ...v, brandId: e.target.value || null }))}
+      >
+        <option value="">Unassigned</option>
+        {brands.map((b) => (
+          <option key={b.id} value={b.id}>
+            {b.name}
+          </option>
+        ))}
+      </ASelect>
+      <p className="-mt-3 text-xs text-white/35">
+        Assign a brand to feature this as one of that brand&apos;s Featured Collections (e.g. Jaquar → &quot;Signature Bath&quot;).
+      </p>
+
+      <div>
+        <span className="mb-1.5 block text-sm font-medium text-white/70">Products</span>
+        <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-2">
+          {products.length === 0 && <p className="p-2 text-xs text-white/30">No products{values.brandId ? " on this brand" : ""} yet.</p>}
+          {products.map((p) => (
+            <label key={p.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-white/70 hover:bg-white/5">
+              <input
+                type="checkbox"
+                checked={productIds.includes(p.id)}
+                onChange={() => toggleProduct(p.id)}
+                className="accent-gold"
+              />
+              <span>
+                {p.name}
+                {p.collection && <span className="text-white/30"> · {p.collection}</span>}
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-white/35">{productIds.length} product{productIds.length === 1 ? "" : "s"} in this collection.</p>
+      </div>
+
       <AField
         label="Sort Order"
         type="number"

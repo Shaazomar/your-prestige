@@ -12,13 +12,17 @@ import { prisma } from "@/lib/prisma";
  *
  * Three rules keep it safe to run against a live catalogue:
  *
- *  1. A product already classified MANUAL is never touched. Human decisions
- *     outrank the classifier permanently.
- *  2. A product that already has a category keeps it. The classifier fills
+ *  1. A product that already has a category keeps it. The classifier fills
  *     gaps and flags doubt; it does not re-file the catalogue underneath
  *     whoever curated it.
+ *  2. Clearing `needsReview` is a human act. Once someone files a product in
+ *     the CMS the flag comes off, and re-running this can never put it back —
+ *     the classifier only ever looks at products with no category at all.
  *  3. It is dry-run unless explicitly told to apply, and reports exactly what
  *     it would change either way.
+ *
+ * Writes to `needsReview` / `reviewReason`, the columns the live database
+ * already carries.
  */
 
 export type Decision =
@@ -189,8 +193,6 @@ export async function classifyCatalog(opts: ClassifyOptions = {}): Promise<{
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
-    // Human decisions are permanent.
-    classification: { not: "MANUAL" },
     ...(includeClassified ? {} : { categoryId: null }),
   };
 
@@ -199,6 +201,7 @@ export async function classifyCatalog(opts: ClassifyOptions = {}): Promise<{
     select: {
       id: true, name: true, collection: true, description: true, productCode: true,
       surface: true, material: true, sourceSheet: true, brandId: true, categoryId: true,
+      needsReview: true,
     },
     ...(limit ? { take: limit } : {}),
   });
@@ -289,20 +292,17 @@ export async function classifyCatalog(opts: ClassifyOptions = {}): Promise<{
   }
 
   if (apply) {
-    const now = new Date();
     // Chunked so a large catalogue does not build one enormous transaction.
-    const classified = decisions.filter((d): d is Extract<Decision, { kind: "classified" }> => d.kind === "classified");
+    const classified = decisions.filter(
+      (d): d is Extract<Decision, { kind: "classified" }> => d.kind === "classified"
+    );
     for (let i = 0; i < classified.length; i += 200) {
       await prisma.$transaction(
         classified.slice(i, i + 200).map((d) =>
           prisma.product.update({
             where: { id: d.productId },
-            data: {
-              categoryId: d.categoryId,
-              classification: "AUTO",
-              classificationNote: d.note,
-              classifiedAt: now,
-            },
+            // Placed confidently, so it is not waiting on anyone.
+            data: { categoryId: d.categoryId, needsReview: false, reviewReason: null },
           })
         )
       );
@@ -314,11 +314,7 @@ export async function classifyCatalog(opts: ClassifyOptions = {}): Promise<{
         review.slice(i, i + 200).map((d) =>
           prisma.product.update({
             where: { id: d.productId },
-            data: {
-              classification: "NEEDS_REVIEW",
-              classificationNote: d.note,
-              classifiedAt: now,
-            },
+            data: { needsReview: true, reviewReason: d.note },
           })
         )
       );

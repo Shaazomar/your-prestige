@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { useAdminList } from "@/hooks/useAdminList";
 import { AdminDataTable, type Column } from "@/components/admin/AdminDataTable";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { Drawer } from "@/components/admin/Drawer";
 import { CategoryForm } from "./CategoryForm";
-import { listCategories, softDeleteCategory, restoreCategory, type CategoryRow } from "./actions";
+import { listCategories, softDeleteCategory, restoreCategory, reorderCategory, type CategoryRow } from "./actions";
 
 interface CategoriesManagerProps {
   permissions: { create: boolean; edit: boolean; delete: boolean };
@@ -56,6 +56,15 @@ export function CategoriesManager({ permissions }: CategoriesManagerProps) {
     }
   }
 
+  async function handleReorder(row: CategoryRow, direction: "up" | "down") {
+    try {
+      await reorderCategory(row.id, direction);
+      list.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Reorder failed");
+    }
+  }
+
   const columns: Column<CategoryRow>[] = [
     {
       key: "name",
@@ -85,7 +94,29 @@ export function CategoriesManager({ permissions }: CategoriesManagerProps) {
       key: "sortOrder",
       label: "Order",
       sortable: true,
-      render: (row) => <span className="text-white/60">{row.sortOrder}</span>,
+      render: (row) =>
+        list.trash ? (
+          <span className="text-white/60">{row.sortOrder}</span>
+        ) : (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleReorder(row, "up")}
+              aria-label={`Move ${row.name} up`}
+              className="grid h-7 w-7 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReorder(row, "down")}
+              aria-label={`Move ${row.name} down`}
+              className="grid h-7 w-7 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
     },
     {
       key: "published",

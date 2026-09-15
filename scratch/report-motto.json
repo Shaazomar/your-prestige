@@ -1,0 +1,18 @@
+{
+  "brand": "motto",
+  "discovered": 334,
+  "processed": 334,
+  "imported": 20,
+  "updated": 314,
+  "variants": 0,
+  "images": 333,
+  "noImage": 0,
+  "duplicates": 314,
+  "failedCount": 1,
+  "failed": [
+    {
+      "url": "https://www.mottogroup.in/product-detail.php?sid=8&size=800x3000mm&pid=61&pname=WALNUT",
+      "reason": "image upload failed: HTTP 404"
+    }
+  ]
+}

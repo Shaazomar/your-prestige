@@ -19,7 +19,7 @@ type Options = { categories: { id: string; name: string }[]; brands: { id: strin
 type Stats = Awaited<ReturnType<typeof getClassificationStats>>;
 
 export function ClassificationManager({ canEdit }: { canEdit: boolean }) {
-  const list = useAdminList<ReviewRow>(listNeedsReview, { pageSize: 24, initialSortBy: "classifiedAt" });
+  const list = useAdminList<ReviewRow>(listNeedsReview, { pageSize: 24, initialSortBy: "updatedAt" });
   const [options, setOptions] = useState<Options>({ categories: [], brands: [] });
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export function ClassificationManager({ canEdit }: { canEdit: boolean }) {
       key: "why",
       label: "Why it needs review",
       render: (row) => (
-        <span className="text-xs text-amber-300/80">{row.classificationNote ?? "—"}</span>
+        <span className="text-xs text-amber-300/80">{row.reviewReason ?? "—"}</span>
       ),
     },
     {
@@ -151,11 +151,10 @@ export function ClassificationManager({ canEdit }: { canEdit: boolean }) {
           Counts unavailable: <span className="font-mono text-xs">{statsError}</span>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: "Products", value: stats?.total, tone: "text-white" },
-            { label: "Reviewed by hand", value: stats?.manual, tone: "text-emerald-400" },
-            { label: "Auto-classified", value: stats?.auto, tone: "text-blue-400" },
+            { label: "Filed in a category", value: stats?.categorised, tone: "text-emerald-400" },
             { label: "Needs review", value: stats?.needsReview, tone: "text-amber-400" },
             { label: "No category yet", value: stats?.uncategorised, tone: "text-white/60" },
           ].map((s) => (

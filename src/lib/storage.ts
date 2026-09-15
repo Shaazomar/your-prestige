@@ -24,18 +24,25 @@ export interface UploadOptions {
   filename?: string;
 }
 
+export type StorageProvider = "s3" | "cloudinary" | "local";
+
 const cloudinaryConfigured = !!(
   process.env.CLOUDINARY_CLOUD_NAME &&
   process.env.CLOUDINARY_API_KEY &&
   process.env.CLOUDINARY_API_SECRET
 );
 
-const s3Configured = !!(
-  process.env.AWS_ACCESS_KEY_ID &&
-  process.env.AWS_SECRET_ACCESS_KEY &&
-  process.env.AWS_ACCESS_KEY_ID.trim() !== "" &&
-  !process.env.AWS_ACCESS_KEY_ID.includes("your_")
-);
+export function isS3Configured(): boolean {
+  const key = process.env.AWS_ACCESS_KEY_ID?.trim();
+  const secret = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+  return !!(key && secret && !key.includes("your_"));
+}
+
+export function activeStorageProvider(): StorageProvider {
+  if (isS3Configured()) return "s3";
+  if (cloudinaryConfigured) return "cloudinary";
+  return "local";
+}
 
 const ROOT_FOLDER = "prestige";
 
@@ -59,11 +66,11 @@ function safeFolder(folder?: string): string {
  * falls back to local disk under public/uploads (dev only).
  */
 export async function uploadFile(file: File, opts?: UploadOptions): Promise<UploadResult> {
-  if (s3Configured) {
+  if (isS3Configured()) {
     try {
       return await uploadToS3(file, opts);
     } catch (s3Err) {
-      console.warn("AWS S3 Upload Error:", s3Err);
+      console.error("AWS S3 Upload Error:", s3Err);
       if (!process.env.VERCEL) {
         console.log("S3 upload failed in local dev; falling back to local disk storage.");
         return uploadToLocalDisk(file, opts);
@@ -90,13 +97,20 @@ async function uploadToS3(file: File, opts?: UploadOptions): Promise<UploadResul
     process.env.NEXT_PUBLIC_S3_BUCKET_URL || `https://${bucket}.s3.${region}.amazonaws.com`
   ).replace(/\/$/, "");
 
-  const client = new S3Client({
-    region,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-  });
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+  const sessionToken = process.env.AWS_SESSION_TOKEN?.trim();
+
+  const client = accessKeyId && secretAccessKey
+    ? new S3Client({
+        region,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+          ...(sessionToken ? { sessionToken } : {}),
+        },
+      })
+    : new S3Client({ region });
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -177,30 +191,18 @@ async function uploadToLocalDisk(file: File, opts?: UploadOptions): Promise<Uplo
 }
 
 export const isCloudinaryConfigured = cloudinaryConfigured;
-export const isS3Configured = s3Configured;
-
-/** Which backend uploadFile() will actually use, for operator-facing copy. */
-export function activeStorageProvider(): "s3" | "cloudinary" | "local" {
-  if (s3Configured) return "s3";
-  if (cloudinaryConfigured) return "cloudinary";
-  return "local";
-}
 
 /**
  * Can we write media at all right now? Catalog imports call this up front so a
  * 100-page run fails at upload time with a clear message, rather than 40 pages in.
  */
 export function canUploadMedia(): { ok: boolean; reason?: string } {
-  // S3 has to count here. uploadFile() prefers S3 over Cloudinary, but this
-  // pre-flight only looked at Cloudinary — so on a Vercel deployment that
-  // stores media in S3 (this app's actual setup) it refused every catalog
-  // import with a message telling the operator to configure Cloudinary.
-  if (s3Configured || cloudinaryConfigured) return { ok: true };
+  if (cloudinaryConfigured || isS3Configured()) return { ok: true };
   if (process.env.VERCEL) {
     return {
       ok: false,
       reason:
-        "Media storage is not configured. Catalog imports write hundreds of images, which needs AWS S3 credentials (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) or Cloudinary credentials (CLOUDINARY_CLOUD_NAME / _API_KEY / _API_SECRET) in production.",
+        "Media storage is not configured. Catalog imports and media uploads require AWS S3 credentials (AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY) or Cloudinary credentials in production.",
     };
   }
   return { ok: true };

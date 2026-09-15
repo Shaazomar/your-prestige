@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { CatalogExplorer } from "@/components/site/catalog/CatalogExplorer";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
+import { BrandStrip } from "@/components/site/catalog/BrandStrip";
 import { getCatalogProducts, CATALOG_CLIENT_LIMIT } from "@/lib/products";
 import { countPublishedProducts, parseFilters, searchCatalog } from "@/lib/catalog-search";
+import { getBrands } from "@/lib/brands";
 
 export const metadata: Metadata = {
   title: "The Catalogue",
@@ -29,16 +31,25 @@ export default async function ProductsPage({
       {useServerBrowser ? (
         <CatalogBrowser
           result={await searchCatalog(parseFilters(sp))}
-          eyebrow="THE CATALOGUE"
-          title={"An archive worth\nexploring."}
-          description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
+          eyebrow="PRODUCTS"
+          title={"Explore our\ncomplete collection."}
+          description="Search by brand, product code or collection — then filter by room, finish or size to find exactly what you need."
+          brandStrip={
+            <BrandStrip
+              brands={(await getBrands())
+                .filter((b) => b.productCount > 0)
+                .map((b) => ({ slug: b.slug, name: b.name, count: b.productCount }))}
+            />
+          }
+          searchPlaceholder="Search products, brands, product codes, collections…"
+          showCategoryOnCards
         />
       ) : (
         <CatalogExplorer
           products={await getCatalogProducts()}
-          eyebrow="THE CATALOGUE"
-          title={"An archive worth\nexploring."}
-          description="Filter by room, brand or finish — then step into the showroom to see every piece at full scale."
+          eyebrow="PRODUCTS"
+          title={"Explore our\ncomplete collection."}
+          description="Search by brand, product code or collection — then filter by room, finish or size to find exactly what you need."
         />
       )}
     </main>

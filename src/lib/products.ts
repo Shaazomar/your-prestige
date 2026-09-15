@@ -24,7 +24,7 @@ import type { Prisma } from "@prisma/client";
  */
 
 const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true } },
+  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
   brand: { select: { name: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -49,7 +49,6 @@ export const CATALOG_CLIENT_LIMIT = 300;
  */
 export const FALLBACK_IMAGE = "/brand/og-image.png";
 
-const CATEGORY_SLUGS: CatalogProduct["category"][] = ["tiles", "sanitary", "designer-picks"];
 const TAGS: NonNullable<CatalogProduct["tag"]>[] = [
   "Bestseller", "New Arrival", "Designer Pick", "Premium", "Limited",
 ];
@@ -66,10 +65,18 @@ function slugHash(slug: string): number {
 }
 
 function resolveCategory(row: ProductRow): CatalogProduct["category"] {
-  const slug = row.category?.slug as CatalogProduct["category"] | undefined;
-  if (slug && CATEGORY_SLUGS.includes(slug)) return slug;
+  const slug = row.category?.slug;
+  const parentSlug = row.category?.parent?.slug;
   if (row.designerPick) return "designer-picks";
-  // Nested categories ("bathroom-tiles") still belong to a top-level bucket.
+  if (slug === "tiles") return "tiles";
+  // The real bathware taxonomy (faucets, showers, wellness, lighting, ...)
+  // all live as children of the "bathware" category — checking ancestry
+  // instead of guessing from the slug string is what makes this robust to
+  // adding more granular categories later without silently miscategorising
+  // them as "tiles".
+  if (slug === "sanitary" || parentSlug === "bathware") return "sanitary";
+  // Legacy fallback for any other loosely-named category that predates the
+  // bathware tree.
   if (slug && /sanitary|bath|faucet|shower|basin/.test(slug)) return "sanitary";
   return "tiles";
 }

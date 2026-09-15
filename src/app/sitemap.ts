@@ -3,26 +3,18 @@ import { siteUrl } from "@/lib/site-config";
 import { getBlogPosts } from "@/lib/posts";
 import { getCatalogProducts } from "@/lib/products";
 import { getShowrooms } from "@/lib/showrooms";
-import { getBrands } from "@/lib/brands";
+import { getBrands, getBrandCategories, getBathwareCategories } from "@/lib/brands";
 import { getLandingPages } from "@/lib/landing-pages";
-import {
-  getBrandCategoryTree,
-  getBrandDirectory,
-  getCategoryTree,
-  flattenCategories,
-} from "@/lib/catalog-taxonomy";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
     "",
     "/about",
     "/products",
-    "/products/tiles",
-    "/products/sanitary",
     "/products/designer-picks",
-    "/brands",
     "/tiles",
     "/bathware",
+    "/brands",
     "/showrooms",
     "/portfolio",
     "/gallery",
@@ -59,24 +51,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Brand catalogue libraries — strong "<brand> dealer Mangaluru" landing pages.
   const brands = await getBrands();
-  const brandPages = brands
-    .filter((b) => b.productCount > 0)
-    .map((b) => ({
-      url: `${siteUrl}/brands/${b.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+  const brandsWithProducts = brands.filter((b) => b.productCount > 0);
+  const brandPages = brandsWithProducts.map((b) => ({
+    url: `${siteUrl}/brands/${b.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
-  // Brand x category — only combinations that actually hold products, which is
-  // what keeps this from becoming a combinatorial explosion of empty URLs.
-  const directory = await getBrandDirectory();
+  // Brand + category combinations (e.g. /brands/jaquar/faucets).
   const brandCategoryPages = (
     await Promise.all(
-      directory.map(async (b) => {
-        const tree = await getBrandCategoryTree(b.id);
-        return flattenCategories(tree).map((node) => ({
-          url: `${siteUrl}/brands/${b.slug}/${node.slug}`,
+      brandsWithProducts.map(async (b) => {
+        const cats = await getBrandCategories(b.slug);
+        return cats.map((c) => ({
+          url: `${siteUrl}/brands/${b.slug}/${c.slug}`,
           lastModified: new Date(),
           changeFrequency: "weekly" as const,
           priority: 0.7,
@@ -85,16 +74,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )
   ).flat();
 
-  // Global category browsing, under whichever top-level section owns it.
-  const sections = await getCategoryTree();
-  const categoryPages = sections.flatMap((section) =>
-    flattenCategories(section.children).map((node) => ({
-      url: `${siteUrl}/${section.slug}/${node.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.75,
-    }))
-  );
+  // Category-first bathware pages (tiles has no sub-categories yet).
+  const bathwareCategories = await getBathwareCategories();
+  const bathwareCategoryPages = bathwareCategories.map((c) => ({
+    url: `${siteUrl}/bathware/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
 
   // Showroom pages are high-value local-SEO landing pages.
   const showrooms = await getShowrooms();
@@ -121,7 +108,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...showroomPages,
     ...brandPages,
     ...brandCategoryPages,
-    ...categoryPages,
+    ...bathwareCategoryPages,
     ...posts,
     ...productPages,
   ];

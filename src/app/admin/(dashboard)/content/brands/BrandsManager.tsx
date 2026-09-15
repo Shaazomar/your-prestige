@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Plus, Star, Globe } from "lucide-react";
+import { Plus, Star, Globe, ArrowUp, ArrowDown } from "lucide-react";
 import { useAdminList } from "@/hooks/useAdminList";
 import { AdminDataTable, type Column } from "@/components/admin/AdminDataTable";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { Drawer } from "@/components/admin/Drawer";
 import { BrandForm } from "./BrandForm";
-import { listBrands, softDeleteBrand, restoreBrand, type BrandRow } from "./actions";
+import { listBrands, softDeleteBrand, restoreBrand, reorderBrand, type BrandRow } from "./actions";
 
 export function BrandsManager({ permissions }: { permissions: { create: boolean; edit: boolean; delete: boolean } }) {
   const list = useAdminList<BrandRow>(listBrands, { initialSortBy: "sortOrder", initialSortDir: "asc" });
@@ -45,6 +45,15 @@ export function BrandsManager({ permissions }: { permissions: { create: boolean;
     }
   }
 
+  async function handleReorder(row: BrandRow, direction: "up" | "down") {
+    try {
+      await reorderBrand(row.id, direction);
+      list.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Reorder failed");
+    }
+  }
+
   const columns: Column<BrandRow>[] = [
     {
       key: "name",
@@ -69,6 +78,7 @@ export function BrandsManager({ permissions }: { permissions: { create: boolean;
       ),
     },
     { key: "products", label: "Products", render: (row) => <span className="text-white/60">{row._count.products}</span> },
+    { key: "categories", label: "Categories", render: (row) => <span className="text-white/60">{row.categoryCount}</span> },
     {
       key: "website",
       label: "Website",
@@ -94,6 +104,33 @@ export function BrandsManager({ permissions }: { permissions: { create: boolean;
           {row.published ? "Published" : "Draft"}
         </span>
       ),
+    },
+    {
+      key: "order",
+      label: "Order",
+      render: (row) =>
+        list.trash ? (
+          <span className="text-white/25">—</span>
+        ) : (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleReorder(row, "up")}
+              aria-label={`Move ${row.name} up`}
+              className="grid h-7 w-7 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReorder(row, "down")}
+              aria-label={`Move ${row.name} down`}
+              className="grid h-7 w-7 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ),
     },
   ];
 

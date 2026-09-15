@@ -13,11 +13,17 @@ const nextConfig: NextConfig = {
       // at a CloudFront domain later needs no change here.
       ...(process.env.NEXT_PUBLIC_S3_BUCKET_URL
         ? [
-            {
-              protocol: "https" as const,
-              hostname: new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL).hostname,
-            },
-          ]
+            (() => {
+              try {
+                return {
+                  protocol: "https" as const,
+                  hostname: new URL(process.env.NEXT_PUBLIC_S3_BUCKET_URL).hostname,
+                };
+              } catch {
+                return null;
+              }
+            })(),
+          ].filter((item): item is { protocol: "https"; hostname: string } => item !== null)
         : []),
       // Virtual-hosted style: <bucket>.s3.<region>.amazonaws.com
       { protocol: "https" as const, hostname: "*.s3.ap-south-1.amazonaws.com" },
@@ -39,6 +45,14 @@ const nextConfig: NextConfig = {
         source: "/product/:category/:slug",
         destination: "/products/:category/:slug",
       },
+    ];
+  },
+  async redirects() {
+    return [
+      // Category-first browsing moved to top-level URLs as part of the
+      // brand-first catalog restructure — preserve existing links/SEO.
+      { source: "/products/tiles", destination: "/tiles", permanent: true },
+      { source: "/products/sanitary", destination: "/bathware", permanent: true },
     ];
   },
 };

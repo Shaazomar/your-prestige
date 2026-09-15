@@ -18,8 +18,8 @@ export interface ReviewRow {
   collection: string | null;
   brandName: string | null;
   categoryPath: string | null;
-  classification: string;
-  classificationNote: string | null;
+  needsReview: boolean;
+  reviewReason: string | null;
   thumbUrl: string | null;
 }
 
@@ -31,7 +31,7 @@ export async function listNeedsReview(
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
-    classification: "NEEDS_REVIEW",
+    needsReview: true,
     ...(params.onlyUncategorised ? { categoryId: null } : {}),
     ...(params.search
       ? {
@@ -49,12 +49,12 @@ export async function listNeedsReview(
       where,
       select: {
         id: true, name: true, slug: true, sku: true, productCode: true,
-        collection: true, classification: true, classificationNote: true,
+        collection: true, needsReview: true, reviewReason: true,
         lifestyleImage: true, image_key: true, thumbnail_key: true,
         brand: { select: { name: true } },
         category: { select: { name: true, parent: { select: { name: true } } } },
       },
-      orderBy: { classifiedAt: "desc" },
+      orderBy: { updatedAt: "desc" },
       ...safePaging(params.page, params.pageSize),
     }),
     prisma.product.count({ where }),
@@ -72,8 +72,8 @@ export async function listNeedsReview(
       categoryPath: r.category
         ? [r.category.parent?.name, r.category.name].filter(Boolean).join(" › ")
         : null,
-      classification: r.classification,
-      classificationNote: r.classificationNote,
+      needsReview: r.needsReview,
+      reviewReason: r.reviewReason,
       thumbUrl:
         resolveImageRef(r.lifestyleImage) || resolveImageRef(r.image_key) || resolveImageRef(r.thumbnail_key),
     })),
@@ -85,25 +85,14 @@ export async function listNeedsReview(
 export async function getClassificationStats() {
   await requirePermission("products", "view");
 
-  const [byStatus, uncategorised, total] = await Promise.all([
-    prisma.product.groupBy({
-      by: ["classification"],
-      where: { deletedAt: null },
-      _count: { _all: true },
-    }),
-    prisma.product.count({ where: { deletedAt: null, categoryId: null } }),
+  const [total, uncategorised, needsReview, categorised] = await Promise.all([
     prisma.product.count({ where: { deletedAt: null } }),
+    prisma.product.count({ where: { deletedAt: null, categoryId: null } }),
+    prisma.product.count({ where: { deletedAt: null, needsReview: true } }),
+    prisma.product.count({ where: { deletedAt: null, categoryId: { not: null } } }),
   ]);
 
-  const counts = Object.fromEntries(byStatus.map((r) => [r.classification, r._count._all]));
-  return {
-    total,
-    uncategorised,
-    unclassified: counts.UNCLASSIFIED ?? 0,
-    auto: counts.AUTO ?? 0,
-    manual: counts.MANUAL ?? 0,
-    needsReview: counts.NEEDS_REVIEW ?? 0,
-  };
+  return { total, uncategorised, needsReview, categorised };
 }
 
 /** Category options as readable paths, for the inline picker. */
@@ -154,7 +143,7 @@ export async function resolveClassification(
 
   const before = await prisma.product.findUniqueOrThrow({
     where: { id: productId },
-    select: { id: true, categoryId: true, brandId: true, classification: true },
+    select: { id: true, categoryId: true, brandId: true, needsReview: true },
   });
 
   const product = await prisma.product.update({
@@ -162,9 +151,11 @@ export async function resolveClassification(
     data: {
       ...(input.categoryId !== undefined ? { categoryId: input.categoryId || null } : {}),
       ...(input.brandId !== undefined ? { brandId: input.brandId || null } : {}),
-      classification: "MANUAL",
-      classificationNote: `Reviewed in the CMS by ${session.user.name}`,
-      classifiedAt: new Date(),
+      // A person has decided, so it is no longer waiting on anyone. The
+      // classifier only ever looks at products with no category, so filing one
+      // here also puts it permanently out of its reach.
+      needsReview: false,
+      reviewReason: null,
       updatedById: session.user.id,
     },
   });
@@ -174,7 +165,7 @@ export async function resolveClassification(
     entity: "Product",
     entityId: productId,
     oldValue: before,
-    newValue: { categoryId: product.categoryId, brandId: product.brandId, classification: product.classification },
+    newValue: { categoryId: product.categoryId, brandId: product.brandId, needsReview: product.needsReview },
   });
 
   return { ok: true };

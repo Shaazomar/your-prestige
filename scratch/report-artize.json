@@ -1,0 +1,18 @@
+{
+  "brand": "artize",
+  "discovered": 491,
+  "processed": 491,
+  "imported": 485,
+  "updated": 5,
+  "variants": 0,
+  "images": 490,
+  "noImage": 0,
+  "duplicates": 5,
+  "failedCount": 1,
+  "failed": [
+    {
+      "url": "https://www.artize.com/in/exposed-part-kit-of-two-concealed-stop-cocks-with-two-operating-lever-&amp;amp;-basin-spout",
+      "reason": "HTTP 404"
+    }
+  ]
+}

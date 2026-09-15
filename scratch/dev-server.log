@@ -1,0 +1,35 @@
+
+> prestige-web@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.5.21 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.6:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · middlewareClientMaxBodySize: "50mb"
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 1039ms
+ ✓ Ready in 7s
+ ○ Compiling / ...
+ ✓ Compiled / in 7.7s
+ GET / 200 in 20971ms
+ ○ Compiling /brands ...
+ ✓ Compiled /brands in 724ms
+ GET /brands 200 in 9980ms
+ ○ Compiling /brands/[slug] ...
+ ✓ Compiled /brands/[slug] in 639ms
+ GET /brands/jaquar 200 in 747429ms
+ GET /brands/jaquar 200 in 12907ms
+ GET /brands/jaquar 200 in 9908ms
+ ✓ Compiled in 302ms
+ ✓ Compiled in 274ms
+ ✓ Compiled in 263ms
+ ✓ Compiled in 335ms
+ ✓ Compiled /brands/[slug] in 100ms
+ GET /brands/jaquar 200 in 13443ms
+ ○ Compiling /brands/[slug]/[category] ...
+ ✓ Compiled /brands/[slug]/[category] in 572ms
+ GET /brands/jaquar/faucets 200 in 42546ms

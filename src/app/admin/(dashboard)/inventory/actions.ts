@@ -39,6 +39,12 @@ export async function listInventory(params: ListParams): Promise<ListResult<Inve
 
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
+    // Inventory is a separate operational concern from the website catalog —
+    // a Product can exist purely as a catalog listing with no Inventory row
+    // (e.g. a brand-site import). This page tracks stock, so it must only
+    // ever list products that actually have an Inventory record, never the
+    // full product table.
+    inventory: { isNot: null },
     ...(params.search
       ? {
           OR: [

@@ -10,6 +10,16 @@
 //   resolved to a name/avatar in application code, and every mutation is
 //   additionally written to AuditLog (a real FK) for a durable trail even
 //   if the acting user is later deleted.
+// - THIS FILE IS STALE relative to the live DB: prestige-inv (a separate app,
+//   same Postgres instance) is the schema's actual source of truth and has
+//   added tables/columns this file doesn't declare (ProductType, the chat
+//   system, BlockOrder, etc.) `prisma migrate diff --from-url $DIRECT_URL
+//   --to-schema-datamodel prisma/schema.prisma --script` shows the drift.
+//   NEVER run `prisma migrate dev` / `db push` from this repo — Prisma would
+//   generate a migration that drops everything below that this file doesn't
+//   know about. Any DDL here must be hand-written, additive-only SQL applied
+//   directly (e.g. `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` via
+//   `$executeRawUnsafe`), with `prisma generate` after to refresh the client.
 
 generator client {
   provider = "prisma-client-js"
@@ -100,7 +110,8 @@ model Category {
   slug        String  @unique
   name        String
   description String?
-  image       String?
+  image       String? // card image
+  bannerImage String? // wider hero-strip image, distinct from the card image
   icon        String?
   sortOrder   Int     @default(0)
   published   Boolean @default(true)
@@ -129,7 +140,7 @@ model Brand {
   slug        String  @unique
   name        String
   logo        String?
-  banner      String?
+  banner      String? // desktop cover image
   gallery     Json? // string[] of media URLs
   description String?
   website     String?
@@ -138,9 +149,21 @@ model Brand {
   sortOrder   Int     @default(0)
   published   Boolean @default(true)
 
+  // — Premium brand page media (additive, hand-written ALTER TABLE — see the
+  // datasource comment at the top for why) —
+  shortDescription String? // one-line strap under the brand name, distinct from the longer `description`
+  mobileCoverImage String? // portrait crop for the hero on small screens
+  heroVideo        String? // autoplay/muted/loop background video; falls back to mobileCoverImage/banner when unset
+  heroPoster       String? // poster frame shown before the video loads
+  /// string[] of Product ids — manually curated for the brand's hero page.
+  /// Falls back to that brand's top products by the usual featured/popular
+  /// sort when empty, so the section is never blank while unset.
+  featuredProductIds Json?
+
   products       Product[]
   catalogImports CatalogImport[]
   landingPages   LandingPage[]
+  collections    Collection[]
   seo            Seo?
 
   createdById String?
@@ -220,22 +243,28 @@ model Product {
   image_key     String?
   thumbnail_key String?
 
+  // — Brand-website catalogue import provenance (one-time scrapes) —
+  // Added via a hand-written additive ALTER TABLE, not `prisma migrate`, because
+  // this file is stale relative to the live DB (shared with prestige-inv, which
+  // owns the authoritative schema) — see the datasource comment at the top.
+  sourceWebsite    String? // e.g. "artize", "essco", "jaquar"
+  sourceProductUrl String? // original product page this row was imported from
+  sourceImageUrl   String? // original hero image URL before re-hosting to S3
+
+  // — Catalog classification workflow —
+  // Added the same additive way as the block above. Set true by the one-time
+  // brand-catalog classification pass when a product's category couldn't be
+  // determined with confidence; surfaced in an admin review queue rather than
+  // guessed. `reviewReason` records which rule failed to match.
+  needsReview  Boolean @default(false)
+  reviewReason String?
+
   seo Seo?
   inventory Inventory?
   inventoryHistory InventoryHistory[]
   offers Offer[]
   stockBookingItems StockBookingItem[]
   variants ProductVariant[]
-
-  // — Catalogue classification —
-  // Where this row's brand/category placement came from. Products the
-  // classifier could not place with high confidence are NEEDS_REVIEW and
-  // surface in the CMS review queue rather than being guessed at.
-  classification     ClassificationStatus @default(UNCLASSIFIED)
-  /// Why the classifier decided what it decided — the matched rule, or the
-  /// reason it declined. Read by the CMS review queue.
-  classificationNote String?
-  classifiedAt       DateTime?
 
   // Provenance — which catalogue import produced this row, if any. A plain
   // column rather than an FK so deleting an import never cascades into the
@@ -261,14 +290,11 @@ model Product {
   // rows, which is one index rather than three separate ones.
   @@index([brandId, categoryId, published, deletedAt])
   @@index([categoryId, published, deletedAt])
-  @@index([classification])
   // NOTE: catalogue search also relies on pg_trgm GIN indexes on name, sku,
-  // productCode and collection, created in
-  // migrations/20260915000000_catalog_brand_structure. Prisma cannot model a
-  // trigram index without the postgresqlExtensions preview feature, so
-  // `prisma migrate dev` will offer to DROP them — decline, or re-add them in
-  // the generated migration. They are what keeps ILIKE search off a
-  // sequential scan.
+  // productCode and collection. Those, and the ProductVariant table below, are
+  // applied by prisma/sql/2026-09-15-product-variants.sql — hand-written and
+  // additive, per the datasource warning at the top of this file. Prisma
+  // cannot model a trigram index at all, so nothing here declares them.
 }
 
 // ————— Portfolio / Gallery / Video / Testimonials —————
@@ -338,19 +364,6 @@ model GalleryItem {
   createdAt   DateTime  @default(now())
 
   @@index([albumId])
-}
-
-/// How a product came to sit under its brand/category, and whether a human
-/// still needs to look at it. Drives the CMS classification queue.
-enum ClassificationStatus {
-  /// Never run through the classifier.
-  UNCLASSIFIED
-  /// Placed automatically at high confidence.
-  AUTO
-  /// Placed or corrected by a person — the classifier must never overwrite these.
-  MANUAL
-  /// The classifier declined to guess. Awaiting a human decision.
-  NEEDS_REVIEW
 }
 
 enum VideoProvider {
@@ -1135,6 +1148,14 @@ model Collection {
   products    Product[] @relation("CollectionProducts")
   seo         Seo?
   offers      Offer[]
+
+  // Optional brand scope — a "Featured Collection" curated within one
+  // brand's page (e.g. Jaquar's "Signature Bath"). Added the same additive,
+  // no-hard-FK way as the datasource comment at the top describes; left
+  // unassigned, a Collection behaves exactly as it always has.
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
   createdById String?
   updatedById String?
   deletedById String?
@@ -1143,6 +1164,7 @@ model Collection {
   updatedAt   DateTime  @updatedAt
 
   @@index([deletedAt])
+  @@index([brandId])
 }
 
 /// A concrete, orderable version of a catalogue product — one size/finish/

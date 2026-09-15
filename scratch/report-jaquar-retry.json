@@ -1,0 +1,19 @@
+{
+  "brand": "jaquar",
+  "discovered": 83,
+  "processed": 83,
+  "imported": 38,
+  "updated": 44,
+  "variants": 0,
+  "images": 82,
+  "noImage": 0,
+  "duplicates": 44,
+  "failedCount": 1,
+  "failed": [
+    {
+      "url": "https://www.jaquar.com/en/cls-arcturus-gold-and-chrome-chandelier",
+      "reason": "HTTP 500"
+    }
+  ],
+  "nonProductPagesSkipped": 0
+}

@@ -9,6 +9,7 @@ export const categorySchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
   description: z.string().max(2000).optional().or(z.literal("")),
   image: z.string().optional().or(z.literal("")),
+  bannerImage: z.string().optional().or(z.literal("")),
   icon: z.string().max(50).optional().or(z.literal("")),
   parentId: z.string().optional().nullable(),
   sortOrder: z.coerce.number().int().default(0),

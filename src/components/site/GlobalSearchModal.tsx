@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, X, ArrowUpRight, CornerDownLeft } from "lucide-react";
-import { products, applicationList, collectionList } from "@/lib/catalog";
+import type { SuggestResponse } from "@/app/api/search/suggest/route";
 import { cn } from "@/lib/utils";
 
 interface GlobalSearchModalProps {
@@ -45,10 +45,13 @@ function readRecents(): string[] {
  * list of hits regardless of which group they belong to, so Enter always has
  * an unambiguous target.
  */
+const EMPTY_RESPONSE: SuggestResponse = { brands: [], products: [], categories: [] };
+
 export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   const [query, setQuery] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
+  const [response, setResponse] = useState<SuggestResponse>(EMPTY_RESPONSE);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,26 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
       return () => window.clearTimeout(t);
     }
   }, [isOpen]);
+
+  // Server-side, debounced — never fetches on every keystroke, and a stale
+  // in-flight request is aborted the moment a newer one is fired.
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    const t = window.setTimeout(() => {
+      fetch(`/api/search/suggest?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal })
+        .then((r) => r.json())
+        .then((data: SuggestResponse) => setResponse(data))
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setResponse(EMPTY_RESPONSE);
+        });
+    }, 250);
+    return () => {
+      window.clearTimeout(t);
+      controller.abort();
+    };
+  }, [isOpen, query]);
 
   // Scroll lock, preserving scroll position across open/close.
   useEffect(() => {
@@ -85,66 +108,37 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     };
   }, [isOpen]);
 
-  const trimmed = query.trim().toLowerCase();
+  const trimmed = query.trim();
 
-  const hits = useMemo<Hit[]>(() => {
-    if (!trimmed) {
-      return [
-        ...collectionList.slice(0, 4).map((c) => ({
-          id: `col:${c}`,
-          href: `/products?collection=${encodeURIComponent(c)}`,
-          label: c,
-          group: "Popular collections",
-        })),
-        ...products.slice(0, 4).map((p) => ({
-          id: `prod:${p.slug}`,
-          href: `/products/${p.category}/${p.slug}`,
-          label: p.name,
-          meta: `${p.brand} · ${p.finish}`,
-          image: p.lifestyleImage,
-          group: "Popular products",
-        })),
-      ];
-    }
+  const brandGroup = trimmed ? "Brands" : "Popular brands";
+  const productGroup = trimmed ? "Products" : "Popular products";
 
-    const matchedProducts = products
-      .filter((p) =>
-        [p.name, p.collection, p.brand, p.color, p.finish].some((f) =>
-          f.toLowerCase().includes(trimmed)
-        )
-      )
-      .slice(0, 8)
-      .map((p) => ({
+  const hits = useMemo<Hit[]>(
+    () => [
+      ...response.brands.map((b) => ({
+        id: `brand:${b.slug}`,
+        href: `/brands/${b.slug}`,
+        label: b.name,
+        meta: `${b.count} product${b.count === 1 ? "" : "s"}`,
+        group: brandGroup,
+      })),
+      ...response.products.map((p) => ({
         id: `prod:${p.slug}`,
         href: `/products/${p.category}/${p.slug}`,
         label: p.name,
         meta: `${p.brand} · ${p.finish}`,
         image: p.lifestyleImage,
-        group: "Products",
-      }));
-
-    const matchedCollections = collectionList
-      .filter((c) => c.toLowerCase().includes(trimmed))
-      .slice(0, 4)
-      .map((c) => ({
-        id: `col:${c}`,
-        href: `/products?collection=${encodeURIComponent(c)}`,
-        label: c,
-        group: "Collections",
-      }));
-
-    const matchedApplications = applicationList
-      .filter((a) => a.toLowerCase().includes(trimmed))
-      .slice(0, 4)
-      .map((a) => ({
-        id: `app:${a}`,
-        href: `/applications/${a.toLowerCase().replace(/\s+/g, "-")}`,
-        label: a,
-        group: "Spaces",
-      }));
-
-    return [...matchedProducts, ...matchedCollections, ...matchedApplications];
-  }, [trimmed]);
+        group: productGroup,
+      })),
+      ...response.categories.map((c) => ({
+        id: `cat:${c.slug}`,
+        href: c.href,
+        label: c.name,
+        group: "Categories",
+      })),
+    ],
+    [response, brandGroup, productGroup]
+  );
 
   // Keep the cursor in range as the result set shrinks under the user.
   useEffect(() => {

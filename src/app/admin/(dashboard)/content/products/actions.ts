@@ -128,9 +128,9 @@ export async function createProduct(input: ProductInput) {
       categoryId: data.categoryId || null,
       brandId: data.brandId || null,
       collectionId: data.collectionId || null,
-      // A person chose this placement, so the classifier must never move it.
-      classification: "MANUAL",
-      classifiedAt: new Date(),
+      // A person chose this placement, so nothing is waiting on it.
+      needsReview: false,
+      reviewReason: null,
       createdById: session.user.id,
       updatedById: session.user.id,
     },
@@ -168,8 +168,8 @@ export async function updateProduct(id: string, input: ProductInput) {
       categoryId: data.categoryId || null,
       brandId: data.brandId || null,
       collectionId: data.collectionId || null,
-      classification: "MANUAL",
-      classifiedAt: new Date(),
+      needsReview: false,
+      reviewReason: null,
       updatedById: session.user.id,
     },
   });

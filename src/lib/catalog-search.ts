@@ -22,40 +22,24 @@ import type { CatalogProduct } from "@/lib/catalog";
 export interface CatalogFilters {
   q?: string;
   category?: string;
+  /**
+   * A parent category slug (e.g. "bathware") — matches that category itself
+   * plus every child underneath it, for umbrella pages like `/bathware` that
+   * span the whole tree rather than one leaf category. Independent of
+   * `category`, which is an exact-slug match used by leaf pages.
+   */
+  categoryGroup?: string;
   brand?: string;
   collection?: string;
   finish?: string;
   material?: string;
   color?: string;
   size?: string;
+  surface?: string;
   application?: string;
   page?: number;
   perPage?: number;
   sort?: "featured" | "newest" | "name";
-
-  // — Scope, set by the route rather than by the visitor —
-  /**
-   * Restrict to one brand by slug. Set by /brands/[brand] and
-   * /brands/[brand]/[category]; a visitor cannot widen out of it, which is
-   * what makes a brand page show only that brand.
-   */
-  brandSlug?: string;
-  /**
-   * Restrict to a category *and everything beneath it*, by category id.
-   * Browsing "Tiles" has to include "Tiles → GVT", so routes resolve the
-   * branch ids once and pass them here.
-   */
-  categoryIds?: string[];
-}
-
-/** Page sizes offered to the visitor. First entry is the default. */
-export const PER_PAGE_OPTIONS = [24, 36, 48] as const;
-
-/** Clamp a requested page size to one we actually offer. */
-export function normalizePerPage(value: number | undefined): number {
-  return (PER_PAGE_OPTIONS as readonly number[]).includes(value ?? 0)
-    ? (value as number)
-    : PER_PAGE_OPTIONS[0];
 }
 
 export interface Facet {
@@ -76,6 +60,7 @@ export interface CatalogSearchResult {
     materials: Facet[];
     colors: Facet[];
     sizes: Facet[];
+    surfaces: Facet[];
     applications: Facet[];
   };
 }
@@ -83,7 +68,7 @@ export interface CatalogSearchResult {
 export const DEFAULT_PER_PAGE = 24;
 
 const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true } },
+  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
   brand: { select: { name: true } },
 } satisfies Prisma.ProductInclude;
 
@@ -104,6 +89,7 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
     material: one("material"),
     color: one("colour") ?? one("color"),
     size: one("size"),
+    surface: one("surface"),
     application: one("room") ?? one("application"),
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
     sort: sort === "newest" || sort === "name" ? sort : "featured",
@@ -113,16 +99,16 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
 function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
   const and: Prisma.ProductWhereInput[] = [{ published: true, deletedAt: null }];
 
-  // Route scope first — these are not user-controllable.
-  if (f.brandSlug) and.push({ brand: { slug: f.brandSlug } });
-  if (f.categoryIds?.length) and.push({ categoryId: { in: f.categoryIds } });
-
   if (f.category) and.push({ category: { slug: f.category } });
+  if (f.categoryGroup) {
+    and.push({ category: { OR: [{ slug: f.categoryGroup }, { parent: { slug: f.categoryGroup } }] } });
+  }
   if (f.brand) and.push({ brand: { name: { equals: f.brand, mode: "insensitive" } } });
   if (f.collection) and.push({ collection: { equals: f.collection, mode: "insensitive" } });
   if (f.finish) and.push({ finish: { equals: f.finish, mode: "insensitive" } });
   if (f.material) and.push({ material: { equals: f.material, mode: "insensitive" } });
   if (f.color) and.push({ color: { equals: f.color, mode: "insensitive" } });
+  if (f.surface) and.push({ surface: { equals: f.surface, mode: "insensitive" } });
 
   // Array columns: exact element containment.
   if (f.size) and.push({ sizes: { array_contains: f.size } });
@@ -142,7 +128,8 @@ function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
         { brand: { name: { contains: f.q, mode: "insensitive" } } },
         { category: { name: { contains: f.q, mode: "insensitive" } } },
         { collectionRelation: { name: { contains: f.q, mode: "insensitive" } } },
-        // A customer quoting a variant's article code should find its product.
+        // A customer quoting a variant's article code should land on its
+        // product — the variant is what is printed on the box, not the parent.
         { variants: { some: { sku: { contains: f.q, mode: "insensitive" } } } },
       ],
     });
@@ -172,15 +159,14 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
         take: perPage,
       }),
       prisma.product.count({ where }),
-      // Facets reflect the route's scope but not the visitor's own filter
-      // choices, so they can always see — and switch to — the other options
-      // rather than being funnelled into a dead end by their first click.
-      // The scope itself still applies: a Jaquar page never offers Velzone.
-      computeFacets({
-        category: filters.category,
-        brandSlug: filters.brandSlug,
-        categoryIds: filters.categoryIds,
-      }),
+      // Facets deliberately reflect the *unfiltered interactive* scope — the
+      // structural "where am I" constraints (category/categoryGroup/brand)
+      // still apply, so a brand page's chips only ever show that brand's own
+      // values, but the interactive chips (finish/colour/size/q/...) are
+      // dropped, so a visitor can always see — and switch to — the other
+      // options rather than being funnelled into a dead end by their own
+      // first click.
+      computeFacets({ category: filters.category, categoryGroup: filters.categoryGroup, brand: filters.brand }),
     ]);
 
     return {
@@ -198,34 +184,59 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
       page: 1,
       perPage,
       pageCount: 1,
-      facets: { brands: [], collections: [], finishes: [], materials: [], colors: [], sizes: [], applications: [] },
+      facets: { brands: [], collections: [], finishes: [], materials: [], colors: [], sizes: [], surfaces: [], applications: [] },
     };
   }
 }
 
-interface FacetScope {
-  category?: string;
-  brandSlug?: string;
-  categoryIds?: string[];
+/** Resolves the structural scope (category/categoryGroup/brand) to concrete ids once, shared by the Prisma `where` and the raw-SQL facets below. */
+async function resolveFacetScope(scope: { category?: string; categoryGroup?: string; brand?: string }) {
+  const categoryIds: string[] = [];
+
+  if (scope.category) {
+    const c = await prisma.category.findUnique({ where: { slug: scope.category }, select: { id: true } });
+    if (c) categoryIds.push(c.id);
+  }
+  if (scope.categoryGroup) {
+    const cats = await prisma.category.findMany({
+      where: { OR: [{ slug: scope.categoryGroup }, { parent: { slug: scope.categoryGroup } }] },
+      select: { id: true },
+    });
+    categoryIds.push(...cats.map((c) => c.id));
+  }
+
+  let brandId: string | undefined;
+  if (scope.brand) {
+    const b = await prisma.brand.findFirst({ where: { name: { equals: scope.brand, mode: "insensitive" } }, select: { id: true } });
+    brandId = b?.id;
+  }
+
+  return { categoryIds: categoryIds.length ? categoryIds : undefined, brandId };
 }
 
-async function computeFacets(scope: FacetScope): Promise<CatalogSearchResult["facets"]> {
+async function computeFacets(scope: {
+  category?: string;
+  categoryGroup?: string;
+  brand?: string;
+}): Promise<CatalogSearchResult["facets"]> {
+  const { categoryIds, brandId } = await resolveFacetScope(scope);
+
   const where: Prisma.ProductWhereInput = {
     published: true,
     deletedAt: null,
-    ...(scope.category ? { category: { slug: scope.category } } : {}),
-    ...(scope.brandSlug ? { brand: { slug: scope.brandSlug } } : {}),
-    ...(scope.categoryIds?.length ? { categoryId: { in: scope.categoryIds } } : {}),
+    ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
+    ...(brandId ? { brandId } : {}),
   };
 
-  const [byBrand, byCollection, byFinish, byMaterial, byColor, sizes, applications] = await Promise.all([
+  const [byBrand, byCollection, byFinish, byMaterial, byColor, bySurface, sizes, applications] = await Promise.all([
     prisma.product.groupBy({ by: ["brandId"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["collection"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["finish"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["material"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["color"], where, _count: { _all: true } }),
-    jsonArrayFacet("sizes", scope),
-    jsonArrayFacet("applications", scope),
+    prisma.product.groupBy({ by: ["surface"], where, _count: { _all: true } }),
+    jsonArrayFacet("sizes", { categoryIds, brandId }),
+    jsonArrayFacet("applications", { categoryIds, brandId }),
   ]);
 
   // groupBy returns brand ids; resolve them to names in one query.
@@ -250,6 +261,7 @@ async function computeFacets(scope: FacetScope): Promise<CatalogSearchResult["fa
     finishes: clean(byFinish, (r) => r.finish),
     materials: clean(byMaterial, (r) => r.material),
     colors: clean(byColor, (r) => r.color),
+    surfaces: clean(bySurface, (r) => r.surface),
     sizes,
     applications,
   };
@@ -265,18 +277,12 @@ async function computeFacets(scope: FacetScope): Promise<CatalogSearchResult["fa
  */
 async function jsonArrayFacet(
   column: "sizes" | "applications",
-  scope: FacetScope
+  scope: { categoryIds?: string[]; brandId?: string }
 ): Promise<Facet[]> {
   const columnRef = column === "sizes" ? Prisma.sql`"sizes"` : Prisma.sql`"applications"`;
-  const categoryClause = scope.category
-    ? Prisma.sql`AND p."categoryId" = (SELECT id FROM "Category" WHERE slug = ${scope.category})`
-    : Prisma.empty;
-  const brandClause = scope.brandSlug
-    ? Prisma.sql`AND p."brandId" = (SELECT id FROM "Brand" WHERE slug = ${scope.brandSlug})`
-    : Prisma.empty;
-  const branchClause = scope.categoryIds?.length
-    ? Prisma.sql`AND p."categoryId" IN (${Prisma.join(scope.categoryIds)})`
-    : Prisma.empty;
+  const clauses = [Prisma.sql`p."published" = true`, Prisma.sql`p."deletedAt" IS NULL`];
+  if (scope.categoryIds) clauses.push(Prisma.sql`p."categoryId" IN (${Prisma.join(scope.categoryIds)})`);
+  if (scope.brandId) clauses.push(Prisma.sql`p."brandId" = ${scope.brandId}`);
 
   try {
     const rows = await prisma.$queryRaw<{ value: string; count: bigint }[]>(Prisma.sql`
@@ -285,7 +291,7 @@ async function jsonArrayFacet(
            LATERAL jsonb_array_elements_text(
              CASE WHEN jsonb_typeof(p.${columnRef}) = 'array' THEN p.${columnRef} ELSE '[]'::jsonb END
            ) AS elem
-      WHERE p."published" = true AND p."deletedAt" IS NULL ${categoryClause} ${brandClause} ${branchClause}
+      WHERE ${Prisma.join(clauses, " AND ")}
       GROUP BY elem
       ORDER BY count DESC, value ASC
       LIMIT 60

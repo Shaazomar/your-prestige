@@ -73,6 +73,12 @@ export default async function ProductPage({
 
   const productNo = product.sku || `PT-${slug.slice(0, 6).toUpperCase()}`;
 
+  // Packaging figures (pieces/box, water absorption, etc.) and the tile-story
+  // copy below are true of vitrified tiles specifically — showing them on a
+  // sanitaryware product (a faucet, a towel rail) would be a wrong factual
+  // claim, not just off-brand copy, so both are gated on category.
+  const isTile = product.category !== "sanitary";
+
   const packingDetails = [
     { label: "Pieces per Box", value: "2 Pcs" },
     { label: "Coverage per Box", value: "15.5 Sq.Ft (1.44 Sq.M)" },
@@ -249,7 +255,7 @@ export default async function ProductPage({
                 <div className="font-serif text-xl sm:text-2xl font-medium text-text">
                   {product.finish}
                 </div>
-                <p className="mt-1 text-[11px] text-muted">High durability vitrified</p>
+                {isTile && <p className="mt-1 text-[11px] text-muted">High durability vitrified</p>}
               </div>
 
               <div>
@@ -260,7 +266,7 @@ export default async function ProductPage({
                 <div className="font-serif text-xl sm:text-2xl font-medium text-text">
                   {product.color}
                 </div>
-                <p className="mt-1 text-[11px] text-muted">Natural mineral hue</p>
+                {isTile && <p className="mt-1 text-[11px] text-muted">Natural mineral hue</p>}
               </div>
 
               <div>
@@ -275,24 +281,28 @@ export default async function ProductPage({
               </div>
             </div>
 
-            {/* Packaging & Logistics Details */}
+            {/* Packaging & Logistics Details — box/coverage/absorption figures
+                are specific to tiles; showing them under a faucet or fitting
+                would be a wrong factual claim, not just off-brand copy. */}
             <div className="mt-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text mb-3">
-                  <Box className="h-4 w-4 text-gold" />
-                  <span>Packaging & Logistics Standards</span>
+              {isTile && (
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text mb-3">
+                    <Box className="h-4 w-4 text-gold" />
+                    <span>Packaging & Logistics Standards</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                    {packingDetails.map((item) => (
+                      <div key={item.label} className="bg-surface p-3.5 rounded-xl border border-line/40">
+                        <span className="text-[10px] text-muted block uppercase tracking-wider font-semibold">
+                          {item.label}
+                        </span>
+                        <span className="font-bold text-text mt-1 block">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                  {packingDetails.map((item) => (
-                    <div key={item.label} className="bg-surface p-3.5 rounded-xl border border-line/40">
-                      <span className="text-[10px] text-muted block uppercase tracking-wider font-semibold">
-                        {item.label}
-                      </span>
-                      <span className="font-bold text-text mt-1 block">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
 
               <Link
                 href="/catalogue"
@@ -306,7 +316,11 @@ export default async function ProductPage({
         </Container>
       </section>
 
-      {/* Material Story (Editorial Section - Asymmetric 60/40 Split) */}
+      {/* Material Story (Editorial Section - Asymmetric 60/40 Split) — this
+          copy ("slab", "vitrified durability", "floor and wall transitions")
+          is specific to tiles and reads as wrong/nonsensical under a faucet
+          or bath fitting, so it's skipped rather than shown incorrectly. */}
+      {isTile && (
       <section className="mb-24 md:mb-32">
         <Container size="wide">
           <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 items-center">
@@ -366,6 +380,7 @@ export default async function ProductPage({
           </div>
         </Container>
       </section>
+      )}
 
       {/* Application Environments Showcase */}
       {product.applications && product.applications.length > 0 && (

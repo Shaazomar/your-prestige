@@ -1,0 +1,346 @@
+{
+  "brand": "jaquar",
+  "discovered": 4859,
+  "processed": 3261,
+  "imported": 3180,
+  "updated": 21,
+  "variants": 0,
+  "images": 3186,
+  "noImage": 0,
+  "duplicates": 21,
+  "failedCount": 83,
+  "failed": [
+    {
+      "url": "https://www.jaquar.com/en/under-counter-basin-beige-matt-3",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/bib-cock-angular-shape-auto-closing-system",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-opal-glass-wall-led-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-2-taps-style-antique-green-finishing-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-opal-globe-glass-wall-lamp-nickel-finish-base",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/1810uf",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-mesh-ceramic-rusty-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-rusty-finish-mesh-filament-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/1810bt-clear",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-black-fabric-rectangular-wall-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-2lights-opal-globe-glass-nickel-finishing-wall-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-green-marble-antique-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-tap-style-antique-green-finishing-wall-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-cylindrical-opal-glass-nickel-finish-base-wall-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-black-fabric-shade-chrome-finish-wall-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-champagne-chrome-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-frosted-glass-chrome-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-cylindrical-frosted-glass-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-2lights-champagne-chrome-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-2-lights-green-marble-antique-finish-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-conical-beige-nickel-finish-table-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-cone-wall-light",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-opal-glass-marble-base-table-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-2lights-champagne-chrome-finish-wall-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-hexagon-shape-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-e14-single-bulb-copper-finish-pipe-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-fabric-shade-chrome-finishing-table-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-hammered-pattern-base-brash-finish-table-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-copper-glass-with-cognac-finishing-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-red-leather-chrome-finishing-table-lamp",
+      "reason": "image upload failed: Client network socket disconnected before secure TLS connection was established"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-red-leather-table-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-e14-single-bulb-copper-finish-pipe-wall-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-e14-5-bulb-copper-finish-pipe-wall-lamp",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-opal-glass-marble-base-table-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-hexagon-shape-wall-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-fabric-shade-chrome-finishing-table-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-fabric-shade-table-lamp-chrome",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-black-fabric-3lt-table-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-copper-glass-with-cognac-finishing-wall-lamp",
+      "reason": "\nInvalid `prisma.product.findUnique()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-black-finishing-table-lamp-1x7w",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-red-leather-table-lamp",
+      "reason": "\nInvalid `prisma.product.findUnique()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-cognac-glass-table-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-e14-5-bulb-copper-finish-pipe-wall-lamp",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/meta-manual-vertical-6-ltr-water-heater",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-pleat-fabric-shade-crystal-table-lamp",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-pleat-fabric-shade-crystal-table-lamp-chrome-finish",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/cls-arcturus-gold-and-chrome-chandelier",
+      "reason": "HTTP 500"
+    },
+    {
+      "url": "https://www.jaquar.com/en/glass-shelf-gold-matt-pvd",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/double-coat-hook-gold-matt-pvd-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/toilet-roll-holder-with-flap-gold-bright-pvd-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/double-coat-hook-gold-bright-pvd-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/glass-shelf-600mm-long-gold-matt-pvd",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/body-shower-130x120mm-rectangular-shape-black-chrome",
+      "reason": "\nInvalid `prisma.product.findUnique()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-stainless-steel",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-antique-bronze",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-graphite",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-antique-bronze-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-antique-copper-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-chrome",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-black-matt",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-black-chrome-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-chrome",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-black-matt",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-black-matt",
+      "reason": "\nInvalid `prisma.product.findUnique()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/corner-glass-shelf-graphite",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-antique-copper",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-black-chrome",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-antique-bronze",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-antique-copper",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/corner-glass-shelf-graphite",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-black-chrome",
+      "reason": "\nInvalid `prisma.product.findUnique()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-stainless-steel",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/corner-glass-shelf-black-matt",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/corner-glass-shelf-chrome",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/glass-shelf-600mm-long-stainless-steel",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/corner-glass-shelf-stainless-steel",
+      "reason": "image upload failed: read ECONNRESET"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-graphite",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-black-chrome",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-chrome",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/towel-rack-600mm-long-chrome-2",
+      "reason": "image upload failed: socket hang up"
+    },
+    {
+      "url": "https://www.jaquar.com/en/soap-dispenser-chrome-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/soap-dish-holder-black-chrome-2",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nServer has closed the connection."
+    },
+    {
+      "url": "https://www.jaquar.com/en/single-lever-exposed-parts-kit-of-hi-flow-diverter-gold-matt-pvd",
+      "reason": "\nInvalid `prisma.product.upsert()` invocation:\n\n\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)"
+    }
+  ]
+}

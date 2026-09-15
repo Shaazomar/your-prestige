@@ -61,6 +61,7 @@ export async function createCategory(input: CategoryInput) {
     data: {
       ...data,
       image: data.image || null,
+      bannerImage: data.bannerImage || null,
       icon: data.icon || null,
       description: data.description || null,
       parentId: data.parentId || null,
@@ -88,6 +89,7 @@ export async function updateCategory(id: string, input: CategoryInput) {
     data: {
       ...data,
       image: data.image || null,
+      bannerImage: data.bannerImage || null,
       icon: data.icon || null,
       description: data.description || null,
       parentId: data.parentId || null,
@@ -113,6 +115,30 @@ export async function softDeleteCategory(id: string) {
   });
   await logAudit({ action: "category.delete", entity: "Category", entityId: id });
   return category;
+}
+
+/** Swaps `sortOrder` with the adjacent sibling *within the same parent* — a bathware child reorders independently of top-level categories. */
+export async function reorderCategory(id: string, direction: "up" | "down") {
+  const session = await requirePermission("categories", "edit");
+
+  const current = await prisma.category.findUniqueOrThrow({ where: { id } });
+  const sibling = await prisma.category.findFirst({
+    where: {
+      deletedAt: null,
+      parentId: current.parentId,
+      sortOrder: direction === "up" ? { lt: current.sortOrder } : { gt: current.sortOrder },
+    },
+    orderBy: { sortOrder: direction === "up" ? "desc" : "asc" },
+  });
+  if (!sibling) return current;
+
+  await prisma.$transaction([
+    prisma.category.update({ where: { id: current.id }, data: { sortOrder: sibling.sortOrder, updatedById: session.user.id } }),
+    prisma.category.update({ where: { id: sibling.id }, data: { sortOrder: current.sortOrder, updatedById: session.user.id } }),
+  ]);
+
+  await logAudit({ action: "category.reorder", entity: "Category", entityId: id, meta: { direction } });
+  return current;
 }
 
 export async function restoreCategory(id: string) {

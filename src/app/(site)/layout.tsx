@@ -7,8 +7,10 @@ import { Footer } from "@/components/site/Footer";
 import { FloatingActions } from "@/components/site/FloatingActions";
 import { OrganizationJsonLd } from "@/components/site/JsonLd";
 import { MaintenancePage } from "@/components/site/MaintenancePage";
+import { QuickViewProvider } from "@/components/site/catalog/QuickViewProvider";
 import { getMaintenanceState, getMaintenanceWhitelist, isValidBypassToken, MAINTENANCE_COOKIE } from "@/lib/maintenance";
 import { getBusiness } from "@/lib/business";
+import { getBrandNavGroups } from "@/lib/brands";
 
 export default async function SiteLayout({ children }: { children: ReactNode }) {
   const state = await getMaintenanceState();
@@ -28,27 +30,30 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
     }
   }
 
-  const business = await getBusiness();
+  const [business, brandGroups] = await Promise.all([getBusiness(), getBrandNavGroups()]);
 
   return (
     <SmoothScroll>
       <OrganizationJsonLd />
-      <Header
-        business={{
-          name: business.name,
-          phone: business.phone,
-          address: business.address,
-          whatsapp: business.whatsapp,
-          instagram: business.instagram,
-          facebook: business.facebook,
-          threads: business.threads,
-        }}
-      />
-      <main>
-        <PageTransition>{children}</PageTransition>
-      </main>
-      <Footer />
-      <FloatingActions whatsapp={business.whatsapp} phone={business.phone} />
+      <QuickViewProvider>
+        <Header
+          business={{
+            name: business.name,
+            phone: business.phone,
+            address: business.address,
+            whatsapp: business.whatsapp,
+            instagram: business.instagram,
+            facebook: business.facebook,
+            threads: business.threads,
+          }}
+          brandGroups={brandGroups}
+        />
+        <main>
+          <PageTransition>{children}</PageTransition>
+        </main>
+        <Footer />
+        <FloatingActions whatsapp={business.whatsapp} phone={business.phone} />
+      </QuickViewProvider>
     </SmoothScroll>
   );
 }

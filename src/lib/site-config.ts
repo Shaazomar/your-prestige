@@ -80,23 +80,20 @@ export const primaryNav: readonly NavLink[] = [
  * remove functionality.
  */
 export const megaMenu = {
-  // Brand-first: brands lead, then the two product worlds, then the curated
-  // edit. The old per-category links now live under Tiles and Bathware, which
-  // are real browsing sections rather than three fixed buckets.
   primary: [
-    { label: "Brands", href: "/brands", hint: "Shop by house" },
-    { label: "Tiles", href: "/tiles", hint: "Floors, walls & slabs" },
-    { label: "Bathware", href: "/bathware", hint: "Sanitaryware & fittings" },
-    { label: "Designer Picks", href: "/products/designer-picks", hint: "Our curated edit" },
+    { label: "Products", href: "/products", hint: "The full catalogue" },
     { label: "Collections", href: "/collections", hint: "Curated ranges" },
+    { label: "Applications", href: "/applications", hint: "Room by room" },
+    { label: "Brands", href: "/brands", hint: "Who we partner with" },
     { label: "Gallery", href: "/gallery", hint: "Installed work" },
+    { label: "Downloads", href: "/catalogue", hint: "Catalogues & specs" },
     { label: "Contact", href: "/contact", hint: "Talk to us" },
   ] satisfies NavLink[],
 
   catalogue: [
-    { label: "All Products", href: "/products" },
-    { label: "Applications", href: "/applications" },
-    { label: "Downloads", href: "/catalogue" },
+    { label: "Tiles", href: "/tiles" },
+    { label: "Bathware", href: "/bathware" },
+    { label: "Designer Picks", href: "/products/designer-picks" },
     { label: "Compare Products", href: "/compare" },
     { label: "Saved Items", href: "/wishlist" },
   ] satisfies NavLink[],
