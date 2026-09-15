@@ -225,6 +225,17 @@ model Product {
   inventoryHistory InventoryHistory[]
   offers Offer[]
   stockBookingItems StockBookingItem[]
+  variants ProductVariant[]
+
+  // — Catalogue classification —
+  // Where this row's brand/category placement came from. Products the
+  // classifier could not place with high confidence are NEEDS_REVIEW and
+  // surface in the CMS review queue rather than being guessed at.
+  classification     ClassificationStatus @default(UNCLASSIFIED)
+  /// Why the classifier decided what it decided — the matched rule, or the
+  /// reason it declined. Read by the CMS review queue.
+  classificationNote String?
+  classifiedAt       DateTime?
 
   // Provenance — which catalogue import produced this row, if any. A plain
   // column rather than an FK so deleting an import never cascades into the
@@ -245,6 +256,19 @@ model Product {
   @@index([featured])
   @@index([collection])
   @@index([sourceImportId])
+  // Brand-first browsing: /brands/[brand] and /brands/[brand]/[category] both
+  // filter on brand + category while excluding unpublished and soft-deleted
+  // rows, which is one index rather than three separate ones.
+  @@index([brandId, categoryId, published, deletedAt])
+  @@index([categoryId, published, deletedAt])
+  @@index([classification])
+  // NOTE: catalogue search also relies on pg_trgm GIN indexes on name, sku,
+  // productCode and collection, created in
+  // migrations/20260915000000_catalog_brand_structure. Prisma cannot model a
+  // trigram index without the postgresqlExtensions preview feature, so
+  // `prisma migrate dev` will offer to DROP them — decline, or re-add them in
+  // the generated migration. They are what keeps ILIKE search off a
+  // sequential scan.
 }
 
 // ————— Portfolio / Gallery / Video / Testimonials —————
@@ -314,6 +338,19 @@ model GalleryItem {
   createdAt   DateTime  @default(now())
 
   @@index([albumId])
+}
+
+/// How a product came to sit under its brand/category, and whether a human
+/// still needs to look at it. Drives the CMS classification queue.
+enum ClassificationStatus {
+  /// Never run through the classifier.
+  UNCLASSIFIED
+  /// Placed automatically at high confidence.
+  AUTO
+  /// Placed or corrected by a person — the classifier must never overwrite these.
+  MANUAL
+  /// The classifier declined to guess. Awaiting a human decision.
+  NEEDS_REVIEW
 }
 
 enum VideoProvider {
@@ -1106,6 +1143,46 @@ model Collection {
   updatedAt   DateTime  @updatedAt
 
   @@index([deletedAt])
+}
+
+/// A concrete, orderable version of a catalogue product — one size/finish/
+/// colour combination with its own article code.
+///
+/// Deliberately has no Inventory relation. Inventory stays keyed to Product
+/// (`Inventory.productId` is unique), so adding variants cannot create, move
+/// or orphan a single stock row, and a catalogue-only product still needs no
+/// inventory record at all.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// Manufacturer article code for this exact variant.
+  sku       String?
+  /// Display name, e.g. "600x1200 Matt" — falls back to the attributes below.
+  name      String?
+  size      String?
+  finish    String?
+  color     String?
+  surface   String?
+  thickness String?
+  /// Unit this variant is sold in ("Box", "Piece", "Set").
+  unit      String?
+
+  price Decimal? @db.Decimal(10, 2)
+  mrp   Decimal? @db.Decimal(10, 2)
+
+  image     String?
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, sku])
+  @@index([productId])
+  @@index([sku])
+  @@index([active])
 }
 
 model Warehouse {

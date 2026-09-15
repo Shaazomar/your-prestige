@@ -9,6 +9,7 @@ import { MultiImageField } from "@/components/admin/MultiImageField";
 import { productSchema, type ProductInput } from "./schema";
 import { createProduct, updateProduct, getProductFormOptions } from "./actions";
 import type { ProductRow } from "./actions";
+import { VariantsEditor } from "./VariantsEditor";
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
@@ -18,7 +19,7 @@ const empty: ProductInput = {
   name: "", slug: "", collection: "", description: "", finish: "", thickness: "",
   sizes: [], material: "", color: "", texture: "", applications: [],
   lifestyleImage: "", textureImage: "", images: [], video: "", brochureUrl: "",
-  tag: "", aspect: "square", relatedIds: [], categoryId: null, brandId: null,
+  tag: "", aspect: "square", relatedIds: [], categoryId: null, brandId: null, collectionId: null,
   featured: false, designerPick: false, published: true, priceIndicator: "",
 };
 
@@ -47,6 +48,7 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
           relatedIds: (product.relatedIds as string[]) ?? [],
           categoryId: product.categoryId,
           brandId: product.brandId,
+          collectionId: product.collectionId,
           featured: product.featured,
           designerPick: product.designerPick,
           published: product.published,
@@ -60,8 +62,9 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
   const [options, setOptions] = useState<{
     categories: { id: string; name: string }[];
     brands: { id: string; name: string }[];
+    collections: { id: string; name: string }[];
     products: { id: string; name: string }[];
-  }>({ categories: [], brands: [], products: [] });
+  }>({ categories: [], brands: [], collections: [], products: [] });
 
   useEffect(() => {
     getProductFormOptions(product?.id).then(setOptions);
@@ -103,7 +106,8 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
       <section className="space-y-5">
         <p className="text-eyebrow text-gold">Identity</p>
         <div className="grid grid-cols-2 gap-4">
@@ -115,7 +119,23 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
           />
           <AField label="Slug" required value={values.slug} onChange={(e) => { setSlugTouched(true); setValues((v) => ({ ...v, slug: e.target.value })); }} error={errors.slug} />
         </div>
-        <AField label="Collection" value={values.collection} onChange={(e) => setValues((v) => ({ ...v, collection: e.target.value }))} placeholder="e.g. Lumina Marble Collection" />
+        {/* Collection is a real relation. It used to be free text, which meant
+            the same range was retyped per product and never matched a
+            Collection row — so brand pages could not group by it. */}
+        <ASelect
+          label="Collection"
+          value={values.collectionId ?? ""}
+          onChange={(e) => {
+            const id = e.target.value || null;
+            const picked = options.collections.find((c) => c.id === id);
+            // Keep the legacy text column in step with the relation so older
+            // queries that still read `collection` stay correct.
+            setValues((v) => ({ ...v, collectionId: id, collection: picked?.name ?? "" }));
+          }}
+        >
+          <option value="">None</option>
+          {options.collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </ASelect>
         <ATextArea label="Description" value={values.description} onChange={(e) => setValues((v) => ({ ...v, description: e.target.value }))} />
       </section>
 
@@ -206,6 +226,12 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
           product ? "Save Changes" : "Create Product"
         )}
       </button>
-    </form>
+      </form>
+
+      {/* Outside the form element: variants save themselves, and nesting them
+          inside would make the Enter key add a variant instead of saving the
+          product. Only offered once the product exists to hang them off. */}
+      {product && <VariantsEditor productId={product.id} canEdit />}
+    </>
   );
 }

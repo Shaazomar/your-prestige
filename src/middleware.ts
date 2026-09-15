@@ -38,6 +38,7 @@ const ROUTE_MODULES: ReadonlyArray<readonly [string, Module]> = [
   ["/admin/maintenance", "maintenance"],
   ["/admin/logs", "logs"],
   ["/admin/content/products", "products"],
+  ["/admin/content/classification", "products"],
   ["/admin/content/catalog-imports", "catalogImports"],
   ["/admin/content/excel-import", "catalogImports"],
   ["/admin/content/categories", "categories"],

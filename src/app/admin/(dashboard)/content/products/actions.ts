@@ -60,16 +60,46 @@ export async function listProducts(params: ListParams): Promise<ListResult<Produ
 
 export async function getProductFormOptions(excludeId?: string) {
   await requirePermission("products", "view");
-  const [categories, brands, products] = await Promise.all([
-    prisma.category.findMany({ where: { deletedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  const [categoryRows, brands, collections, products] = await Promise.all([
+    prisma.category.findMany({
+      where: { deletedAt: null },
+      select: { id: true, name: true, parentId: true },
+      orderBy: { name: "asc" },
+    }),
     prisma.brand.findMany({ where: { deletedAt: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.collection.findMany({
+      where: { deletedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
     prisma.product.findMany({
       where: { deletedAt: null, ...(excludeId ? { id: { not: excludeId } } : {}) },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
   ]);
-  return { categories, brands, products };
+
+  // Present the category tree as indented paths ("Bathware › Faucets › Basin
+  // Mixers") so picking a subcategory is one obvious choice rather than a flat
+  // list of ambiguous leaf names — there are several "Accessories".
+  const byId = new Map(categoryRows.map((c) => [c.id, c]));
+  const pathOf = (id: string): string => {
+    const parts: string[] = [];
+    const guard = new Set<string>();
+    let cursor = byId.get(id);
+    while (cursor && !guard.has(cursor.id)) {
+      guard.add(cursor.id);
+      parts.unshift(cursor.name);
+      cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+    }
+    return parts.join(" › ");
+  };
+
+  const categories = categoryRows
+    .map((c) => ({ id: c.id, name: pathOf(c.id) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return { categories, brands, collections, products };
 }
 
 export async function createProduct(input: ProductInput) {
@@ -97,6 +127,10 @@ export async function createProduct(input: ProductInput) {
       priceIndicator: data.priceIndicator || null,
       categoryId: data.categoryId || null,
       brandId: data.brandId || null,
+      collectionId: data.collectionId || null,
+      // A person chose this placement, so the classifier must never move it.
+      classification: "MANUAL",
+      classifiedAt: new Date(),
       createdById: session.user.id,
       updatedById: session.user.id,
     },
@@ -133,6 +167,9 @@ export async function updateProduct(id: string, input: ProductInput) {
       priceIndicator: data.priceIndicator || null,
       categoryId: data.categoryId || null,
       brandId: data.brandId || null,
+      collectionId: data.collectionId || null,
+      classification: "MANUAL",
+      classifiedAt: new Date(),
       updatedById: session.user.id,
     },
   });

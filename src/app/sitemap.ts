@@ -5,6 +5,12 @@ import { getCatalogProducts } from "@/lib/products";
 import { getShowrooms } from "@/lib/showrooms";
 import { getBrands } from "@/lib/brands";
 import { getLandingPages } from "@/lib/landing-pages";
+import {
+  getBrandCategoryTree,
+  getBrandDirectory,
+  getCategoryTree,
+  flattenCategories,
+} from "@/lib/catalog-taxonomy";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
@@ -15,6 +21,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/products/sanitary",
     "/products/designer-picks",
     "/brands",
+    "/tiles",
+    "/bathware",
     "/showrooms",
     "/portfolio",
     "/gallery",
@@ -60,6 +68,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
+  // Brand x category — only combinations that actually hold products, which is
+  // what keeps this from becoming a combinatorial explosion of empty URLs.
+  const directory = await getBrandDirectory();
+  const brandCategoryPages = (
+    await Promise.all(
+      directory.map(async (b) => {
+        const tree = await getBrandCategoryTree(b.id);
+        return flattenCategories(tree).map((node) => ({
+          url: `${siteUrl}/brands/${b.slug}/${node.slug}`,
+          lastModified: new Date(),
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        }));
+      })
+    )
+  ).flat();
+
+  // Global category browsing, under whichever top-level section owns it.
+  const sections = await getCategoryTree();
+  const categoryPages = sections.flatMap((section) =>
+    flattenCategories(section.children).map((node) => ({
+      url: `${siteUrl}/${section.slug}/${node.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    }))
+  );
+
   // Showroom pages are high-value local-SEO landing pages.
   const showrooms = await getShowrooms();
   const showroomPages = showrooms.map((s) => ({
@@ -84,6 +120,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...landingPages,
     ...showroomPages,
     ...brandPages,
+    ...brandCategoryPages,
+    ...categoryPages,
     ...posts,
     ...productPages,
   ];

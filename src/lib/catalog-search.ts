@@ -32,6 +32,30 @@ export interface CatalogFilters {
   page?: number;
   perPage?: number;
   sort?: "featured" | "newest" | "name";
+
+  // — Scope, set by the route rather than by the visitor —
+  /**
+   * Restrict to one brand by slug. Set by /brands/[brand] and
+   * /brands/[brand]/[category]; a visitor cannot widen out of it, which is
+   * what makes a brand page show only that brand.
+   */
+  brandSlug?: string;
+  /**
+   * Restrict to a category *and everything beneath it*, by category id.
+   * Browsing "Tiles" has to include "Tiles → GVT", so routes resolve the
+   * branch ids once and pass them here.
+   */
+  categoryIds?: string[];
+}
+
+/** Page sizes offered to the visitor. First entry is the default. */
+export const PER_PAGE_OPTIONS = [24, 36, 48] as const;
+
+/** Clamp a requested page size to one we actually offer. */
+export function normalizePerPage(value: number | undefined): number {
+  return (PER_PAGE_OPTIONS as readonly number[]).includes(value ?? 0)
+    ? (value as number)
+    : PER_PAGE_OPTIONS[0];
 }
 
 export interface Facet {
@@ -89,6 +113,10 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
 function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
   const and: Prisma.ProductWhereInput[] = [{ published: true, deletedAt: null }];
 
+  // Route scope first — these are not user-controllable.
+  if (f.brandSlug) and.push({ brand: { slug: f.brandSlug } });
+  if (f.categoryIds?.length) and.push({ categoryId: { in: f.categoryIds } });
+
   if (f.category) and.push({ category: { slug: f.category } });
   if (f.brand) and.push({ brand: { name: { equals: f.brand, mode: "insensitive" } } });
   if (f.collection) and.push({ collection: { equals: f.collection, mode: "insensitive" } });
@@ -107,10 +135,15 @@ function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
         { collection: { contains: f.q, mode: "insensitive" } },
         { description: { contains: f.q, mode: "insensitive" } },
         { productCode: { contains: f.q, mode: "insensitive" } },
+        { sku: { contains: f.q, mode: "insensitive" } },
         { finish: { contains: f.q, mode: "insensitive" } },
         { material: { contains: f.q, mode: "insensitive" } },
         { color: { contains: f.q, mode: "insensitive" } },
         { brand: { name: { contains: f.q, mode: "insensitive" } } },
+        { category: { name: { contains: f.q, mode: "insensitive" } } },
+        { collectionRelation: { name: { contains: f.q, mode: "insensitive" } } },
+        // A customer quoting a variant's article code should find its product.
+        { variants: { some: { sku: { contains: f.q, mode: "insensitive" } } } },
       ],
     });
   }
@@ -139,10 +172,15 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
         take: perPage,
       }),
       prisma.product.count({ where }),
-      // Facets deliberately reflect the *unfiltered* category scope, so a
-      // visitor can always see — and switch to — the other options rather than
-      // being funnelled into a dead end by their own first click.
-      computeFacets({ category: filters.category }),
+      // Facets reflect the route's scope but not the visitor's own filter
+      // choices, so they can always see — and switch to — the other options
+      // rather than being funnelled into a dead end by their first click.
+      // The scope itself still applies: a Jaquar page never offers Velzone.
+      computeFacets({
+        category: filters.category,
+        brandSlug: filters.brandSlug,
+        categoryIds: filters.categoryIds,
+      }),
     ]);
 
     return {
@@ -165,11 +203,19 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
   }
 }
 
-async function computeFacets(scope: { category?: string }): Promise<CatalogSearchResult["facets"]> {
+interface FacetScope {
+  category?: string;
+  brandSlug?: string;
+  categoryIds?: string[];
+}
+
+async function computeFacets(scope: FacetScope): Promise<CatalogSearchResult["facets"]> {
   const where: Prisma.ProductWhereInput = {
     published: true,
     deletedAt: null,
     ...(scope.category ? { category: { slug: scope.category } } : {}),
+    ...(scope.brandSlug ? { brand: { slug: scope.brandSlug } } : {}),
+    ...(scope.categoryIds?.length ? { categoryId: { in: scope.categoryIds } } : {}),
   };
 
   const [byBrand, byCollection, byFinish, byMaterial, byColor, sizes, applications] = await Promise.all([
@@ -178,8 +224,8 @@ async function computeFacets(scope: { category?: string }): Promise<CatalogSearc
     prisma.product.groupBy({ by: ["finish"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["material"], where, _count: { _all: true } }),
     prisma.product.groupBy({ by: ["color"], where, _count: { _all: true } }),
-    jsonArrayFacet("sizes", scope.category),
-    jsonArrayFacet("applications", scope.category),
+    jsonArrayFacet("sizes", scope),
+    jsonArrayFacet("applications", scope),
   ]);
 
   // groupBy returns brand ids; resolve them to names in one query.
@@ -219,11 +265,17 @@ async function computeFacets(scope: { category?: string }): Promise<CatalogSearc
  */
 async function jsonArrayFacet(
   column: "sizes" | "applications",
-  category?: string
+  scope: FacetScope
 ): Promise<Facet[]> {
   const columnRef = column === "sizes" ? Prisma.sql`"sizes"` : Prisma.sql`"applications"`;
-  const categoryClause = category
-    ? Prisma.sql`AND p."categoryId" = (SELECT id FROM "Category" WHERE slug = ${category})`
+  const categoryClause = scope.category
+    ? Prisma.sql`AND p."categoryId" = (SELECT id FROM "Category" WHERE slug = ${scope.category})`
+    : Prisma.empty;
+  const brandClause = scope.brandSlug
+    ? Prisma.sql`AND p."brandId" = (SELECT id FROM "Brand" WHERE slug = ${scope.brandSlug})`
+    : Prisma.empty;
+  const branchClause = scope.categoryIds?.length
+    ? Prisma.sql`AND p."categoryId" IN (${Prisma.join(scope.categoryIds)})`
     : Prisma.empty;
 
   try {
@@ -233,7 +285,7 @@ async function jsonArrayFacet(
            LATERAL jsonb_array_elements_text(
              CASE WHEN jsonb_typeof(p.${columnRef}) = 'array' THEN p.${columnRef} ELSE '[]'::jsonb END
            ) AS elem
-      WHERE p."published" = true AND p."deletedAt" IS NULL ${categoryClause}
+      WHERE p."published" = true AND p."deletedAt" IS NULL ${categoryClause} ${brandClause} ${branchClause}
       GROUP BY elem
       ORDER BY count DESC, value ASC
       LIMIT 60
