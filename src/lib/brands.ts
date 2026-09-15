@@ -308,10 +308,17 @@ export const getBrandFeaturedCollections = cache(
  * published-product counts) — the single source of truth for `/bathware`
  * navigation and route generation. No hardcoded category list anywhere.
  */
-export const getBathwareCategories = cache(
-  async (): Promise<{ slug: string; name: string; count: number }[]> => {
+/**
+ * Published child categories of one top-level section, with real counts,
+ * strongest first. Sections with nothing in them are dropped.
+ *
+ * Generalised from the original bathware-only version so /tiles/[category] can
+ * use the same query rather than a near-identical copy of it.
+ */
+export const getSectionCategories = cache(
+  async (sectionSlug: string): Promise<{ slug: string; name: string; count: number }[]> => {
     try {
-      const parent = await prisma.category.findUnique({ where: { slug: "bathware" }, select: { id: true } });
+      const parent = await prisma.category.findUnique({ where: { slug: sectionSlug }, select: { id: true } });
       if (!parent) return [];
 
       const children = await prisma.category.findMany({
@@ -341,6 +348,12 @@ export const getBathwareCategories = cache(
     }
   }
 );
+
+/** The bathware section's categories. Kept as the name callers already use. */
+export const getBathwareCategories = cache(() => getSectionCategories("bathware"));
+
+/** The tiles section's categories. */
+export const getTileCategories = cache(() => getSectionCategories("tiles"));
 
 export interface BrandNavItem {
   slug: string;

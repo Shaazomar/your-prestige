@@ -26,6 +26,7 @@ export const productSchema = z.object({
   relatedIds: z.array(z.string()).default([]),
   categoryId: z.string().optional().nullable(),
   brandId: z.string().optional().nullable(),
+  collectionId: z.string().optional().nullable(),
   featured: z.boolean().default(false),
   designerPick: z.boolean().default(false),
   published: z.boolean().default(true),

@@ -126,6 +126,11 @@ function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
         { material: { contains: f.q, mode: "insensitive" } },
         { color: { contains: f.q, mode: "insensitive" } },
         { brand: { name: { contains: f.q, mode: "insensitive" } } },
+        { category: { name: { contains: f.q, mode: "insensitive" } } },
+        { collectionRelation: { name: { contains: f.q, mode: "insensitive" } } },
+        // A customer quoting a variant's article code should land on its
+        // product — the variant is what is printed on the box, not the parent.
+        { variants: { some: { sku: { contains: f.q, mode: "insensitive" } } } },
       ],
     });
   }

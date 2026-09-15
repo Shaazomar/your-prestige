@@ -264,6 +264,7 @@ model Product {
   inventoryHistory InventoryHistory[]
   offers Offer[]
   stockBookingItems StockBookingItem[]
+  variants ProductVariant[]
 
   // Provenance — which catalogue import produced this row, if any. A plain
   // column rather than an FK so deleting an import never cascades into the
@@ -284,6 +285,16 @@ model Product {
   @@index([featured])
   @@index([collection])
   @@index([sourceImportId])
+  // Brand-first browsing: /brands/[brand] and /brands/[brand]/[category] both
+  // filter on brand + category while excluding unpublished and soft-deleted
+  // rows, which is one index rather than three separate ones.
+  @@index([brandId, categoryId, published, deletedAt])
+  @@index([categoryId, published, deletedAt])
+  // NOTE: catalogue search also relies on pg_trgm GIN indexes on name, sku,
+  // productCode and collection. Those, and the ProductVariant table below, are
+  // applied by prisma/sql/2026-09-15-product-variants.sql — hand-written and
+  // additive, per the datasource warning at the top of this file. Prisma
+  // cannot model a trigram index at all, so nothing here declares them.
 }
 
 // ————— Portfolio / Gallery / Video / Testimonials —————
@@ -1154,6 +1165,46 @@ model Collection {
 
   @@index([deletedAt])
   @@index([brandId])
+}
+
+/// A concrete, orderable version of a catalogue product — one size/finish/
+/// colour combination with its own article code.
+///
+/// Deliberately has no Inventory relation. Inventory stays keyed to Product
+/// (`Inventory.productId` is unique), so adding variants cannot create, move
+/// or orphan a single stock row, and a catalogue-only product still needs no
+/// inventory record at all.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// Manufacturer article code for this exact variant.
+  sku       String?
+  /// Display name, e.g. "600x1200 Matt" — falls back to the attributes below.
+  name      String?
+  size      String?
+  finish    String?
+  color     String?
+  surface   String?
+  thickness String?
+  /// Unit this variant is sold in ("Box", "Piece", "Set").
+  unit      String?
+
+  price Decimal? @db.Decimal(10, 2)
+  mrp   Decimal? @db.Decimal(10, 2)
+
+  image     String?
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, sku])
+  @@index([productId])
+  @@index([sku])
+  @@index([active])
 }
 
 model Warehouse {

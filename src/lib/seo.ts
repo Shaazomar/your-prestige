@@ -16,6 +16,11 @@ import { siteUrl } from "@/lib/site-config";
  * partially-filled records improve a page rather than blanking it.
  */
 
+/** Absolute, canonical URL for a site-relative path. */
+export function absoluteUrl(path: string): string {
+  return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export interface SeoOverride {
   title: string | null;
   description: string | null;
