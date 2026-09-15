@@ -18,6 +18,7 @@ import { getShowrooms, getShowroomBySlug, formatAddress, directionsHref } from "
 import { telHref, waHref } from "@/lib/business";
 import { siteUrl } from "@/lib/site-config";
 import { resolveImageRef } from "@/lib/s3-url";
+import { PRODUCT_INCLUDE, resolveCategory } from "@/lib/products";
 
 export const revalidate = 300;
 
@@ -70,7 +71,9 @@ export default async function ShowroomDetailPage({
           // Depot-imported products carry their photography as an S3 object
           // key, not a URL — without these the strip rendered no image at all.
           image_key: true, thumbnail_key: true,
-          category: { select: { slug: true } },
+          // The product page's own section resolution, so this links to the
+          // canonical product URL rather than a second address for it.
+          designerPick: true, ...PRODUCT_INCLUDE,
         },
       })
     : [];
@@ -352,7 +355,7 @@ export default async function ShowroomDetailPage({
               className="mb-14"
             />
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((p: { slug: string; name: string; collection?: string | null; lifestyleImage?: string | null; image_key?: string | null; thumbnail_key?: string | null; category?: { slug: string } | null }) => {
+              {featured.map((p) => {
                 const image =
                   resolveImageRef(p.lifestyleImage) ||
                   resolveImageRef(p.image_key) ||
@@ -361,7 +364,7 @@ export default async function ShowroomDetailPage({
                 <Link
 
                   key={p.slug}
-                  href={`/products/${p.category?.slug ?? "tiles"}/${p.slug}`}
+                  href={`/products/${resolveCategory(p)}/${p.slug}`}
                   className="group block"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-stone-100">

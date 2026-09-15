@@ -5,7 +5,8 @@ import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
 import { getBrandBySlug, getBrandCategories } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
-import { getSeoForPath } from "@/lib/seo";
+import { applySeo, getSeoForPath } from "@/lib/seo";
+import { buildBrandCategoryMetadata } from "@/lib/seo-metadata";
 import { siteUrl } from "@/lib/site-config";
 
 /**
@@ -35,8 +36,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { slug, category } = await params;
   const brand = await getBrandBySlug(slug);
@@ -45,15 +48,20 @@ export async function generateMetadata({
   const cat = categories.find((c) => c.slug === category);
   if (!cat) return {};
 
-  const seo = await getSeoForPath(`/brands/${slug}/${category}`);
-  return {
-    title: seo?.title ?? `${brand.name} ${cat.name} | Prestige`,
-    description:
-      seo?.description ??
-      `${cat.count} ${brand.name} ${cat.name.toLowerCase()} product${cat.count === 1 ? "" : "s"} at Prestige Tiles & Sanitary, Mangaluru.`,
-    alternates: { canonical: `${siteUrl}/brands/${brand.slug}/${cat.slug}` },
-    openGraph: { images: seo?.ogImage ? [seo.ogImage] : cat.image ? [cat.image] : undefined },
-  };
+  const path = `/brands/${slug}/${category}`;
+  const base = buildBrandCategoryMetadata({
+    brandName: brand.name,
+    brandSlug: brand.slug,
+    categoryName: cat.name,
+    categorySlug: cat.slug,
+    count: cat.count,
+    image: cat.image,
+    // Filtered views of this page canonicalise back to it and drop out of the
+    // index; page=N stays indexable so the long tail is still crawlable.
+    searchParams: await searchParams,
+  });
+
+  return applySeo(base, await getSeoForPath(path), path);
 }
 
 export default async function BrandCategoryPage({

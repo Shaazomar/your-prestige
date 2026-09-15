@@ -20,7 +20,8 @@ import {
   getBrandFeaturedCollections,
 } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
-import { getSeoForPath } from "@/lib/seo";
+import { applySeo, getSeoForPath } from "@/lib/seo";
+import { buildBrandMetadata } from "@/lib/seo-metadata";
 import { siteUrl } from "@/lib/site-config";
 
 /**
@@ -48,17 +49,20 @@ export async function generateMetadata({
   const brand = await getBrandBySlug(slug);
   if (!brand) return {};
 
-  const seo = await getSeoForPath(`/brands/${slug}`);
-  return {
-    title: seo?.title ?? `${brand.name} Collections | Prestige`,
-    description:
-      seo?.description ??
-      brand.shortDescription ??
-      brand.description ??
-      `Browse the full ${brand.name} range at Prestige Tiles & Sanitary, Mangaluru — ${brand.productCount} products across ${brand.categoryCount} categories, displayed at full scale in our showrooms.`,
-    alternates: { canonical: `${siteUrl}/brands/${brand.slug}` },
-    openGraph: { images: seo?.ogImage ? [seo.ogImage] : brand.banner ? [brand.banner] : undefined },
-  };
+  // Derived from the brand's own categories, so Jaquar reads as bathroom
+  // products and a tile brand reads as surfaces — without hardcoding either.
+  const categories = await getBrandCategories(slug);
+  const base = buildBrandMetadata({
+    name: brand.name,
+    slug: brand.slug,
+    description: brand.description,
+    shortDescription: brand.shortDescription,
+    productCount: brand.productCount,
+    categoryNames: categories.map((c) => c.name),
+    image: brand.banner ?? brand.logo,
+  });
+
+  return applySeo(base, await getSeoForPath(`/brands/${slug}`), `/brands/${slug}`);
 }
 
 export default async function BrandPage({

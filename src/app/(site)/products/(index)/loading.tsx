@@ -1,7 +1,19 @@
 import { Container } from "@/components/ui/Container";
 import { SkeletonProductGrid } from "@/components/ui/Skeleton";
 
-export default function CategoryLoading() {
+/**
+ * Streaming skeleton for the index page only.
+ *
+ * It lives in an `(index)` route group — which does not change the URL —
+ * because a `loading.tsx` creates a Suspense boundary over its segment *and
+ * every segment below it*. With this file one level up, the shell of
+ * `/products/...` detail pages flushed with HTTP 200 before their `notFound()`
+ * or `redirect()` ever threw, so unknown URLs answered 200 with a 404 body
+ * and redirects were delivered as a client-side hop. Keep it inside the
+ * group.
+ */
+
+export default function ProductsLoading() {
   return (
     <div className="bg-white min-h-screen">
       {/* Page Hero Skeleton */}

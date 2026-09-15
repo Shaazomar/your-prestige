@@ -34,6 +34,36 @@ export default function NotFound() {
         </ButtonLink>
       </div>
 
+      {/* Real routes into the catalogue rather than a bounce to the homepage:
+          a visitor who landed on a dead product URL is usually one click from
+          what they wanted. */}
+      <nav aria-label="Where to go next" className="mt-12 w-full max-w-xl">
+        <p className="text-[0.7rem] uppercase tracking-[0.22em] text-ivory/35">
+          Or pick up from here
+        </p>
+        <ul className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2.5 text-sm sm:grid-cols-4">
+          {[
+            { label: "Brands", href: "/brands" },
+            { label: "Tiles", href: "/tiles" },
+            { label: "Bathware", href: "/bathware" },
+            { label: "Collections", href: "/collections" },
+            { label: "All products", href: "/products" },
+            { label: "Designer Picks", href: "/products/designer-picks" },
+            { label: "Showrooms", href: "/showrooms" },
+            { label: "Contact", href: "/contact" },
+          ].map((l) => (
+            <li key={l.href}>
+              <Link
+                href={l.href}
+                className="text-ivory/55 transition-colors hover:text-gold"
+              >
+                {l.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <Link
         href="/showrooms"
         className="mt-10 inline-flex items-center gap-2 text-sm text-ivory/45 transition-colors hover:text-gold"

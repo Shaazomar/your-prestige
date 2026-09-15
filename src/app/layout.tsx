@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Instrument_Serif } from "next/font/google";
 import { business, siteUrl } from "@/lib/site-config";
+import { DEFAULT_TITLE, DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TWITTER_IMAGE } from "@/lib/seo-config";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -21,33 +22,37 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: business.name,
   title: {
-    default: `${business.name} — ${business.tagline}`,
+    // Prestige is not a tile-only business — the catalogue spans tiles and
+    // surfaces plus bathware, sanitaryware, faucets, showers and wellness, so
+    // the default title describes all of it. Page-level generators return
+    // absolute titles and bypass this template.
+    default: DEFAULT_TITLE,
     template: `%s — ${business.name}`,
   },
-  description: business.description,
+  description: DEFAULT_DESCRIPTION,
+  // Deliberately short and non-repetitive: a keyword list is not a ranking
+  // signal, and a long one reads as stuffing.
   keywords: [
-    "Prestige Tiles Mangaluru",
-    "luxury tiles Mangaluru",
-    "premium sanitaryware Mangaluru",
+    "tiles Mangaluru",
+    "sanitaryware Mangaluru",
+    "bathware Mangaluru",
     "Jaquar dealer Mangaluru",
-    "designer bathrooms Karnataka",
-    "tile showroom Dakshina Kannada",
-    "tiles Puttur",
-    "sanitaryware Moodbidri",
-    "tile showroom Derlakatte",
+    "premium surfaces Dakshina Kannada",
   ],
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: siteUrl,
     siteName: business.name,
-    title: `${business.name} — ${business.tagline}`,
-    description: business.description,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [{ url: DEFAULT_OG_IMAGE }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${business.name} — ${business.tagline}`,
-    description: business.description,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_TWITTER_IMAGE],
   },
   robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",

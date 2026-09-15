@@ -2,7 +2,8 @@ import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { brands as fallbackBrandNames } from "@/lib/demo-content";
-import { toCatalogProduct } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { getCategorySubtreeIds, getSubtreeProductCounts } from "@/lib/category-tree";
 
 /**
  * Brand directory, read from the CMS.
@@ -213,11 +214,27 @@ export const getBrandCategories = cache(
       });
       const byId = new Map(cats.map((c) => [c.id, c]));
 
+      // The page behind each chip lists the category's whole subtree, so the
+      // chip counts it the same way. `groupBy` above only says which
+      // categories this brand files products in — 48 brand/category pairs in
+      // the catalogue have products on both a category and its children, and
+      // those chips used to under-report.
+      const brand = await prisma.brand.findUnique({ where: { slug: brandSlug }, select: { id: true } });
+      const subtreeCounts = brand
+        ? await getSubtreeProductCounts(categoryIds, brand.id)
+        : new Map<string, number>();
+
       return rows
         .map((r) => {
           const cat = r.categoryId ? byId.get(r.categoryId) : undefined;
           return cat
-            ? { slug: cat.slug, name: cat.name, count: r._count._all, image: cat.image, description: cat.description }
+            ? {
+                slug: cat.slug,
+                name: cat.name,
+                count: subtreeCounts.get(cat.id) ?? r._count._all,
+                image: cat.image,
+                description: cat.description,
+              }
             : null;
         })
         .filter((x): x is BrandCategoryView => x !== null)
@@ -227,12 +244,6 @@ export const getBrandCategories = cache(
     }
   }
 );
-
-/** Same shape `toCatalogProduct` expects — duplicated locally rather than imported, matching the existing convention in `catalog-search.ts` and the `by-slug` API route. */
-const FEATURED_PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
-  brand: { select: { name: true } },
-} satisfies Prisma.ProductInclude;
 
 /**
  * Products to feature on the brand's hero page. Curated via
@@ -255,7 +266,7 @@ export const getBrandFeaturedProducts = cache(
       if (curatedIds.length > 0) {
         const rows = await prisma.product.findMany({
           where: { id: { in: curatedIds }, published: true, deletedAt: null },
-          include: FEATURED_PRODUCT_INCLUDE,
+          include: PRODUCT_INCLUDE,
         });
         const byId = new Map(rows.map((r) => [r.id, r]));
         const ordered = curatedIds.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => !!r);
@@ -264,7 +275,7 @@ export const getBrandFeaturedProducts = cache(
 
       const fallback = await prisma.product.findMany({
         where: { brandId: brand.id, published: true, deletedAt: null },
-        include: FEATURED_PRODUCT_INCLUDE,
+        include: PRODUCT_INCLUDE,
         orderBy: [{ featured: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
         take: limit,
       });
@@ -308,15 +319,27 @@ export const getBrandFeaturedCollections = cache(
  * published-product counts) — the single source of truth for `/bathware`
  * navigation and route generation. No hardcoded category list anywhere.
  */
+export interface SectionCategory {
+  slug: string;
+  name: string;
+  /** Published products in this category *and everything under it*. */
+  count: number;
+  /** Null for a direct child of the section. */
+  parentSlug: string | null;
+  parentName: string | null;
+}
+
 /**
  * Published child categories of one top-level section, with real counts,
  * strongest first. Sections with nothing in them are dropped.
  *
- * Generalised from the original bathware-only version so /tiles/[category] can
- * use the same query rather than a near-identical copy of it.
+ * `count` spans each category's whole subtree. Counting only products filed
+ * directly on the child advertised "Faucets 123" for a category holding 445 —
+ * and the page beneath it listed the same 123, because the search was scoped
+ * the same way. See `getCategorySubtreeIds`.
  */
 export const getSectionCategories = cache(
-  async (sectionSlug: string): Promise<{ slug: string; name: string; count: number }[]> => {
+  async (sectionSlug: string): Promise<SectionCategory[]> => {
     try {
       const parent = await prisma.category.findUnique({ where: { slug: sectionSlug }, select: { id: true } });
       if (!parent) return [];
@@ -328,23 +351,101 @@ export const getSectionCategories = cache(
       });
       if (children.length === 0) return [];
 
-      const counts = await prisma.product.groupBy({
-        by: ["categoryId"],
-        where: {
-          published: true,
-          deletedAt: null,
-          categoryId: { in: children.map((c) => c.id) },
-        },
-        _count: { _all: true },
-      });
-      const countById = new Map(counts.map((c) => [c.categoryId, c._count._all]));
+      const countById = await getSubtreeProductCounts(children.map((c) => c.id));
 
       return children
-        .map((c) => ({ slug: c.slug, name: c.name, count: countById.get(c.id) ?? 0 }))
+        .map((c) => ({
+          slug: c.slug,
+          name: c.name,
+          count: countById.get(c.id) ?? 0,
+          parentSlug: null,
+          parentName: null,
+        }))
         .filter((c) => c.count > 0)
         .sort((a, b) => b.count - a.count);
     } catch {
       return [];
+    }
+  }
+);
+
+/**
+ * Resolve one category *anywhere inside* a section, for `/tiles/[category]`
+ * and `/bathware/[category]`.
+ *
+ * Accepting descendants, not just direct children, is what gives the 51
+ * third-level categories — Spa Systems, Shower Panels, Large Format — a page
+ * of their own. Before this they existed in the data, held three quarters of
+ * the catalogue between them, and had no URL at all.
+ *
+ * Returns null when the slug is not inside this section, so `/tiles/faucets`
+ * still 404s rather than rendering a bathware category under the tiles
+ * section.
+ */
+export const getSectionCategory = cache(
+  async (sectionSlug: string, categorySlug: string): Promise<SectionCategory | null> => {
+    if (categorySlug === sectionSlug) return null;
+
+    // Deliberately uncaught. `null` from here means "no such category" and the
+    // page turns it into a 404, so a database error must not be allowed to
+    // masquerade as one — see the note in `category-tree.ts`.
+    {
+      const ids = await getCategorySubtreeIds(sectionSlug);
+      if (ids.length === 0) return null;
+
+      const cat = await prisma.category.findFirst({
+        where: { slug: categorySlug, id: { in: ids }, published: true, deletedAt: null },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          parent: { select: { slug: true, name: true } },
+        },
+      });
+      if (!cat) return null;
+
+      const count = (await getSubtreeProductCounts([cat.id])).get(cat.id) ?? 0;
+      if (count === 0) return null;
+
+      return {
+        slug: cat.slug,
+        name: cat.name,
+        count,
+        // The section root is not a useful crumb — the page already sits under
+        // it — so an intermediate parent is reported and the root is not.
+        parentSlug: cat.parent && cat.parent.slug !== sectionSlug ? cat.parent.slug : null,
+        parentName: cat.parent && cat.parent.slug !== sectionSlug ? cat.parent.name : null,
+      };
+    }
+  }
+);
+
+/** Every category inside a section, for route generation and sitemaps. */
+export const getSectionCategoryTree = cache(
+  async (sectionSlug: string): Promise<SectionCategory[]> => {
+    // Uncaught for the same reason as `getSectionCategory`: this drives
+    // `generateStaticParams`, and an empty list silently un-builds every
+    // category page in the section.
+    {
+      const ids = await getCategorySubtreeIds(sectionSlug);
+      if (ids.length === 0) return [];
+
+      const cats = await prisma.category.findMany({
+        where: { id: { in: ids }, published: true, deletedAt: null, NOT: { slug: sectionSlug } },
+        select: { id: true, slug: true, name: true, parent: { select: { slug: true, name: true } } },
+      });
+      const countById = await getSubtreeProductCounts(cats.map((c) => c.id));
+
+      return cats
+        .map((c) => ({
+          slug: c.slug,
+          name: c.name,
+          count: countById.get(c.id) ?? 0,
+          parentSlug: c.parent && c.parent.slug !== sectionSlug ? c.parent.slug : null,
+          parentName: c.parent && c.parent.slug !== sectionSlug ? c.parent.name : null,
+        }))
+        .filter((c) => c.count > 0)
+        .sort((a, b) => b.count - a.count);
     }
   }
 );

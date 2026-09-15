@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Breadcrumbs } from "@/components/site/Breadcrumbs";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
-import { getTileCategories } from "@/lib/brands";
+import { getSectionCategory, getSectionCategoryTree } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
-import { siteUrl } from "@/lib/site-config";
+import { applySeo, getSeoForPath } from "@/lib/seo";
+import { buildCategoryMetadata } from "@/lib/seo-metadata";
 
 /**
  * One tile category across every brand — e.g. `/tiles/gvt` shows Motto,
@@ -17,7 +18,7 @@ export const revalidate = 600;
 
 export async function generateStaticParams() {
   try {
-    const categories = await getTileCategories();
+    const categories = await getSectionCategoryTree("tiles");
     return categories.map((c) => ({ category: c.slug }));
   } catch {
     return [];
@@ -26,18 +27,25 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { category } = await params;
-  const categories = await getTileCategories();
-  const cat = categories.find((c) => c.slug === category);
+  const cat = await getSectionCategory("tiles", category);
   if (!cat) return {};
-  return {
-    title: `${cat.name} — Tiles & Surfaces`,
-    description: `${cat.count} ${cat.name.toLowerCase()} across every brand we carry, at Your Prestige, Mangaluru.`,
-    alternates: { canonical: `${siteUrl}/tiles/${cat.slug}` },
-  };
+
+  const path = `/tiles/${cat.slug}`;
+  const base = buildCategoryMetadata({
+    name: cat.name,
+    path,
+    qualifier: "Tiles & Surfaces",
+    count: cat.count,
+    searchParams: await searchParams,
+  });
+
+  return applySeo(base, await getSeoForPath(path), path);
 }
 
 export default async function TilesCategoryPage({
@@ -48,8 +56,7 @@ export default async function TilesCategoryPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { category } = await params;
-  const categories = await getTileCategories();
-  const cat = categories.find((c) => c.slug === category);
+  const cat = await getSectionCategory("tiles", category);
   // A category that is not in the tiles subtree is not a tiles URL — without
   // this, /tiles/faucets would serve bathware under a tiles address, giving
   // the same products two URLs and two competing canonicals.
@@ -62,7 +69,17 @@ export default async function TilesCategoryPage({
     <main className="min-h-screen bg-white">
       <section className="pb-4 pt-8">
         <Container size="wide">
-          <Breadcrumbs items={[{ label: "Tiles", href: "/tiles" }, { label: cat.name }]} />
+          <Breadcrumbs
+            items={[
+              { label: "Tiles", href: "/tiles" },
+              // A third-level category sits under a second-level one; the
+              // trail says so rather than flattening the tree.
+              ...(cat.parentSlug && cat.parentName
+                ? [{ label: cat.parentName, href: `/tiles/${cat.parentSlug}` }]
+                : []),
+              { label: cat.name },
+            ]}
+          />
         </Container>
       </section>
 

@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { getCategorySubtreeIds } from "@/lib/category-tree";
 import type { CatalogProduct } from "@/lib/catalog";
 
 /**
@@ -23,10 +24,10 @@ export interface CatalogFilters {
   q?: string;
   category?: string;
   /**
-   * A parent category slug (e.g. "bathware") — matches that category itself
-   * plus every child underneath it, for umbrella pages like `/bathware` that
-   * span the whole tree rather than one leaf category. Independent of
-   * `category`, which is an exact-slug match used by leaf pages.
+   * A section slug (e.g. "bathware") for umbrella pages that span the whole
+   * section. Kept separate from `category` so a page can pin its section while
+   * the visitor switches categories inside it; both now scope to the full
+   * subtree, so the difference is intent, not reach.
    */
   categoryGroup?: string;
   brand?: string;
@@ -67,11 +68,6 @@ export interface CatalogSearchResult {
 
 export const DEFAULT_PER_PAGE = 24;
 
-const PRODUCT_INCLUDE = {
-  category: { select: { slug: true, name: true, parent: { select: { slug: true } } } },
-  brand: { select: { name: true } },
-} satisfies Prisma.ProductInclude;
-
 /** Parse URL search params into typed filters. */
 export function parseFilters(sp: Record<string, string | string[] | undefined>): CatalogFilters {
   const one = (k: string) => {
@@ -96,12 +92,19 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
   };
 }
 
-function buildWhere(f: CatalogFilters): Prisma.ProductWhereInput {
+/**
+ * `categoryIds` is the already-resolved subtree scope (see `resolveScope`).
+ * It is passed in rather than looked up here so the search, the count and the
+ * facets all filter on exactly the same set of categories.
+ */
+function buildWhere(f: CatalogFilters, categoryIds?: string[]): Prisma.ProductWhereInput {
   const and: Prisma.ProductWhereInput[] = [{ published: true, deletedAt: null }];
 
-  if (f.category) and.push({ category: { slug: f.category } });
-  if (f.categoryGroup) {
-    and.push({ category: { OR: [{ slug: f.categoryGroup }, { parent: { slug: f.categoryGroup } }] } });
+  // A named category that resolved to nothing must match nothing — falling
+  // through to "no category filter" would answer /bathware/nonsense with the
+  // whole catalogue.
+  if (f.category || f.categoryGroup) {
+    and.push({ categoryId: { in: categoryIds ?? [] } });
   }
   if (f.brand) and.push({ brand: { name: { equals: f.brand, mode: "insensitive" } } });
   if (f.collection) and.push({ collection: { equals: f.collection, mode: "insensitive" } });
@@ -147,9 +150,17 @@ function buildOrder(sort: CatalogFilters["sort"]): Prisma.ProductOrderByWithRela
 export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSearchResult> {
   const perPage = filters.perPage ?? DEFAULT_PER_PAGE;
   const page = filters.page ?? 1;
-  const where = buildWhere(filters);
 
   try {
+    // Resolved once and shared: the listing, the total and the facets must
+    // agree, and each resolution is a recursive walk of the category tree.
+    const scope = await resolveScope({
+      category: filters.category,
+      categoryGroup: filters.categoryGroup,
+      brand: filters.brand,
+    });
+    const where = buildWhere(filters, scope.categoryIds);
+
     const [rows, total, facets] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -166,7 +177,7 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
       // dropped, so a visitor can always see — and switch to — the other
       // options rather than being funnelled into a dead end by their own
       // first click.
-      computeFacets({ category: filters.category, categoryGroup: filters.categoryGroup, brand: filters.brand }),
+      computeFacets(scope),
     ]);
 
     return {
@@ -189,21 +200,28 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
   }
 }
 
-/** Resolves the structural scope (category/categoryGroup/brand) to concrete ids once, shared by the Prisma `where` and the raw-SQL facets below. */
-async function resolveFacetScope(scope: { category?: string; categoryGroup?: string; brand?: string }) {
+interface ResolvedScope {
+  /** Undefined when neither a category nor a group was asked for. */
+  categoryIds?: string[];
+  brandId?: string;
+}
+
+/**
+ * Resolves the structural scope (category/categoryGroup/brand) to concrete ids
+ * once, shared by the Prisma `where` and the raw-SQL facets below.
+ *
+ * Both category inputs expand to their full subtree, so a page pinned to
+ * "Faucets" covers everything filed under Faucets' children too.
+ */
+async function resolveScope(scope: {
+  category?: string;
+  categoryGroup?: string;
+  brand?: string;
+}): Promise<ResolvedScope> {
   const categoryIds: string[] = [];
 
-  if (scope.category) {
-    const c = await prisma.category.findUnique({ where: { slug: scope.category }, select: { id: true } });
-    if (c) categoryIds.push(c.id);
-  }
-  if (scope.categoryGroup) {
-    const cats = await prisma.category.findMany({
-      where: { OR: [{ slug: scope.categoryGroup }, { parent: { slug: scope.categoryGroup } }] },
-      select: { id: true },
-    });
-    categoryIds.push(...cats.map((c) => c.id));
-  }
+  if (scope.category) categoryIds.push(...(await getCategorySubtreeIds(scope.category)));
+  if (scope.categoryGroup) categoryIds.push(...(await getCategorySubtreeIds(scope.categoryGroup)));
 
   let brandId: string | undefined;
   if (scope.brand) {
@@ -211,16 +229,16 @@ async function resolveFacetScope(scope: { category?: string; categoryGroup?: str
     brandId = b?.id;
   }
 
-  return { categoryIds: categoryIds.length ? categoryIds : undefined, brandId };
+  return {
+    // An asked-for scope that resolved to nothing stays an empty array — an
+    // empty `in` matches no rows, which is the correct answer for an unknown
+    // category. `undefined` means "no category scope requested" instead.
+    categoryIds: scope.category || scope.categoryGroup ? [...new Set(categoryIds)] : undefined,
+    brandId,
+  };
 }
 
-async function computeFacets(scope: {
-  category?: string;
-  categoryGroup?: string;
-  brand?: string;
-}): Promise<CatalogSearchResult["facets"]> {
-  const { categoryIds, brandId } = await resolveFacetScope(scope);
-
+async function computeFacets({ categoryIds, brandId }: ResolvedScope): Promise<CatalogSearchResult["facets"]> {
   const where: Prisma.ProductWhereInput = {
     published: true,
     deletedAt: null,
@@ -281,7 +299,11 @@ async function jsonArrayFacet(
 ): Promise<Facet[]> {
   const columnRef = column === "sizes" ? Prisma.sql`"sizes"` : Prisma.sql`"applications"`;
   const clauses = [Prisma.sql`p."published" = true`, Prisma.sql`p."deletedAt" IS NULL`];
-  if (scope.categoryIds) clauses.push(Prisma.sql`p."categoryId" IN (${Prisma.join(scope.categoryIds)})`);
+  // `Prisma.join` cannot render an empty list, and an unknown category must
+  // match nothing rather than everything — so the impossible clause is
+  // written out explicitly.
+  if (scope.categoryIds?.length === 0) clauses.push(Prisma.sql`false`);
+  else if (scope.categoryIds) clauses.push(Prisma.sql`p."categoryId" IN (${Prisma.join(scope.categoryIds)})`);
   if (scope.brandId) clauses.push(Prisma.sql`p."brandId" = ${scope.brandId}`);
 
   try {
