@@ -1,15 +1,18 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/site/PageHero";
 import { applicationsData } from "@/lib/applications";
+import { siteUrl } from "@/lib/site-config";
 
 
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Applications & Environments | Prestige Tiles",
   description: "Browse luxury tile and sanitaryware surfaces categorized across 10 architectural applications.",
+  alternates: { canonical: `${siteUrl}/applications` },
 };
 
 export default function ApplicationsHubPage() {

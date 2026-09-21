@@ -5,15 +5,34 @@ import { BrandStrip } from "@/components/site/catalog/BrandStrip";
 import { getCatalogProducts, CATALOG_CLIENT_LIMIT } from "@/lib/products";
 import { countPublishedProducts, parseFilters, searchCatalog } from "@/lib/catalog-search";
 import { getBrands } from "@/lib/brands";
-
-export const metadata: Metadata = {
-  title: "The Catalogue",
-  description:
-    "Explore Your Prestige's full catalogue — premium tiles, luxury sanitaryware and designer picks from 40+ world-class brands, filterable by room, brand and finish.",
-};
+import { buildCategoryMetadata } from "@/lib/seo-metadata";
 
 // Published product changes should surface without a redeploy.
 export const revalidate = 300;
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  // This page had a static `metadata` object: no canonical at all, and
+  // nothing to stop `?brand=jaquar&finish=matte&size=...` — a combinatorial
+  // space in the thousands across 5,500+ products — from being crawled and
+  // indexed as distinct pages. Every category and brand page in the
+  // catalogue already self-canonicalises a filtered view back to its clean
+  // URL and marks it `noindex, follow`; this page, the one with the largest
+  // filter surface of any of them, had been missed.
+  const count = await countPublishedProducts();
+  return buildCategoryMetadata({
+    name: "The Catalogue",
+    path: "/products",
+    count,
+    description:
+      "Explore Prestige's full catalogue — premium tiles, luxury sanitaryware and designer picks from 40+ world-class brands, filterable by room, brand and finish.",
+    searchParams: sp,
+  });
+}
 
 export default async function ProductsPage({
   searchParams,

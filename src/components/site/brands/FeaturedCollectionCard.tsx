@@ -19,7 +19,7 @@ export function FeaturedCollectionCard({ brandSlug, collection }: { brandSlug: s
     >
       <SafeImage
         src={collection.image ?? ""}
-        alt=""
+        alt={`${collection.name} collection at Prestige`}
         fill
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         placeholderLabel={collection.name}

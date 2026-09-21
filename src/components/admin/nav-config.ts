@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Home, Package, Tags, Award, Briefcase, Images, Video,
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
-  Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText,
+  Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText, ClipboardCheck,
   Store, FileStack, MapPin, MessageSquarePlus, MessageSquare, Building2,
   FileSpreadsheet, Warehouse, Star, LineChart, SlidersHorizontal, Layers,
 } from "lucide-react";
@@ -69,6 +69,7 @@ export const adminNav = [
     items: [
       { label: "Media Library", href: "/admin/media", icon: FolderOpen, module: "media" as Module },
       { label: "SEO Engine", href: "/admin/seo", icon: Search, module: "seo" as Module },
+      { label: "SEO Audit", href: "/admin/seo/audit", icon: ClipboardCheck, module: "seo" as Module },
       { label: "Users & Roles", href: "/admin/users", icon: ShieldCheck, module: "users" as Module },
       { label: "Settings", href: "/admin/settings", icon: Settings, module: "settings" as Module },
       { label: "Maintenance", href: "/admin/maintenance", icon: Wrench, module: "maintenance" as Module },

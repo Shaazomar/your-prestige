@@ -113,6 +113,30 @@ export function formatAddress(s: ShowroomView) {
   return [s.addressLine, s.locality, s.city, s.postalCode].filter(Boolean).join(", ");
 }
 
+/**
+ * Distinct cities these showrooms are in, for a compact "Visit Us · City ·
+ * City" line. Mangaluru's three branches (city, Puttur, Moodbidri all sit
+ * under Dakshina Kannada) collapse to one "Mangaluru" label rather than
+ * listing each taluk — otherwise the same city says its own name three times.
+ *
+ * This used to return the literal string `"manglore"` — a misspelling, not an
+ * alternate spelling — which meant it appeared, uncorrected, in the homepage
+ * eyebrow text and in `/showrooms`' own `<meta name="description">`. A meta
+ * description is often the exact text Google shows in the result snippet, so
+ * this was a visible typo in the site's own search listing for "showroom
+ * Mangalore" and "tiles showroom Mangalore" queries.
+ */
+export function showroomCities(showrooms: Pick<ShowroomView, "city">[]): string[] {
+  return Array.from(
+    new Set(
+      showrooms.map((s) => {
+        const c = s.city.toLowerCase();
+        return c === "mangaluru" || c === "puttur" || c === "moodbidri" ? "Mangaluru" : s.city;
+      })
+    )
+  );
+}
+
 /** Directions link — prefers the curated Maps URL, else a coordinate/address query. */
 export function directionsHref(s: ShowroomView) {
   if (s.mapUrl) return s.mapUrl;

@@ -5,11 +5,13 @@ import { Container } from "@/components/ui/Container";
 import { LeadForm } from "@/components/site/LeadForm";
 import { getCatalogProduct } from "@/lib/products";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Request a Quote",
   description:
     "Get a tailored quotation for tiles and sanitaryware from Your Prestige, Mangaluru — detailed, transparent and fast.",
+  alternates: { canonical: `${siteUrl}/request-quote` },
 };
 
 const promises = [

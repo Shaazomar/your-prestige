@@ -35,7 +35,7 @@ export async function saveHomepageDraft(input: HomepageHeroInput) {
   await logAudit({ action: "homepage.save_draft", entity: "Setting", newValue: data, meta: { by: session.user.id } });
   revalidatePath("/", "layout");
   revalidatePath("/");
-  revalidatePath("/?preview=1");
+  revalidatePath("/admin/preview");
   return data;
 }
 
@@ -58,7 +58,7 @@ export async function publishHomepage() {
   await logAudit({ action: "homepage.publish", entity: "Setting", newValue: value, meta: { by: session.user.id } });
   revalidatePath("/", "layout");
   revalidatePath("/");
-  revalidatePath("/?preview=1");
+  revalidatePath("/admin/preview");
 }
 
 /** Read by the public homepage — falls back to defaults if nothing published yet. */

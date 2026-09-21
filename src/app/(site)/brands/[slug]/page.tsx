@@ -154,7 +154,7 @@ export default async function BrandPage({
                 <RevealStagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {categories.map((c) => (
                     <RevealItem key={c.slug}>
-                      <BrandCategoryCard brandSlug={brand.slug} category={c} />
+                      <BrandCategoryCard brandSlug={brand.slug} brandName={brand.name} category={c} />
                     </RevealItem>
                   ))}
                 </RevealStagger>
@@ -229,7 +229,7 @@ export default async function BrandPage({
           )}
 
           <div id="products" className="scroll-mt-24">
-            <CatalogBrowser result={result} lockedBrand={brand.name} />
+            <CatalogBrowser result={result} lockedBrand={brand.name} showHero={false} />
           </div>
         </>
       )}

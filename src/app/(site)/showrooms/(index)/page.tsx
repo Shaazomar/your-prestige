@@ -6,22 +6,14 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { ShowroomsExplorer } from "@/components/site/showrooms/ShowroomsExplorer";
-import { getShowrooms } from "@/lib/showrooms";
+import { getShowrooms, showroomCities } from "@/lib/showrooms";
 import { getBusiness } from "@/lib/business";
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const showrooms = await getShowrooms();
-  const cities = Array.from(
-    new Set(
-      showrooms.map((s) => {
-        const c = s.city.toLowerCase();
-        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
-        return s.city;
-      })
-    )
-  ).join(", ");
+  const cities = showroomCities(showrooms).join(", ");
   return {
     title: "Our Showrooms",
     description: `Visit any of our ${showrooms.length} showrooms across ${cities}. Full tile and sanitaryware displays, design consultation and directions.`,
@@ -31,15 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ShowroomsPage() {
   const [showrooms, business] = await Promise.all([getShowrooms(), getBusiness()]);
-  const cities = Array.from(
-    new Set(
-      showrooms.map((s) => {
-        const c = s.city.toLowerCase();
-        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
-        return s.city;
-      })
-    )
-  );
+  const cities = showroomCities(showrooms);
 
   return (
     <>

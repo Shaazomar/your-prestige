@@ -32,7 +32,7 @@ export function BrandHero({ brand }: { brand: BrandView }) {
         ) : fallbackImage ? (
           <Image
             src={fallbackImage}
-            alt=""
+            alt={`${brand.name} products on display at Prestige`}
             fill
             priority
             sizes="100vw"

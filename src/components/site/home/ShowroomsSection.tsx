@@ -4,7 +4,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { ShowroomsExplorer } from "@/components/site/showrooms/ShowroomsExplorer";
-import { getShowrooms } from "@/lib/showrooms";
+import { getShowrooms, showroomCities } from "@/lib/showrooms";
 
 /**
  * Homepage showroom section — the primary conversion surface.
@@ -15,15 +15,7 @@ export async function ShowroomsSection() {
   const showrooms = await getShowrooms();
   if (showrooms.length === 0) return null;
 
-  const cities = Array.from(
-    new Set(
-      showrooms.map((s) => {
-        const c = s.city.toLowerCase();
-        if (c === "mangaluru" || c === "puttur" || c === "moodbidri") return "manglore";
-        return s.city;
-      })
-    )
-  );
+  const cities = showroomCities(showrooms);
 
   return (
     <section className="bg-ivory py-28 md:py-40">

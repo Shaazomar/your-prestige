@@ -76,7 +76,7 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
           )}
         </div>
         <div className="flex gap-2">
-          <a href="/?preview=1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:border-gold hover:text-gold">
+          <a href="/admin/preview" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:border-gold hover:text-gold">
             <ExternalLink className="h-3.5 w-3.5" /> Preview
           </a>
           {canPublish && (

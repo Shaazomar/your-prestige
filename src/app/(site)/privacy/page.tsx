@@ -3,11 +3,13 @@ import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { LegalBody } from "@/components/site/LegalBody";
 import { getBusiness } from "@/lib/business";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
     "How Prestige Tiles & Sanitary collects, uses and protects the personal information you share with us.",
+  alternates: { canonical: `${siteUrl}/privacy` },
 };
 
 export const revalidate = 86400;

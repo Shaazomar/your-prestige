@@ -7,7 +7,7 @@ import { RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { CatalogBrowser } from "@/components/site/catalog/CatalogBrowser";
 import { getBathwareCategories } from "@/lib/brands";
 import { parseFilters, searchCatalog } from "@/lib/catalog-search";
-import { siteUrl } from "@/lib/site-config";
+import { buildCategoryMetadata } from "@/lib/seo-metadata";
 
 /**
  * Category-first browsing across every brand — the sibling of `/brands`
@@ -17,12 +17,23 @@ import { siteUrl } from "@/lib/site-config";
 
 export const revalidate = 600;
 
-export const metadata: Metadata = {
-  title: "Luxury Sanitaryware & Bathware",
-  description:
-    "Faucets, showers, sanitaryware, wellness and more from every brand we carry — displayed at full scale at Your Prestige, Mangaluru.",
-  alternates: { canonical: `${siteUrl}/bathware` },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  // See the identical fix on `/tiles`: a hardcoded canonical here meant every
+  // paginated and filtered view claimed to be the same page as `/bathware`
+  // itself, and no filtered view ever dropped out of the index.
+  return buildCategoryMetadata({
+    name: "Luxury Sanitaryware & Bathware",
+    path: "/bathware",
+    description:
+      "Faucets, showers, sanitaryware, wellness and more from every brand we carry — displayed at full scale across our Mangaluru showrooms.",
+    searchParams: sp,
+  });
+}
 
 export default async function BathwarePage({
   searchParams,
@@ -69,7 +80,7 @@ export default async function BathwarePage({
         </section>
       )}
 
-      <CatalogBrowser result={result} showCategoryOnCards />
+      <CatalogBrowser result={result} showCategoryOnCards showHero={false} />
     </main>
   );
 }

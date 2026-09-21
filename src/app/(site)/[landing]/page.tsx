@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect, permanentRedirect } from "next/navigation";
 import { ArrowUpRight, MapPin, Phone } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/site/PageHero";
@@ -11,6 +11,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
 import { FaqAccordion } from "@/components/site/FaqAccordion";
 import { getLandingPage, getLandingSlugs } from "@/lib/landing-pages";
+import { getActiveRedirect } from "@/lib/redirects";
 import { getShowrooms, formatAddress, directionsHref } from "@/lib/showrooms";
 import { getCatalogProducts } from "@/lib/products";
 import { getBusiness, telHref } from "@/lib/business";
@@ -46,7 +47,15 @@ export async function generateMetadata({
 
   const path = `/${page.slug}`;
   const base: Metadata = {
-    title: page.title,
+    // `page.title` is already a complete title — every landing page's own
+    // copy ends in "— Prestige Tiles & Sanitary" (see
+    // scripts/seed-landing-pages.mjs). Passed as a plain string it re-entered
+    // the root layout's `%s — Prestige Tiles & Sanitary` template and the
+    // site name was appended a second time, live: "Tiles in Mangaluru —
+    // Prestige Tiles & Sanitary — Prestige Tiles & Sanitary". `{ absolute }`
+    // is the same fix `buildProductMetadata` and friends already use for
+    // exactly this reason.
+    title: { absolute: page.title },
     description: page.intro ?? page.subheading ?? undefined,
     alternates: { canonical: `${siteUrl}${path}` },
   };
@@ -60,7 +69,20 @@ export default async function LandingPage({
 }) {
   const { landing } = await params;
   const page = await getLandingPage(landing);
-  if (!page) notFound();
+
+  if (!page) {
+    // A CMS-managed redirect for this exact path, if an editor created one —
+    // see `getActiveRedirect`. Next's Server Component redirect only carries
+    // a permanent/temporary distinction, not the stored 301/302/307/308
+    // verbatim; 301 and 308 are equivalent for SEO purposes (both pass link
+    // equity as a permanent move), as are 302 and 307.
+    const target = await getActiveRedirect(`/${landing}`);
+    if (target) {
+      if (target.statusCode === 301 || target.statusCode === 308) permanentRedirect(target.toPath);
+      redirect(target.toPath);
+    }
+    notFound();
+  }
 
   const [allShowrooms, business, products] = await Promise.all([
     getShowrooms(),

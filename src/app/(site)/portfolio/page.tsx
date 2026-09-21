@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { PortfolioGrid } from "@/components/site/PortfolioGrid";
 import { CatalogueHero } from "@/components/site/catalog/CatalogueHero";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Projects & Portfolio",
   description:
     "2,400+ projects delivered — villas, apartments, hotels and commercial landmarks across Mangaluru and Dakshina Kannada, finished with Prestige surfaces.",
+  alternates: { canonical: `${siteUrl}/portfolio` },
 };
 
 export default function PortfolioPage() {
