@@ -153,16 +153,16 @@ export function BrandForm({ brand, onSuccess }: { brand: BrandRow | null; onSucc
 
       <section className="space-y-5 border-t border-white/8 pt-6">
         <p className="text-eyebrow text-gold">Media</p>
-        <ImageUploadField label="Logo" value={values.logo || null} onChange={(url) => setValues((v) => ({ ...v, logo: url ?? "" }))} aspect="aspect-square" />
-        <ImageUploadField label="Desktop Cover Image" value={values.banner || null} onChange={(url) => setValues((v) => ({ ...v, banner: url ?? "" }))} />
-        <ImageUploadField
+        <ImageUploadField scope="brands" ownerId={brand?.id ?? null} label="Logo" value={values.logo || null} onChange={(url) => setValues((v) => ({ ...v, logo: url ?? "" }))} aspect="aspect-square" />
+        <ImageUploadField scope="brands" ownerId={brand?.id ?? null} label="Desktop Cover Image" value={values.banner || null} onChange={(url) => setValues((v) => ({ ...v, banner: url ?? "" }))} />
+        <ImageUploadField scope="brands" ownerId={brand?.id ?? null}
           label="Mobile Cover Image"
           value={values.mobileCoverImage || null}
           onChange={(url) => setValues((v) => ({ ...v, mobileCoverImage: url ?? "" }))}
           aspect="aspect-[3/4]"
         />
-        <VideoUploadField label="Hero Video" value={values.heroVideo || null} onChange={(url) => setValues((v) => ({ ...v, heroVideo: url ?? "" }))} />
-        <ImageUploadField
+        <VideoUploadField scope="brands" ownerId={brand?.id ?? null} label="Hero Video" value={values.heroVideo || null} onChange={(url) => setValues((v) => ({ ...v, heroVideo: url ?? "" }))} />
+        <ImageUploadField scope="brands" ownerId={brand?.id ?? null}
           label="Video Poster"
           value={values.heroPoster || null}
           onChange={(url) => setValues((v) => ({ ...v, heroPoster: url ?? "" }))}

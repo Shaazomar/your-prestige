@@ -34,13 +34,26 @@ export const applicationList: Application[] = [
   "Hospital",
 ];
 
+/**
+ * The section root slug a product's category tree resolves to — "tiles",
+ * "sanitary" or "designer-picks" for every product in the live catalogue
+ * today, but not a closed set: `resolveCategory()` returns whatever the
+ * product's real category ancestry roots at, so a section added later
+ * through the CMS (a "Kitchen" top-level category, say) flows through
+ * correctly instead of being silently forced into one of these three. Code
+ * that switches on this value should have a sensible default for a slug
+ * outside the three well-known ones — see `ProductCard`'s `CATEGORY_LABEL`
+ * lookup for the pattern.
+ */
+export type CatalogSection = string;
+
 export interface CatalogProduct {
   id?: string;
   slug: string;
   name: string;
   collection: string;
   brand: string;
-  category: "tiles" | "sanitary" | "designer-picks";
+  category: CatalogSection;
   finish: string;
   thickness: string;
   sizes: string[];

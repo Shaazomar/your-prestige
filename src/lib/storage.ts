@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { S3_BUCKET, S3_REGION, S3_ENDPOINT, buildObjectUrl } from "@/lib/s3-url";
 
 export interface UploadResult {
   url: string;
@@ -91,26 +92,26 @@ export async function uploadFile(file: File, opts?: UploadOptions): Promise<Uplo
 
 async function uploadToS3(file: File, opts?: UploadOptions): Promise<UploadResult> {
   const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
-  const bucket = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || "your-prestige-in";
-  const region = process.env.S3_REGION || process.env.AWS_REGION || "ap-south-1";
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_S3_BUCKET_URL || `https://${bucket}.s3.${region}.amazonaws.com`
-  ).replace(/\/$/, "");
 
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
   const sessionToken = process.env.AWS_SESSION_TOKEN?.trim();
+  // Path-style addressing is required when an endpoint is set: a custom host
+  // has no per-bucket subdomain to address virtually. Was previously missing
+  // here — this function ignored S3_ENDPOINT entirely, unlike `s3.ts`.
+  const endpointOpts = S3_ENDPOINT ? { endpoint: S3_ENDPOINT, forcePathStyle: true } : {};
 
   const client = accessKeyId && secretAccessKey
     ? new S3Client({
-        region,
+        region: S3_REGION,
+        ...endpointOpts,
         credentials: {
           accessKeyId,
           secretAccessKey,
           ...(sessionToken ? { sessionToken } : {}),
         },
       })
-    : new S3Client({ region });
+    : new S3Client({ region: S3_REGION, ...endpointOpts });
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -119,15 +120,18 @@ async function uploadToS3(file: File, opts?: UploadOptions): Promise<UploadResul
   const key = `${folder}/${Date.now()}-${cleanName}`;
 
   const command = new PutObjectCommand({
-    Bucket: bucket,
+    Bucket: S3_BUCKET,
     Key: key,
     Body: buffer,
     ContentType: file.type || "application/octet-stream",
   });
 
   await client.send(command);
-  const url = `${baseUrl}/${key}`;
-  return { url, publicId: key };
+  // `buildObjectUrl` encodes each path segment — this call site's own key is
+  // already sanitized to URL-safe characters, but a raw `${baseUrl}/${key}`
+  // concatenation here previously meant any future caller that passed an
+  // unsanitized key would have produced a broken URL silently.
+  return { url: buildObjectUrl(key), publicId: key };
 }
 
 async function uploadToCloudinary(file: File, opts?: UploadOptions): Promise<UploadResult> {

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { Showroom } from "@prisma/client";
+import { resolveImageRef } from "@/lib/s3-url";
 
 /** Plain, serialisable showroom shape safe to pass into client components. */
 export interface ShowroomView {
@@ -44,6 +45,19 @@ export interface ShowroomView {
 
 const arr = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
 
+/** Gallery/photo arrays, resolved element-by-element and with unresolvable entries dropped rather than left broken. */
+const resolvedArr = (v: unknown): string[] =>
+  arr(v)
+    .map((x) => resolveImageRef(x))
+    .filter((x): x is string => !!x);
+
+/**
+ * `Showroom.heroImage`/`gallery`/`video` never went through `resolveImageRef`
+ * — the same gap as `Brand`, and for the same reason: it predates the field
+ * being consistently written as an absolute URL. `googlePhotos` is included
+ * for consistency even though it's always already an absolute Google-hosted
+ * URL — resolving an already-absolute URL is a no-op, so this is safe either way.
+ */
 export function toShowroomView(s: Showroom): ShowroomView {
   return {
     id: s.id,
@@ -67,9 +81,9 @@ export function toShowroomView(s: Showroom): ShowroomView {
     managerPhone: s.managerPhone,
     hoursWeekdays: s.hoursWeekdays,
     hoursSunday: s.hoursSunday,
-    heroImage: s.heroImage,
-    gallery: arr(s.gallery),
-    video: s.video,
+    heroImage: resolveImageRef(s.heroImage),
+    gallery: resolvedArr(s.gallery),
+    video: resolveImageRef(s.video),
     description: s.description,
     brands: arr(s.brands),
     amenities: arr(s.amenities),
@@ -80,7 +94,7 @@ export function toShowroomView(s: Showroom): ShowroomView {
     googleWriteReviewUrl: s.googleWriteReviewUrl,
     googleRating: s.googleRating,
     googleReviewCount: s.googleReviewCount,
-    googlePhotos: arr(s.googlePhotos),
+    googlePhotos: resolvedArr(s.googlePhotos),
   };
 }
 
@@ -111,6 +125,30 @@ export const getShowroomBySlug = cache(async (slug: string): Promise<ShowroomVie
 /** Compact single-line address for cards and schema. */
 export function formatAddress(s: ShowroomView) {
   return [s.addressLine, s.locality, s.city, s.postalCode].filter(Boolean).join(", ");
+}
+
+/**
+ * Distinct cities these showrooms are in, for a compact "Visit Us · City ·
+ * City" line. Mangaluru's three branches (city, Puttur, Moodbidri all sit
+ * under Dakshina Kannada) collapse to one "Mangaluru" label rather than
+ * listing each taluk — otherwise the same city says its own name three times.
+ *
+ * This used to return the literal string `"manglore"` — a misspelling, not an
+ * alternate spelling — which meant it appeared, uncorrected, in the homepage
+ * eyebrow text and in `/showrooms`' own `<meta name="description">`. A meta
+ * description is often the exact text Google shows in the result snippet, so
+ * this was a visible typo in the site's own search listing for "showroom
+ * Mangalore" and "tiles showroom Mangalore" queries.
+ */
+export function showroomCities(showrooms: Pick<ShowroomView, "city">[]): string[] {
+  return Array.from(
+    new Set(
+      showrooms.map((s) => {
+        const c = s.city.toLowerCase();
+        return c === "mangaluru" || c === "puttur" || c === "moodbidri" ? "Mangaluru" : s.city;
+      })
+    )
+  );
 }
 
 /** Directions link — prefers the curated Maps URL, else a coordinate/address query. */

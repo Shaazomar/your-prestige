@@ -3,11 +3,13 @@ import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { LegalBody } from "@/components/site/LegalBody";
 import { getBusiness } from "@/lib/business";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
   description:
     "The terms on which Prestige Tiles & Sanitary makes this website and its catalogue available.",
+  alternates: { canonical: `${siteUrl}/terms` },
 };
 
 export const revalidate = 86400;

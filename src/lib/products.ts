@@ -140,9 +140,26 @@ export function resolveCategory(row: {
   const trail = categoryTrail(row).map((c) => c.slug);
   if (trail.includes("bathware") || trail.includes("sanitary")) return "sanitary";
   if (trail.includes("tiles")) return "tiles";
-  // Legacy fallback for any loosely-named category that predates the tree and
-  // hangs off no section root.
-  if (trail.some((s) => /sanitary|bath|faucet|shower|basin/.test(s))) return "sanitary";
+
+  // A category tree that doesn't lead to either known root. This used to
+  // fall straight through to "tiles" unconditionally — meaning a category
+  // added later through the CMS that isn't a tiles/bathware descendant (a
+  // "Kitchen" top-level family, say) would have every one of its products
+  // silently filed as tiles: wrong breadcrumb, wrong canonical URL, wrong
+  // section — with nothing to indicate it had happened. The real root's own
+  // slug is returned instead, so the product carries its real section
+  // through the type system even before that section has a page of its own
+  // (site routing for a genuinely new top-level family is a separate,
+  // deliberate addition — see the category audit report).
+  if (trail.length > 0) return trail[trail.length - 1];
+
+  // No category assigned at all. There is no ancestry to reason from, so
+  // this can't be resolved correctly — "tiles" is kept only as the URL
+  // bucket these products already had before this fix, to avoid moving a
+  // published, possibly-indexed URL out from under a change nobody asked
+  // for. `needsReview`/`reviewReason` and the "Products Needing Category
+  // Review" admin view are the real fix for these — see the category
+  // audit report.
   return "tiles";
 }
 
@@ -260,38 +277,74 @@ export const getCatalogProduct = cache(async (slug: string): Promise<CatalogProd
 });
 
 /**
- * Related products — same scoring the bundled `getRelated()` used (category and
- * collection worth 2, brand 1), but resolved against the database so a
- * thousand-product catalogue doesn't have to be loaded to find three neighbours.
+ * Related products.
+ *
+ * `product.category` is the section-root *bucket* ("tiles" / "sanitary"),
+ * not a real `Category.slug` — comparing it against `category.slug` in a
+ * Prisma `where` used to be silently dead for every bathware product (the
+ * real root slug is "bathware", not "sanitary"), so the candidate pool
+ * collapsed to "same collection OR same brand" with no category constraint
+ * at all: a tap could be recommended under a tile purely for sharing a
+ * brand. The candidate pool is now built from the anchor's *real* category
+ * ancestry (looked up fresh, since `CatalogProduct` doesn't carry a
+ * category id) — exact subcategory, then section root — with brand only
+ * ever acting as a scoring bonus among candidates already qualified by
+ * category or collection, never as a standalone reason to appear.
  */
 export const getRelatedProducts = cache(
   async (product: CatalogProduct, count = 3): Promise<CatalogProduct[]> => {
     try {
+      const anchor = await prisma.product.findFirst({
+        where: { slug: product.slug, published: true, deletedAt: null },
+        select: { categoryId: true, category: { select: CATEGORY_SELECT } },
+      });
+
+      const trail = anchor ? categoryTrail(anchor).map((c) => c.slug) : [];
+      const sectionRoot = trail.length > 0 ? trail[trail.length - 1] : undefined;
+      const leafCategoryId = anchor?.categoryId ?? undefined;
+
+      const categoryFilters: Prisma.ProductWhereInput[] = [];
+      if (leafCategoryId) categoryFilters.push({ categoryId: leafCategoryId });
+      if (sectionRoot) {
+        categoryFilters.push(
+          { category: { slug: sectionRoot } },
+          { category: { parent: { slug: sectionRoot } } },
+          { category: { parent: { parent: { slug: sectionRoot } } } }
+        );
+      }
+
+      // A product with no category ancestry at all has no category signal to
+      // scope by — collection/brand is the only fallback left for it, same
+      // as before this fix.
+      const or: Prisma.ProductWhereInput[] =
+        categoryFilters.length > 0
+          ? [...categoryFilters, { collection: product.collection }]
+          : [{ collection: product.collection }, { brand: { name: product.brand } }];
+
       const rows = await prisma.product.findMany({
         where: {
           published: true,
           deletedAt: null,
           slug: { not: product.slug },
-          OR: [
-            { collection: product.collection },
-            { brand: { name: product.brand } },
-            { category: { slug: product.category } },
-          ],
+          OR: or,
         },
         include: PRODUCT_INCLUDE,
-        take: 40,
+        take: 60,
       });
       if (rows.length === 0) throw new Error("no matches");
 
       const scored = rows
-        .map(toCatalogProduct)
-        .map((p) => ({
-          p,
-          score:
-            (p.category === product.category ? 2 : 0) +
-            (p.collection === product.collection ? 2 : 0) +
-            (p.brand === product.brand ? 1 : 0),
-        }))
+        .map((r) => {
+          const p = toCatalogProduct(r);
+          return {
+            p,
+            score:
+              (leafCategoryId && r.categoryId === leafCategoryId ? 4 : 0) +
+              (p.category === product.category ? 2 : 0) +
+              (p.collection === product.collection ? 2 : 0) +
+              (p.brand === product.brand ? 1 : 0),
+          };
+        })
         .sort((a, b) => b.score - a.score);
 
       return scored.slice(0, count).map((s) => s.p);

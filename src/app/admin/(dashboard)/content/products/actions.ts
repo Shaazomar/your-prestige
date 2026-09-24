@@ -8,6 +8,8 @@ import { productSchema, type ProductInput } from "./schema";
 import type { Prisma } from "@prisma/client";
 import { safeOrderBy, safePaging } from "@/lib/list-params";
 import { resolveImageRef } from "@/lib/s3-url";
+import { revalidateProduct } from "@/lib/revalidate-content";
+import { PRODUCT_INCLUDE } from "@/lib/products";
 
 export type ProductRow = Prisma.ProductGetPayload<{
   include: { category: { select: { name: true } }; brand: { select: { name: true } } };
@@ -137,6 +139,7 @@ export async function createProduct(input: ProductInput) {
   });
 
   await logAudit({ action: "product.create", entity: "Product", entityId: product.id, newValue: product });
+  await revalidateProductById(product.id);
   return product;
 }
 
@@ -175,6 +178,8 @@ export async function updateProduct(id: string, input: ProductInput) {
   });
 
   await logAudit({ action: "product.update", entity: "Product", entityId: id, oldValue: before, newValue: product });
+  // Media and copy changes have to reach the public page now, not in an hour.
+  await revalidateProductById(id);
   return product;
 }
 
@@ -202,4 +207,19 @@ export async function bulkDeleteProducts(ids: string[]) {
     data: { deletedAt: new Date(), deletedById: session.user.id },
   });
   await logAudit({ action: "product.bulk_delete", entity: "Product", meta: { ids } });
+}
+
+/**
+ * Refresh every cached page this product appears on.
+ *
+ * Re-reads the product with its category ancestry because the pages to
+ * invalidate depend on which section it resolves to — the same rule the
+ * canonical URL uses.
+ */
+async function revalidateProductById(id: string) {
+  const row = await prisma.product.findUnique({
+    where: { id },
+    select: { slug: true, designerPick: true, ...PRODUCT_INCLUDE, brand: { select: { slug: true } } },
+  });
+  if (row) revalidateProduct(row);
 }

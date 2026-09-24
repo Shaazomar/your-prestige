@@ -1,5 +1,6 @@
 import { absoluteUrl } from "@/lib/seo-config";
 import { sitemapResponse } from "@/lib/sitemap-xml";
+import { getLandingPageSitemapRows } from "@/lib/sitemap-data";
 
 export const revalidate = 86400;
 
@@ -33,15 +34,19 @@ const PAGES: [path: string, priority: number][] = [
   ["/terms", 0.2],
 ];
 
-export function GET() {
+export async function GET() {
   const now = new Date();
+  const landingRows = await getLandingPageSitemapRows();
   return sitemapResponse(
-    PAGES.map(([path, priority]) => ({
-      url: absoluteUrl(path || "/"),
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority,
-    })),
+    [
+      ...PAGES.map(([path, priority]) => ({
+        url: absoluteUrl(path || "/"),
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority,
+      })),
+      ...landingRows,
+    ],
     86400
   );
 }

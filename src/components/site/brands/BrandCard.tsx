@@ -23,7 +23,7 @@ export function BrandCard({ brand }: { brand: BrandView }) {
       <div className="absolute inset-0">
         <SafeImage
           src={cover ?? ""}
-          alt=""
+          alt={`${brand.name} showroom display at Prestige`}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           placeholderLabel={brand.name}

@@ -6,11 +6,13 @@ import { LeadForm } from "@/components/site/LeadForm";
 import { getCatalogProduct } from "@/lib/products";
 import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { getShowrooms } from "@/lib/showrooms";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Book a Visit",
   description:
     "Book a private consultation at any Prestige showroom across Mangaluru, Puttur and Moodbidri — a guided walkthrough with a dedicated design consultant.",
+  alternates: { canonical: `${siteUrl}/book-visit` },
 };
 
 const expectations = [

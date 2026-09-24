@@ -4,7 +4,16 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import type { BrandCategoryView } from "@/lib/brands";
 
 /** Visual "Shop by Category" card — image, name, real count, hover arrow, entire card clickable. */
-export function BrandCategoryCard({ brandSlug, category }: { brandSlug: string; category: BrandCategoryView }) {
+export function BrandCategoryCard({
+  brandSlug,
+  brandName,
+  category,
+}: {
+  brandSlug: string;
+  /** The brand's display name, for alt text — `brandSlug` alone reads as "jaquar", not "Jaquar". */
+  brandName?: string;
+  category: BrandCategoryView;
+}) {
   return (
     <Link
       href={`/brands/${brandSlug}/${category.slug}`}
@@ -12,7 +21,7 @@ export function BrandCategoryCard({ brandSlug, category }: { brandSlug: string; 
     >
       <SafeImage
         src={category.image ?? ""}
-        alt=""
+        alt={brandName ? `${category.name} by ${brandName} at Prestige` : `${category.name} at Prestige`}
         fill
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
         placeholderLabel={category.name}

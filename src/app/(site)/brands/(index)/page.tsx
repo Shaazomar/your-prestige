@@ -7,11 +7,15 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
 import { BrandsExplorer } from "@/components/site/brands/BrandsExplorer";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Explore Our Collections",
   description:
-    "Authorised partners for premium Indian and international brands — Jaquar, Artize, Essco and more, at Your Prestige, Mangaluru.",
+    "Authorised partners for premium Indian and international brands — Jaquar, Artize, Essco and more, across our Mangaluru showrooms.",
+  // Was unset: no canonical at all, on the page every brand and brand ×
+  // category page ultimately links back to.
+  alternates: { canonical: `${siteUrl}/brands` },
 };
 
 export const revalidate = 600;

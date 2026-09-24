@@ -6,11 +6,13 @@ import { PageHero } from "@/components/site/PageHero";
 import { Container } from "@/components/ui/Container";
 import { getBlogPosts } from "@/lib/posts";
 import { RevealStagger, RevealItem } from "@/components/motion/Reveal";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Journal",
   description:
     "Design intelligence from Your Prestige — tile guides, bathroom design principles and material wisdom for coastal Karnataka.",
+  alternates: { canonical: `${siteUrl}/blog` },
 };
 
 export const revalidate = 300;

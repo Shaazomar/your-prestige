@@ -5,11 +5,13 @@ import { FaqAccordion } from "@/components/site/FaqAccordion";
 import { getPublishedFaqs } from "@/lib/faqs";
 import { Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "FAQs",
   description:
     "Answers to common questions about visiting, brands, delivery, trade pricing and installation at Your Prestige, Mangaluru.",
+  alternates: { canonical: `${siteUrl}/faqs` },
 };
 
 export default async function FaqsPage() {

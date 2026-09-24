@@ -9,11 +9,13 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
 import { InaugurationSection } from "@/components/site/about/InaugurationSection";
 import { PeopleSection } from "@/components/site/about/PeopleSection";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "About Us",
   description:
     "Fifteen years of shaping coastal Karnataka's finest spaces. Discover the story behind Your Prestige — Mangaluru's destination for luxury tiles and sanitaryware.",
+  alternates: { canonical: `${siteUrl}/about` },
 };
 
 export default async function AboutPage() {

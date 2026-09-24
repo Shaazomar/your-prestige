@@ -100,13 +100,6 @@ export default async function ProductPage({
   const whatsappNumber = await getWhatsAppOrderingNumber();
   const related = await getRelatedProducts(product, 4);
 
-  const categoryLabel =
-    product.category === "sanitary"
-      ? "Sanitaryware"
-      : product.category === "designer-picks"
-        ? "Designer Picks"
-        : "Tiles";
-
   // Category crumbs link into the section tree that owns them —
   // /bathware/wellness, /tiles/gvt — so the section comes from the trail's own
   // root rather than from `product.category`: a Designer Pick is curated
@@ -119,6 +112,19 @@ export default async function ProductPage({
   const trail = sectionHref
     ? fullTrail.filter((c) => c.slug !== rootSlug).reverse()
     : [];
+
+  // The real section, not `product.category` — that field's a URL bucket
+  // ("sanitary") in a different namespace from the tree's own root slug
+  // ("bathware"), and previously defaulted anything it didn't recognise to
+  // "Tiles". A product with no real category (see the category audit
+  // report) now reads as "Products" rather than a false "Tiles" label.
+  const categoryLabel = product.category === "designer-picks"
+    ? "Designer Picks"
+    : rootSlug === "bathware"
+      ? "Sanitaryware"
+      : rootSlug === "tiles"
+        ? "Tiles"
+        : "Products";
 
   // `/products/tiles` and `/products/sanitary` both 308 to the section pages,
   // so linking them here would send every visitor — and every crawler — through

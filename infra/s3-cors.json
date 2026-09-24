@@ -1,0 +1,19 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://prestigetiles.in",
+      "https://www.prestigetiles.in"
+    ],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["content-type", "cache-control"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  },
+  {
+    "AllowedOrigins": ["http://localhost:3000"],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["content-type", "cache-control"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]

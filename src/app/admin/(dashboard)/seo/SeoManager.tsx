@@ -125,6 +125,13 @@ function RedirectsTab({ permissions }: { permissions: { create: boolean; edit: b
 
   return (
     <>
+      <p className="mb-4 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-xs leading-relaxed text-white/45">
+        Live on the site for a top-level &quot;From&quot; path only — e.g.{" "}
+        <code className="text-white/70">/old-tiles-page</code>. A multi-segment path like{" "}
+        <code className="text-white/70">/products/tiles/old-slug</code> is saved here but currently
+        has no effect on live traffic, because that URL already matches a real product route before
+        a redirect lookup runs.
+      </p>
       <AdminDataTable
         columns={columns}
         rows={list.rows}

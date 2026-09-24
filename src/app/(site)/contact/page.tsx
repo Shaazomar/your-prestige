@@ -7,6 +7,7 @@ import { LeadForm } from "@/components/site/LeadForm";
 import { Reveal } from "@/components/motion/Reveal";
 import { getBusiness, telHref, waHref } from "@/lib/business";
 import { getShowrooms, formatAddress, directionsHref } from "@/lib/showrooms";
+import { siteUrl } from "@/lib/site-config";
 
 export const revalidate = 300;
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   title: "Contact",
   description:
     "Call, WhatsApp or write to Prestige Tiles & Sanitary — or walk into any of our five showrooms across Mangaluru, Puttur and Moodbidri.",
+  alternates: { canonical: `${siteUrl}/contact` },
 };
 
 export default async function ContactPage() {

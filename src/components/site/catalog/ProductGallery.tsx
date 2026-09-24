@@ -321,6 +321,8 @@ export function ProductGallery({
                         setActiveIndex(idx);
                         setZoomLevel(1);
                       }}
+                      aria-label={`View image ${idx + 1} of ${allImages.length}`}
+                      aria-current={idx === activeIndex}
                       className={cn(
                         "relative h-10 w-14 shrink-0 overflow-hidden rounded-lg transition-all",
                         idx === activeIndex
@@ -328,6 +330,8 @@ export function ProductGallery({
                           : "opacity-40 hover:opacity-80"
                       )}
                     >
+                      {/* Decorative: the button's own aria-label is this control's
+                          accessible name, and the counter above states position. */}
                       <SafeImage src={img} alt="" fill sizes="56px" className="object-cover" />
                     </button>
                   ))}

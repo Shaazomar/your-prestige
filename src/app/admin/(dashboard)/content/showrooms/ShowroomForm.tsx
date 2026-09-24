@@ -230,13 +230,13 @@ export function ShowroomForm({
 
       <section className="space-y-5 border-t border-white/8 pt-6">
         <p className="text-eyebrow text-gold">Media</p>
-        <ImageUploadField
+        <ImageUploadField scope="showrooms" ownerId={showroom?.id ?? null}
           label="Hero Image"
           value={values.heroImage || null}
           onChange={(url) => setValues((v) => ({ ...v, heroImage: url ?? "" }))}
         />
-        <MultiImageField label="Gallery" value={values.gallery} onChange={(gallery) => setValues((v) => ({ ...v, gallery }))} />
-        <VideoUploadField label="Hero Video" value={values.video || null} onChange={(url) => setValues((v) => ({ ...v, video: url ?? "" }))} />
+        <MultiImageField scope="showrooms" ownerId={showroom?.id ?? null} label="Gallery" value={values.gallery} onChange={(gallery) => setValues((v) => ({ ...v, gallery }))} />
+        <VideoUploadField scope="showrooms" ownerId={showroom?.id ?? null} label="Hero Video" value={values.video || null} onChange={(url) => setValues((v) => ({ ...v, video: url ?? "" }))} />
       </section>
 
       <section className="space-y-5 border-t border-white/8 pt-6">
@@ -277,7 +277,7 @@ export function ShowroomForm({
           <AField label="Rating" type="number" step="0.1" value={values.googleRating ?? ""} onChange={(e) => setValues((v) => ({ ...v, googleRating: e.target.value === "" ? undefined : Number(e.target.value) }))} />
           <AField label="Review count" type="number" value={values.googleReviewCount} onChange={(e) => setValues((v) => ({ ...v, googleReviewCount: Number(e.target.value) }))} />
         </div>
-        <MultiImageField label="Google photos" value={values.googlePhotos} onChange={(googlePhotos) => setValues((v) => ({ ...v, googlePhotos }))} />
+        <MultiImageField scope="showrooms" ownerId={showroom?.id ?? null} label="Google photos" value={values.googlePhotos} onChange={(googlePhotos) => setValues((v) => ({ ...v, googlePhotos }))} />
       </section>
 
       <section className="space-y-3 border-t border-white/8 pt-6">

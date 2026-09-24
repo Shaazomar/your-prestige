@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
+import { SafeImage } from "@/components/ui/SafeImage";
+import { resolveImageRef } from "@/lib/s3-url";
 import type { AboutPerson } from "@prisma/client";
 
 interface InaugurationSectionProps {
@@ -41,8 +42,8 @@ export function InaugurationSection({ inauguration }: InaugurationSectionProps) 
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               className="relative aspect-[16/11] md:aspect-[16/10] w-full overflow-hidden rounded-2xl bg-stone-100 border border-stone-200/80 shadow-[0_16px_50px_rgba(0,0,0,0.06)]"
             >
-              <Image
-                src={inauguration.image}
+              <SafeImage
+                src={resolveImageRef(inauguration.image) ?? ""}
                 alt={imageAlt}
                 fill
                 priority

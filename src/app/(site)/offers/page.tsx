@@ -5,11 +5,13 @@ import { Reveal, RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight, Award } from "lucide-react";
 import { getActiveOffers } from "@/lib/offers";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Offers",
   description:
     "Seasonal privileges and project-scale advantages at Your Prestige, Mangaluru — crafted for those building something exceptional.",
+  alternates: { canonical: `${siteUrl}/offers` },
 };
 
 export default async function OffersPage() {

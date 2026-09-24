@@ -57,6 +57,34 @@ export const getProductSitemapRows = cache(async (page = 0): Promise<SitemapRow[
   }
 });
 
+/**
+ * Local-SEO landing pages served at root URLs — `/tiles-mangaluru`,
+ * `/jaquar-dealer-mangaluru`. Real, individually written pages (see
+ * `scripts/seed-landing-pages.mjs`) exist and are servable by
+ * `src/app/(site)/[landing]/page.tsx`, but nothing ever listed them here, so
+ * a crawler could only find one by already knowing its exact URL — no
+ * internal link on the site pointed at any of them either.
+ */
+export const getLandingPageSitemapRows = cache(async (): Promise<SitemapRow[]> => {
+  try {
+    const rows = await prisma.landingPage.findMany({
+      where: PUBLISHED,
+      select: { slug: true, updatedAt: true },
+    });
+    return rows.map((r) => ({
+      url: absoluteUrl(`/${r.slug}`),
+      lastModified: r.updatedAt,
+      changeFrequency: "monthly" as const,
+      // Above a product page, on par with a category page: these target real
+      // local search demand ("tiles in Mangalore") and are genuinely distinct
+      // content, not a thin duplicate.
+      priority: 0.8,
+    }));
+  } catch {
+    return [];
+  }
+});
+
 export const countPublishedProducts = cache(async (): Promise<number> => {
   try {
     return await prisma.product.count({ where: PUBLISHED });

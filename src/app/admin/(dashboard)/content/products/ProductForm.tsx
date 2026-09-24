@@ -154,9 +154,9 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
 
       <section className="space-y-5 border-t border-white/8 pt-6">
         <p className="text-eyebrow text-gold">Media</p>
-        <ImageUploadField label="Lifestyle Image (hero/card)" value={values.lifestyleImage || null} onChange={(url) => setValues((v) => ({ ...v, lifestyleImage: url ?? "" }))} aspect="aspect-[4/5]" />
-        <ImageUploadField label="Texture Close-up" value={values.textureImage || null} onChange={(url) => setValues((v) => ({ ...v, textureImage: url ?? "" }))} />
-        <MultiImageField label="Gallery" value={values.images} onChange={(images) => setValues((v) => ({ ...v, images }))} />
+        <ImageUploadField scope="products" ownerId={product?.id ?? null} label="Lifestyle Image (hero/card)" value={values.lifestyleImage || null} onChange={(url) => setValues((v) => ({ ...v, lifestyleImage: url ?? "" }))} aspect="aspect-[4/5]" />
+        <ImageUploadField scope="products" ownerId={product?.id ?? null} label="Texture Close-up" value={values.textureImage || null} onChange={(url) => setValues((v) => ({ ...v, textureImage: url ?? "" }))} />
+        <MultiImageField scope="products" ownerId={product?.id ?? null} firstIsPrimary label="Gallery" value={values.images} onChange={(images) => setValues((v) => ({ ...v, images }))} />
         <div className="grid grid-cols-2 gap-4">
           <AField label="Video URL" value={values.video} onChange={(e) => setValues((v) => ({ ...v, video: e.target.value }))} />
           <AField label="Catalog PDF URL" value={values.brochureUrl} onChange={(e) => setValues((v) => ({ ...v, brochureUrl: e.target.value }))} />

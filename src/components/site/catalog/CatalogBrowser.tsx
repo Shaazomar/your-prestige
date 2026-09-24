@@ -31,6 +31,7 @@ export function CatalogBrowser({
   eyebrow,
   title,
   description,
+  showHero = true,
   brandStrip,
   searchPlaceholder,
   showCategoryOnCards = false,
@@ -55,6 +56,15 @@ export function CatalogBrowser({
   eyebrow?: string;
   title?: string;
   description?: string;
+  /**
+   * Set `false` on a page that already renders its own `<h1>` above this
+   * component — `/bathware` (`PageHero`) and `/brands/[slug]` (`BrandHero`).
+   * Without it, a caller that passed no `title` here got `CatalogueHero`'s
+   * placeholder copy ("An archive worth exploring.") as a second, visible,
+   * generic heading directly under its real one — two `<h1>`s on the page,
+   * the second reading as filler rather than content.
+   */
+  showHero?: boolean;
   /** Rendered between the hero and the search/filter toolbar — e.g. `/products`'s brand-first strip. Unset everywhere else. */
   brandStrip?: ReactNode;
   searchPlaceholder?: string;
@@ -108,7 +118,9 @@ export function CatalogBrowser({
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      <CatalogueHero eyebrow={eyebrow} title={title} description={description} heroImage={heroImage} />
+      {showHero && (
+        <CatalogueHero eyebrow={eyebrow} title={title} description={description} heroImage={heroImage} />
+      )}
 
       <Container size="wide">
         {brandStrip && <div className="relative z-20 mb-6">{brandStrip}</div>}

@@ -6,11 +6,13 @@ import { getPublishedTestimonials } from "@/lib/testimonials";
 import { RevealStagger, RevealItem, Reveal } from "@/components/motion/Reveal";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowUpRight } from "lucide-react";
+import { siteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Testimonials",
   description:
     "What homeowners, architects and builders across Mangaluru say about Your Prestige.",
+  alternates: { canonical: `${siteUrl}/testimonials` },
 };
 
 export default async function TestimonialsPage() {

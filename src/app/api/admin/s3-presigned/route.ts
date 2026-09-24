@@ -15,18 +15,31 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isS3Configured()) {
-      return NextResponse.json({ directUpload: false });
+      // Previously this answered 200 with `{ directUpload: false }`, which the
+      // client read as "fall back quietly". Unconfigured storage is a
+      // deployment fault, not a routine branch, and saying so is what lets an
+      // admin fix it instead of filing a bug about images.
+      return NextResponse.json(
+        {
+          error:
+            "Media storage is not configured. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET and S3_REGION, then redeploy. See docs/aws-s3-setup.md.",
+        },
+        { status: 503 }
+      );
     }
 
-    assertAllowedUpload(filename, contentType);
+    const type = (contentType || "").split(";")[0].trim().toLowerCase();
+    assertAllowedUpload(filename, type);
 
-    const { uploadUrl, objectUrl, key } = await getPresignedUploadUrl(filename, contentType, folder);
+    const { uploadUrl, objectUrl, key } = await getPresignedUploadUrl(filename, type, folder);
 
     return NextResponse.json({
       directUpload: true,
       uploadUrl,
       objectUrl,
       key,
+      // Echoed so the client sends exactly the value that was signed.
+      contentType: type,
     });
   } catch (err) {
     if (err instanceof UploadValidationError) {

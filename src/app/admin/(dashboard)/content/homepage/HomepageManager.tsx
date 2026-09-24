@@ -76,7 +76,7 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
           )}
         </div>
         <div className="flex gap-2">
-          <a href="/?preview=1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:border-gold hover:text-gold">
+          <a href="/admin/preview" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:border-gold hover:text-gold">
             <ExternalLink className="h-3.5 w-3.5" /> Preview
           </a>
           {canPublish && (
@@ -92,8 +92,8 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
         <AField label="Eyebrow" value={values.eyebrow} onChange={(e) => setValues((v) => v && { ...v, eyebrow: e.target.value })} />
         <AField label="Heading" required value={values.heading} onChange={(e) => setValues((v) => v && { ...v, heading: e.target.value })} error={errors.heading} />
         <ATextArea label="Subheading" value={values.subheading} onChange={(e) => setValues((v) => v && { ...v, subheading: e.target.value })} />
-        <ImageUploadField label="Hero Image" value={values.heroImage || null} onChange={(url) => setValues((v) => v && { ...v, heroImage: url ?? "" })} />
-        <VideoUploadField label="Hero Video (optional, overrides image)" value={values.heroVideo || null} onChange={(url) => setValues((v) => v && { ...v, heroVideo: url ?? "" })} />
+        <ImageUploadField scope="homepage" label="Hero Image" value={values.heroImage || null} onChange={(url) => setValues((v) => v && { ...v, heroImage: url ?? "" })} />
+        <VideoUploadField scope="homepage" label="Hero Video (optional, overrides image)" value={values.heroVideo || null} onChange={(url) => setValues((v) => v && { ...v, heroVideo: url ?? "" })} />
         <div className="grid grid-cols-2 gap-4">
           <AField label="Primary Button Label" value={values.primaryCtaLabel} onChange={(e) => setValues((v) => v && { ...v, primaryCtaLabel: e.target.value })} />
           <AField label="Primary Button Link" value={values.primaryCtaHref} onChange={(e) => setValues((v) => v && { ...v, primaryCtaHref: e.target.value })} />
@@ -109,8 +109,8 @@ export function HomepageManager({ canPublish }: { canPublish: boolean }) {
         <AField label="Story Title" value={values.storyTitle || ""} onChange={(e) => setValues((v) => v && { ...v, storyTitle: e.target.value })} />
         <ATextArea label="Story Paragraph 1" value={values.storyText1 || ""} onChange={(e) => setValues((v) => v && { ...v, storyText1: e.target.value })} />
         <ATextArea label="Story Paragraph 2" value={values.storyText2 || ""} onChange={(e) => setValues((v) => v && { ...v, storyText2: e.target.value })} />
-        <ImageUploadField label="Story Main Image" value={values.storyMainImage || null} onChange={(url) => setValues((v) => v && { ...v, storyMainImage: url ?? "" })} />
-        <ImageUploadField label="Story Detail Image" value={values.storyDetailImage || null} onChange={(url) => setValues((v) => v && { ...v, storyDetailImage: url ?? "" })} />
+        <ImageUploadField scope="homepage" label="Story Main Image" value={values.storyMainImage || null} onChange={(url) => setValues((v) => v && { ...v, storyMainImage: url ?? "" })} />
+        <ImageUploadField scope="homepage" label="Story Detail Image" value={values.storyDetailImage || null} onChange={(url) => setValues((v) => v && { ...v, storyDetailImage: url ?? "" })} />
         
         <div className="grid grid-cols-2 gap-4">
           <AField label="Stat Number (e.g. 15+)" value={values.storyStatNumber || ""} onChange={(e) => setValues((v) => v && { ...v, storyStatNumber: e.target.value })} />

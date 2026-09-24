@@ -63,7 +63,7 @@ export function AlbumForm({ album, onSuccess }: { album: AlbumRow | null; onSucc
         />
         <AField label="Slug" required value={values.slug} onChange={(e) => { setSlugTouched(true); setValues((v) => ({ ...v, slug: e.target.value })); }} error={errors.slug} />
         <ATextArea label="Description" value={values.description} onChange={(e) => setValues((v) => ({ ...v, description: e.target.value }))} />
-        <ImageUploadField label="Cover Image" value={values.coverImage || null} onChange={(url) => setValues((v) => ({ ...v, coverImage: url ?? "" }))} />
+        <ImageUploadField scope="gallery" label="Cover Image" value={values.coverImage || null} onChange={(url) => setValues((v) => ({ ...v, coverImage: url ?? "" }))} />
         <AField label="Sort Order" type="number" value={values.sortOrder} onChange={(e) => setValues((v) => ({ ...v, sortOrder: Number(e.target.value) }))} />
         <AToggle label="Published" checked={values.published} onChange={(published) => setValues((v) => ({ ...v, published }))} />
         <button type="submit" disabled={saving} className="w-full rounded-xl bg-gold py-3 text-sm font-semibold text-ivory transition-colors hover:bg-gold-deep disabled:opacity-60">

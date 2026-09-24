@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { revalidateBrand } from "@/lib/revalidate-content";
 import type { ListParams, ListResult } from "@/hooks/useAdminList";
 import { brandSchema, type BrandInput } from "./schema";
 import type { Prisma } from "@prisma/client";
@@ -83,6 +84,7 @@ export async function createBrand(input: BrandInput) {
   });
 
   await logAudit({ action: "brand.create", entity: "Brand", entityId: brand.id, newValue: brand });
+  revalidateBrand(brand.slug);
   return brand;
 }
 
@@ -103,6 +105,9 @@ export async function updateBrand(id: string, input: BrandInput) {
   });
 
   await logAudit({ action: "brand.update", entity: "Brand", entityId: id, oldValue: before, newValue: brand });
+  // The logo, hero and poster all render from this record.
+  revalidateBrand(brand.slug);
+  if (before.slug !== brand.slug) revalidateBrand(before.slug);
   return brand;
 }
 
