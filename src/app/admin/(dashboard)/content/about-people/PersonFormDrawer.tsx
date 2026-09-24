@@ -5,6 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { X, Upload, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 import { createAboutPerson, updateAboutPerson, type AboutPersonInput } from "./actions";
+import { resolveImageRef } from "@/lib/s3-url";
 import type { AboutPerson } from "@prisma/client";
 
 interface DrawerProps {
@@ -301,7 +302,7 @@ export function PersonFormDrawer({ open, onClose, person, onSuccess }: DrawerPro
                   <div className="space-y-3">
                     <div className="relative mx-auto h-44 w-36 overflow-hidden rounded-xl border border-white/10 shadow-lg">
                       <Image
-                        src={formData.image}
+                        src={resolveImageRef(formData.image) ?? ""}
                         alt={formData.imageAlt || formData.name || "Preview"}
                         fill
                         className="object-cover"
@@ -391,7 +392,7 @@ export function PersonFormDrawer({ open, onClose, person, onSuccess }: DrawerPro
                 {formData.image && (
                   <div className="relative h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-black">
                     <Image
-                      src={formData.image}
+                      src={resolveImageRef(formData.image) ?? ""}
                       alt=""
                       fill
                       className="object-cover"

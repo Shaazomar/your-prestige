@@ -3,7 +3,7 @@ import {
   MessageSquareQuote, PenSquare, HelpCircle, BadgePercent, Users2, CalendarClock,
   Bot, FolderOpen, Search, ShieldCheck, BarChart3, Settings, Wrench, ScrollText, ClipboardCheck,
   Store, FileStack, MapPin, MessageSquarePlus, MessageSquare, Building2,
-  FileSpreadsheet, Warehouse, Star, LineChart, SlidersHorizontal, Layers,
+  FileSpreadsheet, Warehouse, Star, LineChart, SlidersHorizontal, Layers, Activity,
 } from "lucide-react";
 
 import type { Module } from "@/lib/permissions";
@@ -68,6 +68,7 @@ export const adminNav = [
     section: "System & Storage",
     items: [
       { label: "Media Library", href: "/admin/media", icon: FolderOpen, module: "media" as Module },
+      { label: "Media Health Check", href: "/admin/media/health", icon: Activity, module: "media" as Module },
       { label: "SEO Engine", href: "/admin/seo", icon: Search, module: "seo" as Module },
       { label: "SEO Audit", href: "/admin/seo/audit", icon: ClipboardCheck, module: "seo" as Module },
       { label: "Users & Roles", href: "/admin/users", icon: ShieldCheck, module: "users" as Module },

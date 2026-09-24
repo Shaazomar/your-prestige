@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./Skeleton";
+import { isKnownImageHost } from "@/lib/image-hosts";
 
 /**
  * `toCatalogProduct` substitutes this local asset when a product has no
@@ -52,6 +53,7 @@ export function SafeImage({
   lightSkeleton = false,
   placeholderLabel,
   fill,
+  unoptimized,
   ...props
 }: SafeImageProps) {
   const [loading, setLoading] = useState(true);
@@ -111,8 +113,22 @@ export function SafeImage({
           loading ? "scale-[0.98] opacity-0 blur-sm" : "scale-100 opacity-100 blur-none",
           className
         )}
+        // A host outside `remotePatterns` doesn't fail to load — it throws
+        // during render, before any request happens, which `onError` below
+        // can never catch. Skipping the optimizer for that one image is the
+        // only way to avoid it taking the whole page down. See `image-hosts.ts`.
+        unoptimized={unoptimized ?? !isKnownImageHost(typeof src === "string" ? src : "")}
         onLoad={() => setLoading(false)}
-        onError={() => setError(true)}
+        onError={() => {
+          // The placeholder below is deliberate UX, not a hidden failure —
+          // but a silently-swallowed broken URL is undiagnosable. This is
+          // the one place every image on the site funnels through, so it's
+          // the one place that can log every broken reference in one list.
+          if (process.env.NODE_ENV !== "production") {
+            console.error(`SafeImage: failed to load — ${src}`);
+          }
+          setError(true);
+        }}
         {...props}
       />
     </div>

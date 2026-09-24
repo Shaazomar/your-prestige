@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { Showroom } from "@prisma/client";
+import { resolveImageRef } from "@/lib/s3-url";
 
 /** Plain, serialisable showroom shape safe to pass into client components. */
 export interface ShowroomView {
@@ -44,6 +45,19 @@ export interface ShowroomView {
 
 const arr = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
 
+/** Gallery/photo arrays, resolved element-by-element and with unresolvable entries dropped rather than left broken. */
+const resolvedArr = (v: unknown): string[] =>
+  arr(v)
+    .map((x) => resolveImageRef(x))
+    .filter((x): x is string => !!x);
+
+/**
+ * `Showroom.heroImage`/`gallery`/`video` never went through `resolveImageRef`
+ * — the same gap as `Brand`, and for the same reason: it predates the field
+ * being consistently written as an absolute URL. `googlePhotos` is included
+ * for consistency even though it's always already an absolute Google-hosted
+ * URL — resolving an already-absolute URL is a no-op, so this is safe either way.
+ */
 export function toShowroomView(s: Showroom): ShowroomView {
   return {
     id: s.id,
@@ -67,9 +81,9 @@ export function toShowroomView(s: Showroom): ShowroomView {
     managerPhone: s.managerPhone,
     hoursWeekdays: s.hoursWeekdays,
     hoursSunday: s.hoursSunday,
-    heroImage: s.heroImage,
-    gallery: arr(s.gallery),
-    video: s.video,
+    heroImage: resolveImageRef(s.heroImage),
+    gallery: resolvedArr(s.gallery),
+    video: resolveImageRef(s.video),
     description: s.description,
     brands: arr(s.brands),
     amenities: arr(s.amenities),
@@ -80,7 +94,7 @@ export function toShowroomView(s: Showroom): ShowroomView {
     googleWriteReviewUrl: s.googleWriteReviewUrl,
     googleRating: s.googleRating,
     googleReviewCount: s.googleReviewCount,
-    googlePhotos: arr(s.googlePhotos),
+    googlePhotos: resolvedArr(s.googlePhotos),
   };
 }
 

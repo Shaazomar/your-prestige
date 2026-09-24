@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getS3Client, getS3Config } from "@/lib/s3";
+import { buildObjectUrl } from "@/lib/s3-url";
 import { buildMediaKey, type MediaScope } from "@/lib/media/keys";
 
 /**
@@ -68,11 +69,8 @@ export function canonicalContentType(contentType: string): string {
   return (contentType || "").split(";")[0].trim().toLowerCase();
 }
 
-/** Public URL for a stored key, escaping each segment but not the slashes. */
-export function objectUrlForKey(key: string): string {
-  const { baseUrl } = getS3Config();
-  return `${baseUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
-}
+/** Public URL for a stored key. Thin re-export of the one canonical builder in `s3-url.ts`. */
+export const objectUrlForKey = buildObjectUrl;
 
 export interface PresignInput {
   scope: MediaScope;

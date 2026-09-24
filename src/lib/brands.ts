@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { brands as fallbackBrandNames } from "@/lib/demo-content";
 import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
 import { getCategorySubtreeIds, getSubtreeProductCounts } from "@/lib/category-tree";
+import { resolveImageRef } from "@/lib/s3-url";
 
 /**
  * Brand directory, read from the CMS.
@@ -71,16 +72,27 @@ type BrandSelectRow = {
   featuredProductIds: Prisma.JsonValue;
 };
 
+/**
+ * `Brand.logo`/`banner`/etc. hold whatever the upload path that wrote them
+ * produced — an absolute URL from the current media system, but a bare S3
+ * object key from anything that wrote the column before that existed
+ * (`scripts/seed.mjs`, a hand-edited CMS value, an older import). Nothing
+ * here ever ran that through `resolveImageRef`, unlike `products.ts` and
+ * `collections.ts` — so a brand's logo or hero could render correctly on one
+ * page and silently fail on another, purely depending on which code path
+ * last wrote the column. Resolved once here, at the data boundary, the same
+ * as the catalogue.
+ */
 function toBrandView(b: BrandSelectRow, productCount: number, categoryCount: number): BrandView {
   return {
     id: b.id,
     slug: b.slug,
     name: b.name,
-    logo: b.logo,
-    banner: b.banner,
-    mobileCoverImage: b.mobileCoverImage,
-    heroVideo: b.heroVideo,
-    heroPoster: b.heroPoster,
+    logo: resolveImageRef(b.logo),
+    banner: resolveImageRef(b.banner),
+    mobileCoverImage: resolveImageRef(b.mobileCoverImage),
+    heroVideo: resolveImageRef(b.heroVideo),
+    heroPoster: resolveImageRef(b.heroPoster),
     description: b.description,
     shortDescription: b.shortDescription,
     website: b.website,
@@ -232,7 +244,7 @@ export const getBrandCategories = cache(
                 slug: cat.slug,
                 name: cat.name,
                 count: subtreeCounts.get(cat.id) ?? r._count._all,
-                image: cat.image,
+                image: resolveImageRef(cat.image),
                 description: cat.description,
               }
             : null;
@@ -305,7 +317,7 @@ export const getBrandFeaturedCollections = cache(
         slug: r.slug,
         name: r.name,
         description: r.description,
-        image: r.image,
+        image: resolveImageRef(r.image),
         count: r._count.products,
       }));
     } catch {

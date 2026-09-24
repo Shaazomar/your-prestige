@@ -4,8 +4,30 @@ import React, { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import "./TiltedCard.css";
 
+/**
+ * A quiet, on-brand placeholder — the same failure mode `SafeImage` shows
+ * everywhere else, so a broken About-page photo doesn't stand out as a
+ * different kind of bug from a broken product photo. `TiltedCard` predates
+ * `SafeImage` and is built around a plain `<img>` driven by CSS transforms
+ * (the 3D tilt), not `next/image`'s `fill` layout, so it gets its own small
+ * error state rather than being forced into `SafeImage`'s shape.
+ */
+function TiltedCardFallback({ label }: { label?: string }) {
+  return (
+    <div
+      role="img"
+      aria-label={label ? `${label} — image unavailable` : "Image unavailable"}
+      className="tilted-card-image flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f4f2ec] to-[#e9e6dd]"
+    >
+      <svg viewBox="0 0 48 48" className="h-8 w-8 text-[#181818]/12" fill="none" aria-hidden="true">
+        <path d="M8 40V8h16a10 10 0 0 1 0 20H16" stroke="currentColor" strokeWidth="3" strokeLinecap="square" />
+      </svg>
+    </div>
+  );
+}
+
 export interface TiltedCardProps {
-  imageSrc: string;
+  imageSrc: string | null;
   altText?: string;
   captionText?: string;
   containerHeight?: string;
@@ -55,6 +77,7 @@ export function TiltedCard({
   );
 
   const [isHovered, setIsHovered] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return;
@@ -108,12 +131,22 @@ export function TiltedCard({
           damping: 25,
         }}
       >
-        <img
-          src={imageSrc}
-          alt={altText}
-          className="tilted-card-image"
-          loading="lazy"
-        />
+        {failed || !imageSrc ? (
+          <TiltedCardFallback label={altText} />
+        ) : (
+          <img
+            src={imageSrc}
+            alt={altText}
+            className="tilted-card-image"
+            loading="lazy"
+            onError={() => {
+              if (process.env.NODE_ENV !== "production") {
+                console.error(`TiltedCard: image failed to load — ${imageSrc}`);
+              }
+              setFailed(true);
+            }}
+          />
+        )}
 
         {displayOverlayContent && overlayContent && (
           <div className="tilted-card-overlay">{overlayContent}</div>

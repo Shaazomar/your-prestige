@@ -14,6 +14,7 @@ import {
   reorderAboutPeople,
 } from "./actions";
 import { PersonFormDrawer } from "./PersonFormDrawer";
+import { resolveImageRef } from "@/lib/s3-url";
 import type { AboutPerson } from "@prisma/client";
 
 interface PeopleManagerProps {
@@ -222,7 +223,7 @@ export function PeopleManager({ permissions }: PeopleManagerProps) {
               <div className="p-4 flex gap-4">
                 <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black">
                   <Image
-                    src={person.image}
+                    src={resolveImageRef(person.image) ?? ""}
                     alt={person.imageAlt || person.name}
                     fill
                     className="object-cover"

@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { RevealStagger, RevealItem } from "@/components/motion/Reveal";
 import { TiltedCard } from "@/components/ui/TiltedCard";
+import { resolveImageRef } from "@/lib/s3-url";
 import type { AboutPerson } from "@prisma/client";
 
 interface PeopleSectionProps {
@@ -46,7 +47,7 @@ export function PeopleSection({
             <RevealItem key={person.id}>
               <div className="flex flex-col items-center w-full">
                 <TiltedCard
-                  imageSrc={person.image}
+                  imageSrc={resolveImageRef(person.image)}
                   altText={
                     person.imageAlt || `${person.name} - ${person.designation}`
                   }

@@ -9,11 +9,21 @@ import { useQuickView } from "@/components/site/catalog/QuickViewProvider";
 import { cn } from "@/lib/utils";
 import { SafeImage } from "@/components/ui/SafeImage";
 
-const CATEGORY_LABEL: Record<CatalogProduct["category"], string> = {
+/**
+ * `product.category` is a section-root slug, not a closed set (see
+ * `CatalogSection`) — a category isn't guaranteed to be one of these three,
+ * so this is a lookup table with a fallback, not an exhaustive `Record`. A
+ * missing entry now shows the raw slug, capitalised, rather than `undefined`.
+ */
+const CATEGORY_LABEL: Partial<Record<string, string>> = {
   tiles: "Tiles",
   sanitary: "Bathware",
   "designer-picks": "Designer Pick",
 };
+
+function categoryLabel(category: string): string {
+  return CATEGORY_LABEL[category] ?? category.charAt(0).toUpperCase() + category.slice(1);
+}
 
 interface ProductCardProps {
   product: CatalogProduct;
@@ -127,7 +137,7 @@ export function ProductCard({ product, className, priority = false, showCategory
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
           {product.brand}
           {showCategory && (
-            <span className="text-ink/30">· {CATEGORY_LABEL[product.category]}</span>
+            <span className="text-ink/30">· {categoryLabel(product.category)}</span>
           )}
         </p>
 
