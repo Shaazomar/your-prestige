@@ -82,10 +82,16 @@ export const PUBLIC_PRODUCT_WHERE = {
   deletedAt: null,
   published: true,
   status: { notIn: ["DRAFT", "ARCHIVED"] },
+  OR: [
+    { lifestyleImage: { not: null } },
+    { image_key: { not: null } },
+    { thumbnail_key: { not: null } },
+    { textureImage: { not: null } },
+  ],
 } satisfies Prisma.ProductWhereInput;
 
 /** Same predicate, for the raw-SQL queries that can't take a Prisma `where` object. */
-export const PUBLIC_PRODUCT_SQL = Prisma.sql`p."deletedAt" IS NULL AND p."published" = true AND p."status" NOT IN ('DRAFT', 'ARCHIVED')`;
+export const PUBLIC_PRODUCT_SQL = Prisma.sql`p."deletedAt" IS NULL AND p."published" = true AND p."status" NOT IN ('DRAFT', 'ARCHIVED') AND (COALESCE(p."lifestyleImage", '') != '' OR COALESCE(p."image_key", '') != '' OR COALESCE(p."thumbnail_key", '') != '' OR COALESCE(p."textureImage", '') != '' OR p."images" IS NOT NULL)`;
 
 /** The three states a product's `status` column can hold, and their CMS labels. */
 export const PRODUCT_VISIBILITY_LABEL: Record<string, string> = {
@@ -279,6 +285,24 @@ function describe(p: {
   return `${p.name} from ${p.brand}'s ${p.collection} — a ${p.finish.toLowerCase()} surface in ${p.color.toLowerCase()}.${size}`;
 }
 
+/** Whether a product row carries at least one displayable image. */
+export function hasProductImage(row: {
+  lifestyleImage?: string | null;
+  textureImage?: string | null;
+  images?: unknown;
+  image_key?: string | null;
+  thumbnail_key?: string | null;
+}): boolean {
+  const images = arr(row.images);
+  return !!(
+    row.lifestyleImage?.trim() ||
+    images.length > 0 ||
+    row.image_key?.trim() ||
+    row.thumbnail_key?.trim() ||
+    row.textureImage?.trim()
+  );
+}
+
 /** The published catalogue, most prominent first. */
 export const getCatalogProducts = cache(
   async (opts?: { category?: CatalogProduct["category"]; limit?: number }): Promise<CatalogProduct[]> => {
@@ -289,8 +313,9 @@ export const getCatalogProducts = cache(
         orderBy: [{ featured: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
         take: opts?.limit ?? CATALOG_CLIENT_LIMIT,
       });
-      if (rows.length === 0) return filterCategory(fallbackProducts, opts?.category);
-      return filterCategory(rows.map(toCatalogProduct), opts?.category);
+      const validRows = rows.filter(hasProductImage);
+      if (validRows.length === 0) return filterCategory(fallbackProducts, opts?.category);
+      return filterCategory(validRows.map(toCatalogProduct), opts?.category);
     } catch {
       return filterCategory(fallbackProducts, opts?.category);
     }

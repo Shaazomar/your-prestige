@@ -200,11 +200,21 @@ export class Stats {
 }
 
 export async function upsertProduct({ importKey, data }) {
+  // Production rule: If product has no valid lifestyleImage/images, save as DRAFT with needsReview=true
+  const hasImage = !!(data.lifestyleImage?.trim() || (Array.isArray(data.images) && data.images.length > 0));
+  const safeData = {
+    ...data,
+    published: hasImage ? (data.published ?? true) : false,
+    status: hasImage ? (data.status ?? 'ACTIVE') : 'DRAFT',
+    needsReview: hasImage ? (data.needsReview ?? false) : true,
+    reviewReason: hasImage ? (data.reviewReason ?? null) : (data.reviewReason || 'Image extraction failed or missing'),
+  };
+
   const existing = await prisma.product.findUnique({ where: { importKey }, select: { id: true } });
   const row = await prisma.product.upsert({
     where: { importKey },
-    create: { importKey, ...data },
-    update: { ...data },
+    create: { importKey, ...safeData },
+    update: { ...safeData },
   });
   return { row, created: !existing };
 }

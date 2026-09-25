@@ -35,6 +35,7 @@ export const adminNav = [
     section: "Catalog & PIM",
     items: [
       { label: "Products", href: "/admin/content/products", icon: Package, module: "products" as Module },
+      { label: "Image Review", href: "/admin/content/image-review", icon: Images, module: "products" as Module },
       { label: "Classification", href: "/admin/content/classification", icon: SlidersHorizontal, module: "products" as Module },
       { label: "Catalog Imports", href: "/admin/content/catalog-imports", icon: FileStack, module: "catalogImports" as Module },
       { label: "Excel Import", href: "/admin/content/excel-import", icon: FileSpreadsheet, module: "catalogImports" as Module },

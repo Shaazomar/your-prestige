@@ -33,3 +33,32 @@
  ○ Compiling /brands/[slug]/[category] ...
  ✓ Compiled /brands/[slug]/[category] in 572ms
  GET /brands/jaquar/faucets 200 in 42546ms
+ ✓ Compiled / in 240ms
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique()` invocation in
+E:\growthbridge\your-prestige\.next\server\chunks\ssr\[root-of-the-server]__4707a5f8._.js:704:158
+
+  701     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])("/?preview=1");
+  702 }
+  703 async function getPublishedHomepageHero() {
+→ 704     const row = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)
+    at <unknown> (src\app\admin\(dashboard)\content\homepage\actions.ts:66:36)
+    at async getPublishedHomepageHero (src\app\admin\(dashboard)\content\homepage\actions.ts:66:15)
+    at async HomePage (src\app\(site)\page.tsx:29:12)
+  64 | /** Read by the public homepage — falls back to defaults if nothing published yet. */
+  65 | export async function getPublishedHomepageHero(): Promise<HomepageHeroInput> {
+> 66 |   const row = await prisma.setting.findUnique({ where: { key: "homepage.hero.published" } });
+     |                                    ^
+  67 |   return row ? { ...defaultHomepageHero, ...(row.value as object) } : defaultHomepageHero;
+  68 | }
+  69 | {
+  code: 'P2024',
+  meta: [Object],
+  clientVersion: '6.19.3',
+  digest: '246146932'
+}
+ GET / 200 in 11619ms
+ ○ Compiling /icon.png ...
+ GET / 200 in 10561ms
+ ✓ Compiled /icon.png in 2s
