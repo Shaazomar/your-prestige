@@ -30,6 +30,14 @@ export const productSchema = z.object({
   featured: z.boolean().default(false),
   designerPick: z.boolean().default(false),
   published: z.boolean().default(true),
+  /**
+   * The one field that removes a product from the public site — see
+   * `PUBLIC_PRODUCT_WHERE` in `lib/products.ts`. `published` above is kept in
+   * lockstep with this (true only for ACTIVE) purely so any other code still
+   * reading the plain boolean stays correct; the form only ever presents this
+   * single three-way control, never both.
+   */
+  status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).default("ACTIVE"),
   priceIndicator: z.string().max(10).optional().or(z.literal("")),
 });
 

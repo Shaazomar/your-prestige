@@ -1,73 +1,50 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { products, type CatalogProduct } from "@/lib/catalog";
+import { searchCatalog, type CatalogFilters } from "@/lib/catalog-search";
 
-
+/**
+ * Public product listing API.
+ *
+ * This used to filter the small hardcoded fallback array from `lib/catalog`
+ * — a dozen or so demo products — and never touched the database at all, so
+ * any caller of this endpoint (nothing in this app calls it today, but it's
+ * a public, unauthenticated route, so an external integration might) got a
+ * handful of fixture products no matter what was actually published. Rebuilt
+ * on `searchCatalog`, the same server-side, paginated query every catalogue
+ * page uses — see `PUBLIC_PRODUCT_WHERE` in `lib/products.ts` for the one
+ * rule that decides what's visible.
+ *
+ * `inStock` is intentionally not wired to anything: this is a showcase
+ * catalogue, and stock availability must never remove a product from public
+ * listings.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const query = searchParams.get("query")?.toLowerCase();
-  const category = searchParams.get("category");
-  const collection = searchParams.get("collection");
-  const finish = searchParams.get("finish");
-  const color = searchParams.get("color");
-  const application = searchParams.get("application");
-  const inStockOnly = searchParams.get("inStock") === "true";
-  const limit = parseInt(searchParams.get("limit") || "50", 10);
-  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "50", 10) || 50, 1), 200);
+  const page = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
 
-  let filtered: CatalogProduct[] = [...products];
-
-  if (query) {
-    filtered = filtered.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.slug.toLowerCase().includes(query) ||
-        p.collection.toLowerCase().includes(query) ||
-        p.brand.toLowerCase().includes(query) ||
-        p.color.toLowerCase().includes(query) ||
-        p.finish.toLowerCase().includes(query) ||
-        p.applications.some((app) => app.toLowerCase().includes(query))
-    );
-  }
-
-  if (category) {
-    filtered = filtered.filter((p) => p.category === category);
-  }
-
-  if (collection) {
-    filtered = filtered.filter((p) => p.collection.toLowerCase() === collection.toLowerCase());
-  }
-
-  if (finish) {
-    filtered = filtered.filter((p) => p.finish.toLowerCase().includes(finish.toLowerCase()));
-  }
-
-  if (color) {
-    filtered = filtered.filter((p) => p.color.toLowerCase().includes(color.toLowerCase()));
-  }
-
-  if (application) {
-    filtered = filtered.filter((p) =>
-      p.applications.some((a) => a.toLowerCase().includes(application.toLowerCase()))
-    );
-  }
-
-  if (inStockOnly) {
-    filtered = filtered.filter((p) => !("inStock" in p) || Boolean(p["inStock" as keyof CatalogProduct]));
-  }
-
-
-
-  const total = filtered.length;
-  const start = (page - 1) * limit;
-  const paginated = filtered.slice(start, start + limit);
-
-  return NextResponse.json({
-    success: true,
-    total,
+  const filters: CatalogFilters = {
+    q: searchParams.get("query")?.trim() || undefined,
+    category: searchParams.get("category")?.trim() || undefined,
+    collection: searchParams.get("collection")?.trim() || undefined,
+    finish: searchParams.get("finish")?.trim() || undefined,
+    color: searchParams.get("color")?.trim() || undefined,
+    application: searchParams.get("application")?.trim() || undefined,
     page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-    data: paginated,
-  });
+    perPage: limit,
+  };
+
+  const result = await searchCatalog(filters);
+
+  return NextResponse.json(
+    {
+      success: true,
+      total: result.total,
+      page: result.page,
+      limit: result.perPage,
+      totalPages: result.pageCount,
+      data: result.products,
+    },
+    { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } }
+  );
 }

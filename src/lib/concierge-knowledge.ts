@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getBusiness } from "@/lib/business";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 /**
  * Knowledge base the concierge answers from — assembled live from the CMS
@@ -38,7 +39,7 @@ export async function getConciergeKnowledge(): Promise<ConciergeKnowledge> {
       orderBy: [{ isFlagship: "desc" }, { sortOrder: "asc" }],
     }),
     prisma.product.findMany({
-      where: { published: true, deletedAt: null },
+      where: PUBLIC_PRODUCT_WHERE,
       include: { category: { select: { slug: true } }, brand: { select: { name: true } } },
       take: 200,
     }),

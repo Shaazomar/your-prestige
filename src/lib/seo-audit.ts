@@ -389,6 +389,7 @@ async function checkDbFindings(): Promise<SeoAuditReport["dbFindings"]> {
   try {
     const { prisma } = await import("@/lib/prisma");
     const { getSubtreeProductCounts } = await import("@/lib/category-tree");
+    const { PUBLIC_PRODUCT_WHERE } = await import("@/lib/products");
     const PUBLISHED = { published: true, deletedAt: null } as const;
 
     const [
@@ -402,8 +403,8 @@ async function checkDbFindings(): Promise<SeoAuditReport["dbFindings"]> {
       landingPagesWithFaqs,
       allCategories,
     ] = await Promise.all([
-      prisma.product.count({ where: PUBLISHED }),
-      prisma.product.count({ where: { ...PUBLISHED, lifestyleImage: null, image_key: null, thumbnail_key: null } }),
+      prisma.product.count({ where: PUBLIC_PRODUCT_WHERE }),
+      prisma.product.count({ where: { ...PUBLIC_PRODUCT_WHERE, lifestyleImage: null, image_key: null, thumbnail_key: null } }),
       prisma.brand.count({ where: PUBLISHED }),
       prisma.brand.count({ where: { ...PUBLISHED, logo: null } }),
       prisma.category.count({ where: PUBLISHED }),

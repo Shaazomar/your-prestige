@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE, PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 /**
  * Grouped search-as-you-type suggestions: brands, products and categories in
@@ -50,13 +50,13 @@ export async function GET(req: NextRequest) {
     if (!q) {
       const [brands, products] = await Promise.all([
         prisma.brand.findMany({
-          where: { published: true, deletedAt: null, products: { some: { published: true, deletedAt: null } } },
-          select: { slug: true, name: true, _count: { select: { products: { where: { published: true, deletedAt: null } } } } },
+          where: { published: true, deletedAt: null, products: { some: PUBLIC_PRODUCT_WHERE } },
+          select: { slug: true, name: true, _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } } },
           orderBy: { products: { _count: "desc" } },
           take: 5,
         }),
         prisma.product.findMany({
-          where: { published: true, deletedAt: null, featured: true },
+          where: { ...PUBLIC_PRODUCT_WHERE, featured: true },
           include: PRODUCT_INCLUDE,
           orderBy: { viewCount: "desc" },
           take: 4,
@@ -77,16 +77,15 @@ export async function GET(req: NextRequest) {
           published: true,
           deletedAt: null,
           name: { contains: q, mode: "insensitive" },
-          products: { some: { published: true, deletedAt: null } },
+          products: { some: PUBLIC_PRODUCT_WHERE },
         },
-        select: { slug: true, name: true, _count: { select: { products: { where: { published: true, deletedAt: null } } } } },
+        select: { slug: true, name: true, _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } } },
         orderBy: { products: { _count: "desc" } },
         take: 4,
       }),
       prisma.product.findMany({
         where: {
-          published: true,
-          deletedAt: null,
+          ...PUBLIC_PRODUCT_WHERE,
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { productCode: { contains: q, mode: "insensitive" } },
@@ -103,7 +102,7 @@ export async function GET(req: NextRequest) {
           published: true,
           deletedAt: null,
           name: { contains: q, mode: "insensitive" },
-          products: { some: { published: true, deletedAt: null } },
+          products: { some: PUBLIC_PRODUCT_WHERE },
         },
         select: {
           slug: true,

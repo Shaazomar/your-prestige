@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_PRODUCT_SQL } from "@/lib/products";
 
 /**
  * Category-subtree resolution.
@@ -85,7 +86,7 @@ export const getSubtreeProductCounts = cache(
       SELECT s.root AS root, COUNT(p.id) AS count
         FROM subtree s
         LEFT JOIN "Product" p
-          ON p."categoryId" = s.id AND p.published = true AND p."deletedAt" IS NULL ${brandClause}
+          ON p."categoryId" = s.id AND ${PUBLIC_PRODUCT_SQL} ${brandClause}
        GROUP BY s.root
     `);
     return new Map(rows.map((r) => [r.root, Number(r.count)]));

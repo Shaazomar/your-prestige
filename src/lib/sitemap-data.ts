@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/seo-config";
-import { PRODUCT_INCLUDE, resolveCategory } from "@/lib/products";
+import { PRODUCT_INCLUDE, resolveCategory, PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 /**
  * Shared sitemap sources.
@@ -37,7 +37,7 @@ const SECTION_ROUTES = new Set(["tiles", "bathware"]);
 export const getProductSitemapRows = cache(async (page = 0): Promise<SitemapRow[]> => {
   try {
     const rows = await prisma.product.findMany({
-      where: PUBLISHED,
+      where: PUBLIC_PRODUCT_WHERE,
       // The same include the product page resolves its section from — a
       // sitemap URL that isn't the page's own canonical is a duplicate the
       // crawler was told about by us.
@@ -87,7 +87,7 @@ export const getLandingPageSitemapRows = cache(async (): Promise<SitemapRow[]> =
 
 export const countPublishedProducts = cache(async (): Promise<number> => {
   try {
-    return await prisma.product.count({ where: PUBLISHED });
+    return await prisma.product.count({ where: PUBLIC_PRODUCT_WHERE });
   } catch {
     return 0;
   }
@@ -101,7 +101,7 @@ export const getBrandSitemapRows = cache(async (): Promise<SitemapRow[]> => {
         slug: true,
         updatedAt: true,
         products: {
-          where: PUBLISHED,
+          where: PUBLIC_PRODUCT_WHERE,
           select: { category: { select: { slug: true } } },
           // Enough to cover a brand's category set without loading its catalogue.
           take: 500,

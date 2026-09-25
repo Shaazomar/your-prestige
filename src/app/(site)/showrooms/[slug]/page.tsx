@@ -18,7 +18,7 @@ import { getShowrooms, getShowroomBySlug, formatAddress, directionsHref } from "
 import { telHref, waHref } from "@/lib/business";
 import { siteUrl } from "@/lib/site-config";
 import { resolveImageRef } from "@/lib/s3-url";
-import { PRODUCT_INCLUDE, resolveCategory } from "@/lib/products";
+import { PRODUCT_INCLUDE, resolveCategory, PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 export const revalidate = 300;
 
@@ -65,7 +65,7 @@ export default async function ShowroomDetailPage({
 
   const featuredProducts = s.featuredProductIds.length
     ? await prisma.product.findMany({
-        where: { id: { in: s.featuredProductIds }, published: true, deletedAt: null },
+        where: { id: { in: s.featuredProductIds }, ...PUBLIC_PRODUCT_WHERE },
         select: {
           slug: true, name: true, collection: true, lifestyleImage: true,
           // Depot-imported products carry their photography as an S3 object

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function AdminDashboard() {
     recentEnquiries,
   ] = await Promise.all([
     prisma.product.count({ where: { deletedAt: null } }),
-    prisma.product.count({ where: { published: true, deletedAt: null } }),
+    prisma.product.count({ where: PUBLIC_PRODUCT_WHERE }),
     prisma.product.count({ where: { featured: true, deletedAt: null } }),
     prisma.offer.count({ where: { status: "ACTIVE", deletedAt: null } }),
     prisma.lead.count({ where: { source: "whatsapp", deletedAt: null } }),

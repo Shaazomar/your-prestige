@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE, PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 /**
  * Look up published products by slug.
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const rows = await prisma.product.findMany({
-      where: { slug: { in: slugs }, published: true, deletedAt: null },
+      where: { slug: { in: slugs }, ...PUBLIC_PRODUCT_WHERE },
       include: PRODUCT_INCLUDE,
     });
 
