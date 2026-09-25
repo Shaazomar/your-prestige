@@ -16,7 +16,7 @@ export const business = {
   description:
     "Luxury tiles, designer bathrooms and world-class sanitaryware across coastal Karnataka. Five showrooms in Mangaluru, Puttur and Moodbidri — curated for architects, builders and discerning homeowners.",
   phone: "+91 90089 19195",
-  whatsapp: "919008919195",
+  whatsapp: "918182996633",
   email: "",
   website: "",
   address: {

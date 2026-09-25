@@ -28,7 +28,7 @@ export interface EnquiryListItem {
 
 /**
  * Single source of truth for the active WhatsApp Ordering Number.
- * Defaults to setting "whatsapp.number" -> "business.whatsapp" -> "+919876543210".
+ * Defaults to setting "whatsapp.number" -> "business.whatsapp" -> "+918182996633".
  */
 export const getWhatsAppOrderingNumber = cache(async (): Promise<string> => {
   try {
@@ -47,7 +47,7 @@ export const getWhatsAppOrderingNumber = cache(async (): Promise<string> => {
   } catch {
     // Database fallback
   }
-  return "+919008919195";
+  return "+918182996633";
 });
 
 /**
