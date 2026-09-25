@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AField, ATextArea, ASelect, AToggle, ATagInput } from "@/components/admin/FormField";
+
+/**
+ * Mirrors `PRODUCT_VISIBILITY_LABEL` in `lib/products.ts` — duplicated rather
+ * than imported because that module pulls in Prisma, which can't reach a
+ * client bundle. Three literal labels; if they ever drift, the enum values
+ * themselves (kept in sync via `productSchema`) are still the source of truth.
+ */
+const VISIBILITY_OPTIONS: { value: "ACTIVE" | "DRAFT" | "ARCHIVED"; label: string }[] = [
+  { value: "ACTIVE", label: "Published — visible on the website" },
+  { value: "DRAFT", label: "Draft — not visible yet" },
+  { value: "ARCHIVED", label: "Hidden — pulled from the website" },
+];
 import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { MultiImageField } from "@/components/admin/MultiImageField";
 import { productSchema, type ProductInput } from "./schema";
@@ -20,7 +32,7 @@ const empty: ProductInput = {
   sizes: [], material: "", color: "", texture: "", applications: [],
   lifestyleImage: "", textureImage: "", images: [], video: "", brochureUrl: "",
   tag: "", aspect: "square", relatedIds: [], categoryId: null, brandId: null, collectionId: null,
-  featured: false, designerPick: false, published: true, priceIndicator: "",
+  featured: false, designerPick: false, published: true, status: "ACTIVE", priceIndicator: "",
 };
 
 export function ProductForm({ product, onSuccess }: { product: ProductRow | null; onSuccess: () => void }) {
@@ -52,6 +64,7 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
           featured: product.featured,
           designerPick: product.designerPick,
           published: product.published,
+          status: (product.status as "ACTIVE" | "DRAFT" | "ARCHIVED") ?? "ACTIVE",
           priceIndicator: product.priceIndicator ?? "",
         }
       : empty
@@ -209,7 +222,21 @@ export function ProductForm({ product, onSuccess }: { product: ProductRow | null
       <section className="space-y-3 border-t border-white/8 pt-6">
         <AToggle label="Featured" checked={values.featured} onChange={(featured) => setValues((v) => ({ ...v, featured }))} />
         <AToggle label="Designer Pick" checked={values.designerPick} onChange={(designerPick) => setValues((v) => ({ ...v, designerPick }))} />
-        <AToggle label="Published" checked={values.published} onChange={(published) => setValues((v) => ({ ...v, published }))} />
+        {/* The one control that decides whether this product is visible on the
+            website. Nothing else here — not stock, not a missing image, not
+            featured — can hide it; only this. */}
+        <ASelect
+          label="Visibility"
+          value={values.status}
+          onChange={(e) => {
+            const status = e.target.value as "ACTIVE" | "DRAFT" | "ARCHIVED";
+            setValues((v) => ({ ...v, status, published: status === "ACTIVE" }));
+          }}
+        >
+          {VISIBILITY_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </ASelect>
       </section>
 
       <button

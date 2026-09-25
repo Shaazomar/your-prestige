@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { resolveImageRef } from "@/lib/s3-url";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 /**
  * Structural media-health scan — brief §18's "Image Health Check".
@@ -46,7 +47,7 @@ function isInvalid(stored: string): boolean {
 
 async function scanProducts(): Promise<MediaIssue[]> {
   const rows = await prisma.product.findMany({
-    where: { deletedAt: null, published: true },
+    where: PUBLIC_PRODUCT_WHERE,
     select: {
       id: true, slug: true, name: true,
       lifestyleImage: true, textureImage: true, images: true,

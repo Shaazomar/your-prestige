@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { products as fallbackProducts, type CatalogProduct } from "@/lib/catalog";
 import { toApplications } from "@/lib/applications";
 import { resolveImageRef } from "@/lib/s3-url";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 /**
  * Reads the public catalogue out of PostgreSQL and shapes it into the
@@ -59,6 +59,40 @@ export const PRODUCT_INCLUDE = {
 } satisfies Prisma.ProductInclude;
 
 type ProductRow = Prisma.ProductGetPayload<{ include: typeof PRODUCT_INCLUDE }>;
+
+/**
+ * The one predicate that decides whether a product is visible to a website
+ * visitor. Every public catalogue query — listing, search, facets, sitemap,
+ * related products, sitewide search-suggest, sitemap, SEO audit counts — must
+ * filter through this, and nothing else.
+ *
+ * Deliberately narrow: `published` and `status` are the only two columns that
+ * can remove a product from the site, and both require an explicit admin
+ * action. Missing image, zero stock, no brand, no collection, no category, no
+ * featured flag — none of those hide a product. `status` defaults to
+ * `"ACTIVE"` and is a plain string column that already exists on the shared
+ * `Product` table (see the datasource note at the top of schema.prisma) —
+ * `"DRAFT"` and `"ARCHIVED"` are the two explicit ways an admin can pull a
+ * product from public view (the CMS calls these "Draft" and "Hidden"; see
+ * `PRODUCT_VISIBILITY_LABEL`). `notIn` rather than `equals("ACTIVE")` on
+ * purpose: an unrecognised future status value defaults to *visible*, the
+ * same "explicit-only hiding" rule as everything else here.
+ */
+export const PUBLIC_PRODUCT_WHERE = {
+  deletedAt: null,
+  published: true,
+  status: { notIn: ["DRAFT", "ARCHIVED"] },
+} satisfies Prisma.ProductWhereInput;
+
+/** Same predicate, for the raw-SQL queries that can't take a Prisma `where` object. */
+export const PUBLIC_PRODUCT_SQL = Prisma.sql`p."deletedAt" IS NULL AND p."published" = true AND p."status" NOT IN ('DRAFT', 'ARCHIVED')`;
+
+/** The three states a product's `status` column can hold, and their CMS labels. */
+export const PRODUCT_VISIBILITY_LABEL: Record<string, string> = {
+  ACTIVE: "Published",
+  DRAFT: "Draft",
+  ARCHIVED: "Hidden",
+};
 
 /**
  * `CatalogExplorer` recomputes its filter facets client-side from the array it
@@ -250,7 +284,7 @@ export const getCatalogProducts = cache(
   async (opts?: { category?: CatalogProduct["category"]; limit?: number }): Promise<CatalogProduct[]> => {
     try {
       const rows = await prisma.product.findMany({
-        where: { published: true, deletedAt: null },
+        where: PUBLIC_PRODUCT_WHERE,
         include: PRODUCT_INCLUDE,
         orderBy: [{ featured: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
         take: opts?.limit ?? CATALOG_CLIENT_LIMIT,
@@ -266,7 +300,7 @@ export const getCatalogProducts = cache(
 export const getCatalogProduct = cache(async (slug: string): Promise<CatalogProduct | null> => {
   try {
     const row = await prisma.product.findFirst({
-      where: { slug, published: true, deletedAt: null },
+      where: { slug, ...PUBLIC_PRODUCT_WHERE },
       include: PRODUCT_INCLUDE,
     });
     if (row) return toCatalogProduct(row);
@@ -295,7 +329,7 @@ export const getRelatedProducts = cache(
   async (product: CatalogProduct, count = 3): Promise<CatalogProduct[]> => {
     try {
       const anchor = await prisma.product.findFirst({
-        where: { slug: product.slug, published: true, deletedAt: null },
+        where: { slug: product.slug, ...PUBLIC_PRODUCT_WHERE },
         select: { categoryId: true, category: { select: CATEGORY_SELECT } },
       });
 
@@ -323,8 +357,7 @@ export const getRelatedProducts = cache(
 
       const rows = await prisma.product.findMany({
         where: {
-          published: true,
-          deletedAt: null,
+          ...PUBLIC_PRODUCT_WHERE,
           slug: { not: product.slug },
           OR: or,
         },
@@ -367,7 +400,7 @@ export const getRelatedProducts = cache(
 export async function getCatalogParams(limit = 100): Promise<{ category: string; slug: string }[]> {
   try {
     const rows = await prisma.product.findMany({
-      where: { published: true, deletedAt: null },
+      where: PUBLIC_PRODUCT_WHERE,
       include: PRODUCT_INCLUDE,
       orderBy: [{ featured: "desc" }, { viewCount: "desc" }],
       take: limit,
@@ -397,7 +430,7 @@ function filterCategory(list: CatalogProduct[], category?: CatalogProduct["categ
 export const getProductVariants = cache(async (slug: string) => {
   try {
     return await prisma.productVariant.findMany({
-      where: { active: true, product: { slug, published: true, deletedAt: null } },
+      where: { active: true, product: { slug, ...PUBLIC_PRODUCT_WHERE } },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       select: { id: true, sku: true, name: true, size: true, finish: true, color: true },
     });
@@ -417,7 +450,7 @@ export const getProductCategoryTrail = cache(
   async (slug: string): Promise<{ slug: string; name: string }[]> => {
     try {
       const row = await prisma.product.findFirst({
-        where: { slug, published: true, deletedAt: null },
+        where: { slug, ...PUBLIC_PRODUCT_WHERE },
         select: { category: { select: CATEGORY_SELECT } },
       });
       return row ? categoryTrail(row) : [];

@@ -2,7 +2,7 @@ import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { brands as fallbackBrandNames } from "@/lib/demo-content";
-import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE, PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 import { getCategorySubtreeIds, getSubtreeProductCounts } from "@/lib/category-tree";
 import { resolveImageRef } from "@/lib/s3-url";
 
@@ -108,7 +108,7 @@ function toBrandView(b: BrandSelectRow, productCount: number, categoryCount: num
 async function categoryCountsByBrandId(): Promise<Map<string, number>> {
   const rows = await prisma.product.groupBy({
     by: ["brandId", "categoryId"],
-    where: { published: true, deletedAt: null, brandId: { not: null }, categoryId: { not: null } },
+    where: { ...PUBLIC_PRODUCT_WHERE, brandId: { not: null }, categoryId: { not: null } },
   });
   const seen = new Map<string, Set<string>>();
   for (const r of rows) {
@@ -127,7 +127,7 @@ export const getBrands = cache(async (): Promise<BrandView[]> => {
         orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
         select: {
           ...BRAND_VIEW_SELECT,
-          _count: { select: { products: { where: { published: true, deletedAt: null } } } },
+          _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } },
         },
       }),
       categoryCountsByBrandId(),
@@ -146,13 +146,13 @@ export const getBrandBySlug = cache(async (slug: string): Promise<BrandView | nu
       where: { slug, published: true, deletedAt: null },
       select: {
         ...BRAND_VIEW_SELECT,
-        _count: { select: { products: { where: { published: true, deletedAt: null } } } },
+        _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } },
       },
     });
     if (!b) return null;
 
     const distinctCategories = await prisma.product.findMany({
-      where: { brandId: b.id, published: true, deletedAt: null, categoryId: { not: null } },
+      where: { brandId: b.id, ...PUBLIC_PRODUCT_WHERE, categoryId: { not: null } },
       distinct: ["categoryId"],
       select: { categoryId: true },
     });
@@ -186,7 +186,7 @@ export const getBrandCollections = cache(
     try {
       const rows = await prisma.product.groupBy({
         by: ["collection"],
-        where: { published: true, deletedAt: null, brand: { slug: brandSlug } },
+        where: { ...PUBLIC_PRODUCT_WHERE, brand: { slug: brandSlug } },
         _count: { _all: true },
       });
       return rows
@@ -214,7 +214,7 @@ export const getBrandCategories = cache(
     try {
       const rows = await prisma.product.groupBy({
         by: ["categoryId"],
-        where: { published: true, deletedAt: null, brand: { slug: brandSlug } },
+        where: { ...PUBLIC_PRODUCT_WHERE, brand: { slug: brandSlug } },
         _count: { _all: true },
       });
       const categoryIds = rows.map((r) => r.categoryId).filter((id): id is string => !!id);
@@ -277,7 +277,7 @@ export const getBrandFeaturedProducts = cache(
 
       if (curatedIds.length > 0) {
         const rows = await prisma.product.findMany({
-          where: { id: { in: curatedIds }, published: true, deletedAt: null },
+          where: { id: { in: curatedIds }, ...PUBLIC_PRODUCT_WHERE },
           include: PRODUCT_INCLUDE,
         });
         const byId = new Map(rows.map((r) => [r.id, r]));
@@ -286,7 +286,7 @@ export const getBrandFeaturedProducts = cache(
       }
 
       const fallback = await prisma.product.findMany({
-        where: { brandId: brand.id, published: true, deletedAt: null },
+        where: { brandId: brand.id, ...PUBLIC_PRODUCT_WHERE },
         include: PRODUCT_INCLUDE,
         orderBy: [{ featured: "desc" }, { viewCount: "desc" }, { createdAt: "desc" }],
         take: limit,
@@ -310,7 +310,7 @@ export const getBrandFeaturedCollections = cache(
           name: true,
           description: true,
           image: true,
-          _count: { select: { products: { where: { published: true, deletedAt: null } } } },
+          _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } },
         },
       });
       return rows.map((r) => ({
@@ -500,14 +500,14 @@ export const getBrandNavGroups = cache(async (): Promise<BrandNavGroups> => {
       tilesCat
         ? prisma.product.groupBy({
             by: ["brandId"],
-            where: { published: true, deletedAt: null, categoryId: tilesCat.id },
+            where: { ...PUBLIC_PRODUCT_WHERE, categoryId: tilesCat.id },
             _count: { _all: true },
           })
         : Promise.resolve([]),
       bathwareCat
         ? prisma.product.groupBy({
             by: ["brandId"],
-            where: { published: true, deletedAt: null, category: { parentId: bathwareCat.id } },
+            where: { ...PUBLIC_PRODUCT_WHERE, category: { parentId: bathwareCat.id } },
             _count: { _all: true },
           })
         : Promise.resolve([]),

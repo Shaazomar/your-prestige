@@ -103,13 +103,21 @@ export function ProductsManager({ permissions }: { permissions: { create: boolea
     { key: "tag", label: "Tag", render: (row) => row.tag ? <span className="rounded-full bg-gold/15 px-2.5 py-1 text-xs font-medium text-gold">{row.tag}</span> : <span className="text-white/25">—</span> },
     { key: "featured", label: "Featured", render: (row) => row.featured ? <Star className="h-4 w-4 fill-gold text-gold" /> : <span className="text-white/25">—</span> },
     {
-      key: "published",
-      label: "Status",
-      render: (row) => (
-        <span className={row.published ? "rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-medium text-emerald-300" : "rounded-full bg-white/8 px-2.5 py-1 text-xs font-medium text-white/40"}>
-          {row.published ? "Published" : "Draft"}
-        </span>
-      ),
+      key: "status",
+      label: "Visibility",
+      render: (row) => {
+        // `status` is a plain string column (see `PUBLIC_PRODUCT_WHERE` in
+        // lib/products.ts) — anything other than the two explicit hidden
+        // states reads as live, matching the site's own "explicit-only
+        // hiding" rule.
+        const hidden = row.status === "DRAFT" || row.status === "ARCHIVED";
+        const label = row.status === "DRAFT" ? "Draft" : row.status === "ARCHIVED" ? "Hidden" : "Published";
+        return (
+          <span className={hidden ? "rounded-full bg-white/8 px-2.5 py-1 text-xs font-medium text-white/40" : "rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-medium text-emerald-300"}>
+            {label}
+          </span>
+        );
+      },
     },
   ];
 

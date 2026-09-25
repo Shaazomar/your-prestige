@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { toCatalogProduct, PRODUCT_INCLUDE } from "@/lib/products";
+import { toCatalogProduct, PRODUCT_INCLUDE, PUBLIC_PRODUCT_WHERE, PUBLIC_PRODUCT_SQL } from "@/lib/products";
 import { getCategorySubtreeIds } from "@/lib/category-tree";
 import type { CatalogProduct } from "@/lib/catalog";
 
@@ -98,7 +98,7 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
  * facets all filter on exactly the same set of categories.
  */
 function buildWhere(f: CatalogFilters, categoryIds?: string[]): Prisma.ProductWhereInput {
-  const and: Prisma.ProductWhereInput[] = [{ published: true, deletedAt: null }];
+  const and: Prisma.ProductWhereInput[] = [PUBLIC_PRODUCT_WHERE];
 
   // A named category that resolved to nothing must match nothing — falling
   // through to "no category filter" would answer /bathware/nonsense with the
@@ -240,8 +240,7 @@ async function resolveScope(scope: {
 
 async function computeFacets({ categoryIds, brandId }: ResolvedScope): Promise<CatalogSearchResult["facets"]> {
   const where: Prisma.ProductWhereInput = {
-    published: true,
-    deletedAt: null,
+    ...PUBLIC_PRODUCT_WHERE,
     ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
     ...(brandId ? { brandId } : {}),
   };
@@ -298,7 +297,7 @@ async function jsonArrayFacet(
   scope: { categoryIds?: string[]; brandId?: string }
 ): Promise<Facet[]> {
   const columnRef = column === "sizes" ? Prisma.sql`"sizes"` : Prisma.sql`"applications"`;
-  const clauses = [Prisma.sql`p."published" = true`, Prisma.sql`p."deletedAt" IS NULL`];
+  const clauses = [PUBLIC_PRODUCT_SQL];
   // `Prisma.join` cannot render an empty list, and an unknown category must
   // match nothing rather than everything — so the impossible clause is
   // written out explicitly.
@@ -327,7 +326,7 @@ async function jsonArrayFacet(
 /** How many products are published — decides client-side vs server-side browsing. */
 export async function countPublishedProducts(): Promise<number> {
   try {
-    return await prisma.product.count({ where: { published: true, deletedAt: null } });
+    return await prisma.product.count({ where: PUBLIC_PRODUCT_WHERE });
   } catch {
     return 0;
   }
