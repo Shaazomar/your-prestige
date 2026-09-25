@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AlertTriangle, PlayCircle, Wrench, Search, Loader2, ShieldCheck } from "lucide-react";
 import { scanMediaHealth, repairMediaField, verifyMediaHealthUrl } from "./actions";
 import type { MediaIssue, MediaHealthStats } from "@/lib/media/health-check";
+import { BrandImageChecker } from "./BrandImageChecker";
 
 const STATUS_TONE: Record<string, string> = {
   missing: "bg-white/10 text-white/60",
@@ -127,6 +128,8 @@ export function MediaHealthManager({ canEdit }: { canEdit: boolean }) {
           </p>
         )}
       </div>
+
+      <BrandImageChecker canEdit={canEdit} />
 
       {/* Structural scan */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/8 bg-[#141413] p-5">

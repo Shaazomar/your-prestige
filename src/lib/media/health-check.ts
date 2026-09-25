@@ -256,6 +256,97 @@ export function summarize(issues: MediaIssue[]): MediaHealthStats {
   return { total: issues.length, byStatus, byEntity };
 }
 
+/** Runs `fn` over `items` with at most `limit` in flight — a brand's products checked 10 at a time, not all at once against S3. */
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+export interface BrandImageCheckRow {
+  productId: string;
+  slug: string;
+  name: string;
+  storedValue: string | null;
+  resolvedUrl: string | null;
+  status: "valid" | "broken" | "unauthorized" | "unsupported" | "missing";
+  httpStatus?: number;
+  error?: string;
+}
+
+export interface BrandImageCheckPage {
+  total: number;
+  rows: BrandImageCheckRow[];
+  nextOffset: number | null;
+}
+
+/**
+ * Live, brand-scoped image verification — the bulk counterpart to
+ * `verifyMediaUrl`, for the exact question a merchandiser actually has: "is
+ * this whole brand's photography actually live?" A structural scan can't
+ * answer that — a stored value can be a perfectly well-formed S3 key for an
+ * object that was never uploaded, which only a real HTTP request reveals.
+ *
+ * Paginated (`offset`/`limit`) rather than one pass over the whole brand: a
+ * brand can hold thousands of products, and a single request that tries to
+ * HEAD-check all of them risks timing out the request itself. The caller
+ * (see `MediaHealthManager`) drives the next page from `nextOffset` and
+ * accumulates a running total across calls.
+ */
+export async function verifyBrandImages(
+  brandSlug: string,
+  offset: number,
+  limit: number
+): Promise<BrandImageCheckPage> {
+  const brand = await prisma.brand.findFirst({ where: { slug: brandSlug }, select: { id: true } });
+  if (!brand) return { total: 0, rows: [], nextOffset: null };
+
+  const where = { ...PUBLIC_PRODUCT_WHERE, brandId: brand.id };
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      select: {
+        id: true, slug: true, name: true,
+        lifestyleImage: true, images: true, image_key: true, thumbnail_key: true, textureImage: true,
+      },
+      orderBy: { name: "asc" },
+      skip: offset,
+      take: limit,
+    }),
+  ]);
+
+  const rows = await mapWithConcurrency(products, 10, async (p): Promise<BrandImageCheckRow> => {
+    const gallery = arr(p.images);
+    // Same fallback order as `toCatalogProduct` — checking only `lifestyleImage`
+    // would flag a product as broken when a gallery or depot-import image
+    // would actually have rendered.
+    const resolvedUrl =
+      resolveImageRef(p.lifestyleImage) ||
+      resolveImageRef(gallery[0]) ||
+      resolveImageRef(p.image_key) ||
+      resolveImageRef(p.thumbnail_key) ||
+      resolveImageRef(p.textureImage);
+    const storedValue = p.lifestyleImage || p.image_key || p.thumbnail_key || gallery[0] || p.textureImage || null;
+
+    if (!resolvedUrl) {
+      return { productId: p.id, slug: p.slug, name: p.name, storedValue, resolvedUrl: null, status: "missing" };
+    }
+    const check = await verifyMediaUrl(resolvedUrl);
+    return { productId: p.id, slug: p.slug, name: p.name, storedValue, resolvedUrl, ...check };
+  });
+
+  const nextOffset = offset + products.length < total ? offset + products.length : null;
+  return { total, rows, nextOffset };
+}
+
 /**
  * Live reachability check for one resolved URL — on-demand only (see the
  * module comment for why this never runs across the whole catalogue

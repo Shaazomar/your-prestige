@@ -3,7 +3,11 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { collectMediaIssues, summarize, verifyMediaUrl, type MediaIssue, type MediaHealthStats } from "@/lib/media/health-check";
+import {
+  collectMediaIssues, summarize, verifyMediaUrl, verifyBrandImages,
+  type MediaIssue, type MediaHealthStats, type BrandImageCheckPage,
+} from "@/lib/media/health-check";
+import { PUBLIC_PRODUCT_WHERE } from "@/lib/products";
 
 export async function scanMediaHealth(): Promise<{ issues: MediaIssue[]; stats: MediaHealthStats }> {
   await requirePermission("media", "view");
@@ -14,6 +18,27 @@ export async function scanMediaHealth(): Promise<{ issues: MediaIssue[]; stats: 
 export async function verifyMediaHealthUrl(url: string) {
   await requirePermission("media", "view");
   return verifyMediaUrl(url);
+}
+
+/** Published brands with a product count, for the "verify this brand's photography" picker. */
+export async function listBrandsForImageCheck(): Promise<{ slug: string; name: string; productCount: number }[]> {
+  await requirePermission("media", "view");
+  const rows = await prisma.brand.findMany({
+    where: { published: true, deletedAt: null },
+    select: { slug: true, name: true, _count: { select: { products: { where: PUBLIC_PRODUCT_WHERE } } } },
+    orderBy: { name: "asc" },
+  });
+  return rows
+    .map((r) => ({ slug: r.slug, name: r.name, productCount: r._count.products }))
+    .filter((r) => r.productCount > 0);
+}
+
+const IMAGE_CHECK_BATCH = 40;
+
+/** One page of a brand's live image verification — see `verifyBrandImages`. */
+export async function checkBrandImages(brandSlug: string, offset: number): Promise<BrandImageCheckPage> {
+  await requirePermission("media", "view");
+  return verifyBrandImages(brandSlug, offset, IMAGE_CHECK_BATCH);
 }
 
 /**
