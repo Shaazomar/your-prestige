@@ -136,6 +136,40 @@ All 30 public routes return 200. Typecheck and lint are clean.
    bookings, business settings and all five showrooms were silently never
    seeded.
 4. **The admin passkey**, above.
+5. **Every customer order was saved anonymously.** `CustomerOrder` has always
+   carried `customerName`, `customerPhone` and `notes`; `createOrder`
+   validates them; `buildOrderMessage` prints them into the WhatsApp text;
+   the admin Orders table has a CUSTOMER column. Nothing collected them. The
+   enquiry drawer now asks before the handoff, with phone required — it is
+   how the showroom calls back, and the only identifier if the customer never
+   sends the prepared message.
+6. **The prepared WhatsApp fallback was never used.** `placeWhatsAppOrder`
+   built `fallbackUrl` "in case saving the order fails", then returned a bare
+   error on every failure path — so on a site whose whole checkout is
+   "continue on WhatsApp", a database hiccup blocked the customer entirely.
+   Both failure paths now hand over the prepared message, without an order
+   reference, since nothing was saved.
+7. **The focus ring failed the standard its own comment invoked.** The accent
+   gold is 1.84:1 against the page canvas; WCAG wants 3:1 for a non-text
+   indicator. Added `--color-gold-ink` (3.75:1 on canvas) for thin marks on
+   light grounds and pointed the focus ring and link underline at it. The
+   fill gold is unchanged, so buttons look identical.
+
+### Verified working (not defects)
+
+Worth recording, because each looked suspicious before being measured:
+
+- **Filters and search are genuinely backed by the database.**
+  `?brand=velzone` returns 53, matching `SELECT count(*)` exactly; `q=tranco`
+  returns 2 and `q=bib` 145, both matching. Full-SKU search works
+  (`ESA-WHT-LDG1010` → 1 result).
+- **Checkout persists correctly.** A driven order saved as
+  `PR-261105-3HGL` with both line items linked to real product ids, and
+  appeared in admin Orders with the customer shown.
+- **ERP isolation holds.** `Inventory`, `InventoryMovement` and `StockBlock`
+  had zero rows written across the entire QA run.
+- **Responsive.** Home, shop, PDP and brand pages render at 1920×1080,
+  1440×900, 1366×768, 768×1024, 390×844 and 360×800 with no layout failure.
 
 ## Defects found, not yet fixed
 
@@ -162,8 +196,9 @@ All 30 public routes return 200. Typecheck and lint are clean.
 ## What has not been verified
 
 - Anything about production itself — see the image section above.
-- The checkout/enquiry submission path end to end, and admin receipt of that
-  enquiry. The forms render; the full round trip was not driven.
+- The `/api/leads` quotation path (`LeadForm`, `QuoteModal`, the wishlist
+  conversion). Only the order path through `/api/orders` was driven end to
+  end.
 - The PDF/OCR importer against a real brand catalogue. `progress.md` records
   it has only ever run against a generated fixture.
 - Tile coverage/box calculations — the quantity selector and unit dropdown
