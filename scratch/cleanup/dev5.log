@@ -1,0 +1,64 @@
+   ▲ Next.js 15.5.21 (Turbopack)
+   - Local:        http://localhost:3111
+   - Network:      http://10.28.186.120:3111
+   - Environments: .env
+   - Experiments (use with caution):
+     · middlewareClientMaxBodySize: "50mb"
+
+ ✓ Starting...
+ ✓ Compiled middleware in 247ms
+ ✓ Ready in 2s
+ ○ Compiling / ...
+ ✓ Compiled / in 4.2s
+ GET / 200 in 3000ms
+ GET / 200 in 3014ms
+ GET / 200 in 3012ms
+ GET / 200 in 3008ms
+ GET / 200 in 3000ms
+ GET / 200 in 3009ms
+ GET / 200 in 3013ms
+ GET / 200 in 3008ms
+ GET / 200 in 3007ms
+ GET / 200 in 3012ms
+ GET / 200 in 3011ms
+ GET / 200 in 3057ms
+ GET / 200 in 3004ms
+ GET / 200 in 3013ms
+ GET / 200 in 3002ms
+ GET / 200 in 3003ms
+ GET / 200 in 3003ms
+ GET / 200 in 3102ms
+ GET / 200 in 3002ms
+ GET / 200 in 3012ms
+ GET / 200 in 3009ms
+ GET / 200 in 3001ms
+ GET / 200 in 3007ms
+ GET / 200 in 3001ms
+ GET / 200 in 3002ms
+ GET / 200 in 3013ms
+ GET / 200 in 3006ms
+ GET / 200 in 2903ms
+ GET / 200 in 3009ms
+ GET / 200 in 3011ms
+ GET / 200 in 3004ms
+ GET / 200 in 3014ms
+ GET / 200 in 3015ms
+ GET / 200 in 3011ms
+ GET / 200 in 3009ms
+ GET / 200 in 3005ms
+ GET / 200 in 3012ms
+ GET / 200 in 3007ms
+ GET / 200 in 3015ms
+ GET / 200 in 3009ms
+ GET / 200 in 3000ms
+ GET / 200 in 3011ms
+ GET / 200 in 3182ms
+ GET / 200 in 3010ms
+ GET / 200 in 3003ms
+ GET / 200 in 3011ms
+ GET / 200 in 3008ms
+ GET / 200 in 3310ms
+ ○ Compiling /products ...
+ ✓ Compiled /products in 626ms
+ GET /products?q=basin%20mixer 200 in 8678ms
+[?25h

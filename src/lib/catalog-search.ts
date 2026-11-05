@@ -97,7 +97,27 @@ export function parseFilters(sp: Record<string, string | string[] | undefined>):
  * It is passed in rather than looked up here so the search, the count and the
  * facets all filter on exactly the same set of categories.
  */
-function buildWhere(f: CatalogFilters, categoryIds?: string[]): Prisma.ProductWhereInput {
+/**
+ * `ProductVariant` is created by a hand-applied SQL file
+ * (prisma/sql/2026-09-15-product-variants.sql), not by `prisma migrate`, so it
+ * can be absent from a given database. A `variants: { some: ... }` filter
+ * against a missing table throws, and `searchCatalog` used to swallow that
+ * into an empty result - every text search then answered "No products found".
+ * The answer is cached briefly so this costs one cheap lookup a minute.
+ */
+let variantTableCheck: { at: number; ok: boolean } | null = null;
+async function hasVariantTable(): Promise<boolean> {
+  if (variantTableCheck && Date.now() - variantTableCheck.at < 60_000) return variantTableCheck.ok;
+  try {
+    const r = await prisma.$queryRaw<{ ok: boolean }[]>`SELECT to_regclass('public."ProductVariant"') IS NOT NULL AS ok`;
+    variantTableCheck = { at: Date.now(), ok: !!r[0]?.ok };
+  } catch {
+    variantTableCheck = { at: Date.now(), ok: false };
+  }
+  return variantTableCheck.ok;
+}
+
+function buildWhere(f: CatalogFilters, categoryIds?: string[], includeVariants = true): Prisma.ProductWhereInput {
   const and: Prisma.ProductWhereInput[] = [PUBLIC_PRODUCT_WHERE];
 
   // A named category that resolved to nothing must match nothing — falling
@@ -133,7 +153,7 @@ function buildWhere(f: CatalogFilters, categoryIds?: string[]): Prisma.ProductWh
         { collectionRelation: { name: { contains: f.q, mode: "insensitive" } } },
         // A customer quoting a variant's article code should land on its
         // product — the variant is what is printed on the box, not the parent.
-        { variants: { some: { sku: { contains: f.q, mode: "insensitive" } } } },
+        ...(includeVariants ? [{ variants: { some: { sku: { contains: f.q, mode: "insensitive" as const } } } }] : []),
       ],
     });
   }
@@ -159,7 +179,7 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
       categoryGroup: filters.categoryGroup,
       brand: filters.brand,
     });
-    const where = buildWhere(filters, scope.categoryIds);
+    const where = buildWhere(filters, scope.categoryIds, await hasVariantTable());
 
     const [rows, total, facets] = await Promise.all([
       prisma.product.findMany({
@@ -188,7 +208,10 @@ export async function searchCatalog(filters: CatalogFilters): Promise<CatalogSea
       pageCount: Math.max(1, Math.ceil(total / perPage)),
       facets,
     };
-  } catch {
+  } catch (err) {
+    // Never hide this: an empty page with no log looks exactly like "no matching
+    // products", which is how a missing table once blanked all text search.
+    console.error("searchCatalog failed:", err);
     return {
       products: [],
       total: 0,

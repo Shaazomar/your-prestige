@@ -1,0 +1,144 @@
+   ▲ Next.js 15.5.21 (Turbopack)
+   - Local:        http://localhost:3111
+   - Network:      http://10.28.186.120:3111
+   - Environments: .env
+   - Experiments (use with caution):
+     · middlewareClientMaxBodySize: "50mb"
+
+ ✓ Starting...
+ ✓ Compiled middleware in 253ms
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 4.4s
+ GET / 200 in 3005ms
+ GET / 200 in 3267ms
+ GET / 200 in 3005ms
+ GET / 200 in 3004ms
+ GET / 200 in 3009ms
+ GET / 200 in 3011ms
+ GET / 200 in 2913ms
+ GET / 200 in 3013ms
+ GET / 200 in 3008ms
+ GET / 200 in 3002ms
+ GET / 200 in 3014ms
+ GET / 200 in 3003ms
+ GET / 200 in 3007ms
+ GET / 200 in 3010ms
+ GET / 200 in 3007ms
+ GET / 200 in 3008ms
+ GET / 200 in 3004ms
+ GET / 200 in 2963ms
+ GET / 200 in 4599ms
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique()` invocation in
+E:\growthbridge\your-prestige\.next\server\chunks\ssr\[root-of-the-server]__dac9e10d._.js:713:158
+
+  710     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])("/admin/preview");
+  711 }
+  712 async function getPublishedHomepageHero() {
+→ 713     const row = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)
+    at <unknown> (src\app\admin\(dashboard)\content\homepage\actions.ts:66:36)
+    at async getPublishedHomepageHero (src\app\admin\(dashboard)\content\homepage\actions.ts:66:15)
+    at async HomePage (src\app\(site)\page.tsx:70:16)
+  64 | /** Read by the public homepage — falls back to defaults if nothing published yet. */
+  65 | export async function getPublishedHomepageHero(): Promise<HomepageHeroInput> {
+> 66 |   const row = await prisma.setting.findUnique({ where: { key: "homepage.hero.published" } });
+     |                                    ^
+  67 |   return row ? { ...defaultHomepageHero, ...(row.value as object) } : defaultHomepageHero;
+  68 | }
+  69 | {
+  code: 'P2024',
+  meta: [Object],
+  clientVersion: '6.19.3',
+  digest: '4077982875'
+}
+ GET / 200 in 3017ms
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique()` invocation in
+E:\growthbridge\your-prestige\.next\server\chunks\ssr\[root-of-the-server]__dac9e10d._.js:713:158
+
+  710     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])("/admin/preview");
+  711 }
+  712 async function getPublishedHomepageHero() {
+→ 713     const row = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique(
+Can't reach database server at `ep-fragrant-dream-ayoi2s86-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-fragrant-dream-ayoi2s86-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+    at <unknown> (src\app\admin\(dashboard)\content\homepage\actions.ts:66:36)
+    at async getPublishedHomepageHero (src\app\admin\(dashboard)\content\homepage\actions.ts:66:15)
+    at async HomePage (src\app\(site)\page.tsx:70:16)
+  64 | /** Read by the public homepage — falls back to defaults if nothing published yet. */
+  65 | export async function getPublishedHomepageHero(): Promise<HomepageHeroInput> {
+> 66 |   const row = await prisma.setting.findUnique({ where: { key: "homepage.hero.published" } });
+     |                                    ^
+  67 |   return row ? { ...defaultHomepageHero, ...(row.value as object) } : defaultHomepageHero;
+  68 | }
+  69 | {
+  code: 'P1001',
+  meta: [Object],
+  clientVersion: '6.19.3',
+  digest: '653471707'
+}
+ GET / 500 in 656ms
+ ○ Compiling /products ...
+ ✓ Compiled /products in 1172ms
+searchCatalog failed: Error [PrismaClientKnownRequestError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].brand.findFirst()` invocation in
+E:\growthbridge\your-prestige\.next\server\chunks\ssr\[root-of-the-server]__a2655fec._.js:532:158
+
+  529 if (scope.categoryGroup) categoryIds.push(...await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$category$2d$tree$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getCategorySubtreeIds"])(scope.categoryGroup));
+  530 let brandId;
+  531 if (scope.brand) {
+→ 532     const b = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].brand.findFirst(
+Can't reach database server at `ep-fragrant-dream-ayoi2s86-pooler.c-5.us-east-2.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-fragrant-dream-ayoi2s86-pooler.c-5.us-east-2.aws.neon.tech:5432`.
+    at <unknown> (src\lib\catalog-search.ts:251:34)
+    at async resolveScope (src\lib\catalog-search.ts:251:15)
+    at async searchCatalog (src\lib\catalog-search.ts:177:19)
+    at async ProductsPage (src\app\(site)\products\(index)\page.tsx:52:19)
+  249 |   let brandId: string | undefined;
+  250 |   if (scope.brand) {
+> 251 |     const b = await prisma.brand.findFirst({ where: { name: { equals: scope.brand, mode: "insensitive" } }, select: { id: true } });
+      |                                  ^
+  252 |     brandId = b?.id;
+  253 |   }
+  254 | {
+  code: 'P1001',
+  meta: [Object],
+  clientVersion: '6.19.3'
+}
+ GET /products?brand=artize 200 in 1673ms
+ ⨯ Error [PrismaClientKnownRequestError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique()` invocation in
+E:\growthbridge\your-prestige\.next\server\chunks\ssr\[root-of-the-server]__dac9e10d._.js:713:158
+
+  710     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])("/admin/preview");
+  711 }
+  712 async function getPublishedHomepageHero() {
+→ 713     const row = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].setting.findUnique(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 13)
+    at <unknown> (src\app\admin\(dashboard)\content\homepage\actions.ts:66:36)
+    at async getPublishedHomepageHero (src\app\admin\(dashboard)\content\homepage\actions.ts:66:15)
+    at async HomePage (src\app\(site)\page.tsx:70:16)
+  64 | /** Read by the public homepage — falls back to defaults if nothing published yet. */
+  65 | export async function getPublishedHomepageHero(): Promise<HomepageHeroInput> {
+> 66 |   const row = await prisma.setting.findUnique({ where: { key: "homepage.hero.published" } });
+     |                                    ^
+  67 |   return row ? { ...defaultHomepageHero, ...(row.value as object) } : defaultHomepageHero;
+  68 | }
+  69 | {
+  code: 'P2024',
+  meta: [Object],
+  clientVersion: '6.19.3',
+  digest: '4077982875'
+}
+ GET /products?q=basin%20mixer 200 in 11695ms
+ ✓ Compiled /icon.png in 282ms
+ GET /icon.png?icon.17253d89.png 200 in 687ms
+ GET /products?q=basin%20mixer 200 in 9482ms
+ GET /icon.png?icon.17253d89.png 200 in 321ms
+ GET /products?q=BASIN-MIXER-71011B 200 in 10398ms
+ GET /icon.png?icon.17253d89.png 200 in 428ms
+[?25h
