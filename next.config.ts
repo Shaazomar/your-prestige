@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   images: {
+    // Bypass Vercel's image optimizer unless IMAGE_OPTIMIZER=on (set at build
+    // time). Production `/_next/image` was answering HTTP 402
+    // (X-Vercel-Error: OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED — optimization
+    // quota exhausted), which blanked every image not already cached, while the
+    // S3 objects themselves were fine. Catalogue images are already web-sized
+    // JPEGs (median ~80 KB, ~1000 px), so they are served straight from S3.
+    // Flip to "on" once the quota/plan is sorted or a CloudFront resizer exists.
+    unoptimized: process.env.IMAGE_OPTIMIZER !== "on",
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
