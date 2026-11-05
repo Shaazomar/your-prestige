@@ -260,14 +260,20 @@ async function seedOffers() {
   const count = await prisma.offer.count();
   if (count > 0) return console.log("Offers already seeded, skipping.");
 
+  // Field names track the current `Offer` model (name/startDate/endDate/
+  // status). An earlier revision of this script wrote title/validFrom/
+  // validUntil/showCountdown/published — columns the model no longer has —
+  // so seeding aborted here and every module after offers (leads, bookings,
+  // business settings, showrooms) was left unseeded on a fresh database.
   await prisma.offer.create({
     data: {
-      title: "The New Home Privilege",
+      name: "The New Home Privilege",
       description: "Complimentary design consultation for full-home projects.",
-      validFrom: new Date(),
-      validUntil: new Date(Date.now() + 60 * day),
-      showCountdown: true,
-      published: true,
+      type: "PRODUCT",
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 60 * day),
+      status: "ACTIVE",
+      featured: true,
     },
   });
   console.log("Seeded 1 offer.");
