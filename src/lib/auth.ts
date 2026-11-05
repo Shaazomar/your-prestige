@@ -4,6 +4,19 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import type { Prisma } from "@prisma/client";
+import { createHash, timingSafeEqual } from "crypto";
+
+/**
+ * Constant-time string comparison. `!==` on a secret leaks its length and,
+ * in principle, its prefix through timing. Both sides are hashed first so
+ * the compared buffers are always the same length, which `timingSafeEqual`
+ * requires (it throws on a length mismatch).
+ */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  const ha = createHash("sha256").update(a).digest();
+  const hb = createHash("sha256").update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 /**
  * Direct audit write for auth events — cannot use the shared logAudit()
@@ -33,7 +46,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const passkey = credentials?.passkey;
         if (typeof passkey !== "string") return null;
 
-        if (passkey !== "your@prestige") {
+        // The expected passkey was the literal string "your@prestige",
+        // written into this file and committed to the repository — so the
+        // whole admin surface (catalogue, orders, customer contact details,
+        // CMS) was readable to anyone who could read the source, and to
+        // anyone who guessed a phrase printed on the site's own masthead.
+        // It now comes from the environment and there is no fallback: if
+        // ADMIN_PASSKEY is unset, nobody signs in. That is the correct
+        // failure mode for a missing auth secret — see docs/admin-auth.md
+        // before deploying.
+        const expected = process.env.ADMIN_PASSKEY;
+        if (!expected) {
+          console.error(
+            "ADMIN_PASSKEY is not set — refusing every admin sign-in. Set it in the deployment environment."
+          );
+          await logAuthEvent("auth.login_failed", { reason: "admin_passkey_not_configured" });
+          return null;
+        }
+
+        if (!timingSafeEqualStr(passkey, expected)) {
           try {
             await logAuthEvent("auth.login_failed", { reason: "bad_passkey" });
           } catch (e) {
