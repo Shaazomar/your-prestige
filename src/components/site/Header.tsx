@@ -98,7 +98,7 @@ export function Header({ business, brandGroups }: HeaderProps) {
               className="relative z-10 shrink-0"
               aria-label={`${business.name} — Home`}
             >
-              <Logo size={condensed ? "xs" : "sm"} tone="dark" />
+              <Logo size={condensed ? "xs" : "sm"} tone="dark" hideSub />
             </Link>
 
             <nav className="hidden items-center gap-9 lg:flex" aria-label="Primary">

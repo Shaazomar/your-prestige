@@ -37,6 +37,8 @@ interface LogoProps {
   markOnly?: boolean;
   /** Include the tagline beneath the wordmark */
   withTagline?: boolean;
+  /** Hide the "Tiles & Sanitary" line, leaving the monogram and PRESTIGE alone. Used by the site nav. */
+  hideSub?: boolean;
   /** Stack the mark above the wordmark instead of beside it */
   stacked?: boolean;
   className?: string;
@@ -47,6 +49,7 @@ export function Logo({
   tone = "dark",
   markOnly = false,
   withTagline = false,
+  hideSub = false,
   stacked = false,
   className,
 }: LogoProps) {
@@ -81,16 +84,18 @@ export function Logo({
           >
             {BRAND.wordmark}
           </span>
-          <span
-            className={cn(
-              s.sub,
-              "mt-1 font-semibold uppercase tracking-[0.3em]",
-              // Brand yellow sings on dark; on ivory it needs darkening to stay legible.
-              isLight ? "text-[#FFD900]" : "text-[#a88a00]"
-            )}
-          >
-            {BRAND.wordmarkSub}
-          </span>
+          {!hideSub && (
+            <span
+              className={cn(
+                s.sub,
+                "mt-1 font-semibold uppercase tracking-[0.3em]",
+                // Brand yellow sings on dark; on ivory it needs darkening to stay legible.
+                isLight ? "text-[#FFD900]" : "text-[#a88a00]"
+              )}
+            >
+              {BRAND.wordmarkSub}
+            </span>
+          )}
           {withTagline && (
             <span
               className={cn(
