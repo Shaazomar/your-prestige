@@ -10,7 +10,7 @@ import { siteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "FAQs",
   description:
-    "Answers to common questions about visiting, brands, delivery, trade pricing and installation at Your Prestige, Mangaluru.",
+    "Answers to common questions about visiting, brands, delivery, trade pricing and installation at Prestige, Mangaluru.",
   alternates: { canonical: `${siteUrl}/faqs` },
 };
 

@@ -14,7 +14,7 @@ import { siteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Fifteen years of shaping coastal Karnataka's finest spaces. Discover the story behind Your Prestige — Mangaluru's destination for luxury tiles and sanitaryware.",
+    "Fifteen years of shaping coastal Karnataka's finest spaces. Discover the story behind Prestige — Mangaluru's destination for luxury tiles and sanitaryware.",
   alternates: { canonical: `${siteUrl}/about` },
 };
 
@@ -43,7 +43,7 @@ export default async function AboutPage() {
       <PageHero
         eyebrow="The Prestige Story"
         title="Fifteen years of shaping beautiful spaces."
-        description="From a single storefront to coastal Karnataka's most trusted destination for luxury surfaces — this is how we built Your Prestige."
+        description="From a single storefront to coastal Karnataka's most trusted destination for luxury surfaces — this is how we built Prestige."
       />
 
       {/* 1. MAIN HIGHLIGHT: Inauguration Section */}

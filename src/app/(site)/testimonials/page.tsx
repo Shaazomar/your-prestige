@@ -11,7 +11,7 @@ import { siteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Testimonials",
   description:
-    "What homeowners, architects and builders across Mangaluru say about Your Prestige.",
+    "What homeowners, architects and builders across Mangaluru say about Prestige.",
   alternates: { canonical: `${siteUrl}/testimonials` },
 };
 

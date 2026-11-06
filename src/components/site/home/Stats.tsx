@@ -15,7 +15,7 @@ export function Stats() {
     <section className="bg-ink py-24 text-ivory md:py-32">
       <Container size="wide">
         <Reveal direction="none">
-          <p className="text-eyebrow mb-16 text-center text-gold">Why Your Prestige</p>
+          <p className="text-eyebrow mb-16 text-center text-gold">Why Prestige</p>
         </Reveal>
         <RevealStagger className="grid grid-cols-2 gap-x-6 gap-y-14 lg:grid-cols-4" stagger={0.12}>
           {stats.map((s) => (
