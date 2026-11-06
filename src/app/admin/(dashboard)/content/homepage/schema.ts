@@ -41,7 +41,7 @@ export const defaultHomepageHero: HomepageHeroInput = {
   // Prestige Story defaults
   storyEyebrow: "The Prestige Story",
   storyTitle: "Not a tile shop. A destination for design.",
-  storyText1: "For over fifteen years, Your Prestige has shaped the finest homes, hotels and landmarks of coastal Karnataka. Our Mangaluru showroom is an immersive gallery — full-scale bathroom sanctuaries, book-matched marble walls, and consultants who think like designers, not salespeople.",
+  storyText1: "For over fifteen years, Prestige has shaped the finest homes, hotels and landmarks of coastal Karnataka. Our Mangaluru showroom is an immersive gallery — full-scale bathroom sanctuaries, book-matched marble walls, and consultants who think like designers, not salespeople.",
   storyText2: "Every surface we curate is chosen for one reason: it deserves to be lived with.",
   storyMainImage: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1600&auto=format&fit=crop",
   storyDetailImage: "https://images.unsplash.com/photo-1615873968403-89e068629265?q=80&w=800&auto=format&fit=crop",

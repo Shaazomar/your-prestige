@@ -11,7 +11,7 @@ import { siteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Journal",
   description:
-    "Design intelligence from Your Prestige — tile guides, bathroom design principles and material wisdom for coastal Karnataka.",
+    "Design intelligence from Prestige — tile guides, bathroom design principles and material wisdom for coastal Karnataka.",
   alternates: { canonical: `${siteUrl}/blog` },
 };
 

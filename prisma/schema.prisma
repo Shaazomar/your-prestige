@@ -1,4 +1,4 @@
-// Your Prestige — CMS Data Model (PostgreSQL / Neon)
+// Prestige — CMS Data Model (PostgreSQL / Neon)
 //
 // Conventions used throughout this schema:
 // - Soft delete: models the admin can "delete & restore" carry `deletedAt`.

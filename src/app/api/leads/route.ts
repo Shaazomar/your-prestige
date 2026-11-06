@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         : "our showroom";
       await sendEmail({
         to: lead.email,
-        subject: "Your Prestige showroom visit request",
+        subject: "Prestige showroom visit request",
         html: `<p>Hi ${lead.name},</p>
 <p>Thank you — we've received your request to visit <strong>${where}</strong> on
 <strong>${new Date(visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</strong>${

@@ -209,7 +209,7 @@ async function seedTestimonials() {
     data: {
       name: "Arjun Shetty",
       role: "Villa Owner, Bejai",
-      quote: "Walking into Your Prestige felt like entering a design museum.",
+      quote: "Walking into Prestige felt like entering a design museum.",
       rating: 5,
       featured: true,
       published: true,
@@ -395,7 +395,7 @@ async function seedShowrooms() {
   const showrooms = [
     {
       slug: "jeppinamogaru-mangaluru",
-      name: "Your Prestige Tiles & Sanitary",
+      name: "Prestige Tiles & Sanitary",
       subtitle: "Jaquar Authorized Dealer",
       addressLine: "National Highway Road, Near Indian Conventional Hall",
       locality: "Jeppinamogaru",

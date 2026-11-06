@@ -91,7 +91,7 @@ export const testimonials = [
     name: "Arjun Shetty",
     role: "Villa Owner, Bejai",
     quote:
-      "Walking into Your Prestige felt like entering a design museum. They didn't sell us tiles — they designed our entire home's character.",
+      "Walking into Prestige felt like entering a design museum. They didn't sell us tiles — they designed our entire home's character.",
     rating: 5,
   },
   {

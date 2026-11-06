@@ -6,14 +6,13 @@ import { cn } from "@/lib/utils";
  * Official Prestige brand lockup.
  *
  * The supplied logo asset is the "P" monogram only (public/brand/mark.png,
- * brand yellow #FFD900). The "your / PRESTIGE / TILES & SANITARY" wordmark
+ * brand yellow #FFD900). The "PRESTIGE / TILES & SANITARY" wordmark
  * and tagline are typeset here to match the official layout, so the lockup
  * stays crisp at any size and can adapt to light/dark surfaces.
  */
 
 export const BRAND = {
   name: "Prestige Tiles & Sanitary",
-  wordmarkTop: "your",
   wordmark: "PRESTIGE",
   wordmarkSub: "Tiles & Sanitary",
   tagline: "Designing Spaces, Crafting Elegance",
@@ -22,11 +21,11 @@ export const BRAND = {
 } as const;
 
 const sizes = {
-  xs: { mark: 20, top: "text-[0.5rem]", main: "text-[0.72rem]", sub: "text-[0.42rem]" },
-  sm: { mark: 26, top: "text-[0.55rem]", main: "text-[0.9rem]", sub: "text-[0.48rem]" },
-  md: { mark: 34, top: "text-[0.62rem]", main: "text-[1.15rem]", sub: "text-[0.55rem]" },
-  lg: { mark: 48, top: "text-[0.7rem]", main: "text-[1.6rem]", sub: "text-[0.62rem]" },
-  xl: { mark: 72, top: "text-[0.85rem]", main: "text-[2.4rem]", sub: "text-[0.8rem]" },
+  xs: { mark: 20, main: "text-[0.72rem]", sub: "text-[0.42rem]" },
+  sm: { mark: 26, main: "text-[0.9rem]", sub: "text-[0.48rem]" },
+  md: { mark: 34, main: "text-[1.15rem]", sub: "text-[0.55rem]" },
+  lg: { mark: 48, main: "text-[1.6rem]", sub: "text-[0.62rem]" },
+  xl: { mark: 72, main: "text-[2.4rem]", sub: "text-[0.8rem]" },
 } as const;
 
 interface LogoProps {
@@ -75,17 +74,8 @@ export function Logo({
         <span className={cn("flex flex-col leading-none", stacked && "items-center")}>
           <span
             className={cn(
-              s.top,
-              "font-light lowercase tracking-[0.42em]",
-              isLight ? "text-ivory/50" : "text-ink/45"
-            )}
-          >
-            {BRAND.wordmarkTop}
-          </span>
-          <span
-            className={cn(
               s.main,
-              "mt-0.5 font-bold uppercase tracking-[0.18em]",
+              "font-bold uppercase tracking-[0.18em]",
               isLight ? "text-ivory" : "text-ink"
             )}
           >

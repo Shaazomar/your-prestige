@@ -10,7 +10,7 @@ import { siteUrl } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Request a Quote",
   description:
-    "Get a tailored quotation for tiles and sanitaryware from Your Prestige, Mangaluru — detailed, transparent and fast.",
+    "Get a tailored quotation for tiles and sanitaryware from Prestige, Mangaluru — detailed, transparent and fast.",
   alternates: { canonical: `${siteUrl}/request-quote` },
 };
 

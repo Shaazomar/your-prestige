@@ -10,7 +10,7 @@ const mapsSearch = (q) =>
 const showrooms = [
   {
     slug: "jeppinamogaru-mangaluru",
-    name: "Your Prestige Tiles & Sanitary",
+    name: "Prestige Tiles & Sanitary",
     subtitle: "Jaquar Authorized Dealer",
     addressLine: "National Highway Road, Near Indian Conventional Hall",
     locality: "Jeppinamogaru",

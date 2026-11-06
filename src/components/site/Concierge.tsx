@@ -35,7 +35,7 @@ export function Concierge({
     {
       role: "assistant",
       content:
-        "Welcome to Your Prestige. I'm your personal design concierge — ask me about collections, brands, pricing, or let me arrange a private showroom visit.",
+        "Welcome to Prestige. I'm your personal design concierge — ask me about collections, brands, pricing, or let me arrange a private showroom visit.",
     },
   ]);
   const [input, setInput] = useState("");

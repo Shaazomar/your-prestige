@@ -170,7 +170,7 @@ export async function sendReminder(id: string) {
   if (booking.email) {
     await sendEmail({
       to: booking.email,
-      subject: "Your Prestige — Visit Reminder",
+      subject: "Prestige — Visit Reminder",
       html: `<p>Hi ${booking.name},</p><p>This is a reminder for your showroom visit on ${booking.requestedDate.toLocaleString(
         "en-IN"
       )}. We look forward to seeing you!</p>`,

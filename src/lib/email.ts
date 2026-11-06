@@ -1,7 +1,7 @@
 /**
  * Transactional email via Resend. Configure with:
  *   RESEND_API_KEY
- *   EMAIL_FROM — e.g. "Your Prestige <hello@yourprestige.in>"
+ *   EMAIL_FROM — e.g. "Prestige <hello@yourprestige.in>"
  * Inactive (logs to console instead) until both are set.
  */
 

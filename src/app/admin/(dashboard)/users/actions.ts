@@ -58,7 +58,7 @@ export async function inviteUser(input: InviteUserInput) {
   const acceptUrl = `${process.env.AUTH_URL ?? "http://localhost:3000"}/admin/accept-invite?token=${inviteToken}`;
   await sendEmail({
     to: user.email,
-    subject: "You've been invited to Your Prestige Admin",
+    subject: "You've been invited to Prestige Admin",
     html: `<p>Hi ${user.name},</p><p>You've been invited as ${data.role.replace("_", " ")}. <a href="${acceptUrl}">Accept your invite</a> to set a password.</p>`,
   });
 
@@ -77,7 +77,7 @@ export async function resendInvite(id: string) {
   const acceptUrl = `${process.env.AUTH_URL ?? "http://localhost:3000"}/admin/accept-invite?token=${inviteToken}`;
   await sendEmail({
     to: user.email,
-    subject: "Your Your Prestige Admin invite",
+    subject: "Your Prestige Admin invite",
     html: `<p>Hi ${user.name},</p><p><a href="${acceptUrl}">Accept your invite</a> to set a password.</p>`,
   });
 
@@ -127,7 +127,7 @@ export async function sendPasswordReset(id: string) {
   const resetUrl = `${process.env.AUTH_URL ?? "http://localhost:3000"}/admin/reset-password?token=${resetToken}`;
   await sendEmail({
     to: user.email,
-    subject: "Reset your Your Prestige Admin password",
+    subject: "Reset your Prestige Admin password",
     html: `<p>Hi ${user.name},</p><p><a href="${resetUrl}">Reset your password</a>. This link expires in 1 hour.</p>`,
   });
 

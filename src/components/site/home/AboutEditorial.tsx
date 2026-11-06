@@ -12,7 +12,7 @@ export function AboutEditorial({ data }: { data: HomepageHeroInput }) {
   const title = data?.storyTitle || "Not a tile shop. A destination for design.";
   const text1 =
     data?.storyText1 ||
-    "For over fifteen years, Your Prestige has shaped the finest homes, hotels and landmarks of coastal Karnataka. Our Mangaluru showroom is an immersive gallery — full-scale bathroom sanctuaries, book-matched marble walls, and consultants who think like designers, not salespeople.";
+    "For over fifteen years, Prestige has shaped the finest homes, hotels and landmarks of coastal Karnataka. Our Mangaluru showroom is an immersive gallery — full-scale bathroom sanctuaries, book-matched marble walls, and consultants who think like designers, not salespeople.";
   const text2 =
     data?.storyText2 || "Every surface we curate is chosen for one reason: it deserves to be lived with.";
   const mainImage =
