@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Download } from "lucide-react";
@@ -94,28 +93,30 @@ export function Hero({ data }: { data: HomepageHeroInput }) {
               transition={{ duration: 0.8, delay: 0.5 }}
               className="flex items-center gap-4 pt-4 border-t border-stone-100"
             >
-              <div className="flex -space-x-3">
-                <Image
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop"
-                  alt="Architect avatar"
-                  width={40}
-                  height={40}
-                  className="rounded-full border-2 border-white object-cover"
-                />
-                <Image
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop"
-                  alt="Designer avatar"
-                  width={40}
-                  height={40}
-                  className="rounded-full border-2 border-white object-cover"
-                />
-                <Image
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop"
-                  alt="Architect avatar"
-                  width={40}
-                  height={40}
-                  className="rounded-full border-2 border-white object-cover"
-                />
+              {/*
+                Previously three Unsplash portraits of real, unrelated people,
+                captioned as the architects and designers who trust this
+                showroom — fabricated social proof built from strangers'
+                photographs. They were also bare `next/image` rather than
+                `SafeImage`, so when the host was unreachable the hero
+                rendered three broken-image glyphs directly under the
+                headline.
+
+                A non-photographic monogram cluster makes the same visual
+                point, claims nothing about specific people, needs no network
+                request, and cannot break. Swap in real client logos or
+                credited portraits once there are ones the business owns.
+              */}
+              <div className="flex -space-x-3" aria-hidden="true">
+                {["A", "D", "S"].map((initial, i) => (
+                  <span
+                    key={initial}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#efece4] to-[#ded9cc] text-[11px] font-semibold tracking-wide text-ink/55 shadow-sm"
+                    style={{ zIndex: 3 - i }}
+                  >
+                    {initial}
+                  </span>
+                ))}
               </div>
               <div>
                 <p className="text-xs font-bold text-ink">Trusted by 1500+ Architects & Designers</p>

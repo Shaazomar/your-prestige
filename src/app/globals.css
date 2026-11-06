@@ -42,10 +42,29 @@
   --color-muted: #6e6a63;
   --color-faint: #9a958c;
 
-  /* ——— Accent ——— */
+  /* ——— Accent ———
+     The gold has two jobs and they need two values, because one value
+     cannot do both on a warm-white site.
+
+     `--color-gold` is the FILL gold: large areas of colour with near-black
+     type sitting on top (the Get Quote button, selection highlight, a
+     filled chip). Contrast is carried by the dark text against the gold, so
+     a bright, saturated gold is right here.
+
+     `--color-gold-ink` is the INK gold: anything thin on a light ground —
+     focus rings, active underlines, indicator rules, small accent text.
+     The fill gold measures 1.84:1 against the #fafaf8 canvas and 1.92:1
+     against white, so at 2px it is effectively invisible, and WCAG requires
+     3:1 for a non-text indicator. This measures 3.75:1 on canvas and
+     3.92:1 on white while staying unmistakably the same gold.
+
+     Using the fill gold for a hairline is the mistake this split exists to
+     prevent — most visibly the focus ring, whose own comment claimed it was
+     "non-negotiable, for WCAG AA keyboard users" while failing that bar. */
   --color-gold: #eab308;
   --color-gold-bright: #fde047;
   --color-gold-deep: #ca8a04;
+  --color-gold-ink: #9c7c38;
 
   /* ——— Status (admin surfaces only) ——— */
   --color-success: #4ade80;
@@ -200,7 +219,8 @@
   bottom: -3px;
   height: 2px;
   width: 100%;
-  background: var(--color-gold);
+  /* 2px rule on a light ground — ink gold, same reasoning as the focus ring. */
+  background: var(--color-gold-ink);
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.4s var(--ease-luxury);
@@ -251,9 +271,11 @@ body {
 }
 
 /* Focus is always visible and always gold — the one place the accent
-   is non-negotiable, for WCAG AA keyboard users. */
+   is non-negotiable, for WCAG AA keyboard users. Uses the ink gold: the
+   fill gold is 1.84:1 against the canvas, so this ring was failing the
+   very standard this comment invokes. See the accent tokens above. */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-gold-ink);
   outline-offset: 3px;
   border-radius: 2px;
 }

@@ -36,7 +36,21 @@ export function CatalogueHero({
   const titleLines = title.split("\n");
 
   return (
-    <section className="relative overflow-hidden bg-white pt-28 pb-12 lg:pt-36 lg:pb-16">
+    /*
+      Vertical budget matters here in a way it doesn't on an editorial page:
+      this hero sits on top of every product listing (/products, /tiles,
+      /bathware, every brand and category page). At its previous proportions
+      — pt-36 + a 520px media panel + pb-16 — it filled the entire first
+      screen at 1440x900 and at 390x844, so a visitor landing on the shop
+      saw no product, and not even the search/filter bar, until they
+      scrolled: measured first-card offsets were 955px (laptop) and 981px
+      (mobile) against viewports of 900 and 844.
+
+      The opener is kept — it is the page's identity and its h1 — but tuned
+      to a band rather than a full screen, so the toolbar and the first row
+      of products are reachable immediately.
+    */
+    <section className="relative overflow-hidden bg-white pt-24 pb-8 lg:pt-28 lg:pb-10">
       {/* SVG Organic Clip Path Definition */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
         <defs>
@@ -93,9 +107,17 @@ export function CatalogueHero({
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="lg:col-span-6 relative pt-4 lg:pt-0"
+            /*
+              Hidden below `sm`. On a phone the media panel stacks between
+              the headline and the filter toolbar, which pushed the first
+              product to 897px against an 844px viewport — so the shop still
+              opened on no products. On a listing page the products are the
+              photography; the decorative panel is the part that gives way.
+              It returns from `sm` up, where it costs nothing.
+            */
+            className="hidden sm:block lg:col-span-6 relative pt-4 lg:pt-0"
           >
-            <div className="relative w-full aspect-[4/3] sm:aspect-[14/11] lg:h-[520px] group">
+            <div className="relative w-full aspect-[5/3] sm:aspect-[16/10] lg:h-[360px] group">
               {/* Outer Prestige Gold Organic Outline Accent */}
               <div className="absolute -inset-2 pointer-events-none z-10">
                 <motion.svg

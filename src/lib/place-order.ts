@@ -21,9 +21,22 @@ export interface PlaceOrderResult {
   error?: string;
 }
 
+/**
+ * Who placed the order. Optional so existing callers keep working, but the
+ * enquiry drawer now always supplies at least a phone number — without one a
+ * saved order cannot be followed up if the customer never sends the prepared
+ * WhatsApp message. `createOrder` validates all three server-side.
+ */
+export interface PlaceOrderCustomer {
+  name?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
 export async function placeWhatsAppOrder(
   items: PlaceOrderItem[],
-  whatsappNumber: string
+  whatsappNumber: string,
+  customer?: PlaceOrderCustomer
 ): Promise<PlaceOrderResult> {
   // Prepare a fallback link in case saving the order fails.
   const fallbackUrl = buildWhatsAppLink(
@@ -68,6 +81,9 @@ export async function placeWhatsAppOrder(
             unit,
           })
         ),
+        customerName: customer?.name?.trim() || null,
+        customerPhone: customer?.phone?.trim() || null,
+        notes: customer?.notes?.trim() || null,
         sourcePage: window.location.pathname,
       }),
     });
@@ -92,7 +108,22 @@ export async function placeWhatsAppOrder(
       };
     }
 
-    // Close the blank tab when the server rejects the order.
+    // The server rejected the order. `fallbackUrl` was prepared for exactly
+    // this case but was never used, so a database hiccup left the customer
+    // with an error and no way through — on a site whose entire checkout is
+    // "continue on WhatsApp". Hand them the prepared message instead.
+    //
+    // It deliberately carries no order reference, because no order was
+    // saved: per the brief, opening WhatsApp is not a confirmed order. The
+    // enquiry simply arrives as a chat the showroom answers by hand.
+    if (openWhatsApp(fallbackUrl)) {
+      return {
+        saved: false,
+        error:
+          "We couldn't save your order, so it hasn't been recorded — but your message is ready on WhatsApp and we'll pick it up there.",
+      };
+    }
+
     if (popup && !popup.closed) {
       popup.close();
     }
@@ -104,7 +135,15 @@ export async function placeWhatsAppOrder(
         "Could not save your order. Please refresh and try again.",
     };
   } catch {
-    // Do not open a second tab or redirect the original product page.
+    // Network or parse failure — same reasoning as above.
+    if (openWhatsApp(fallbackUrl)) {
+      return {
+        saved: false,
+        error:
+          "We couldn't reach our server, so your order hasn't been recorded — but your message is ready on WhatsApp.",
+      };
+    }
+
     if (popup && !popup.closed) {
       popup.close();
     }

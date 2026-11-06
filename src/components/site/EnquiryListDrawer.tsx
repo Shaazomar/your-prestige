@@ -21,8 +21,40 @@ export function EnquiryListDrawer({ isOpen, onClose, whatsappNumber }: EnquiryLi
   const { items, updateQuantity, updateUnit, removeItem, clearList } = useEnquiryList();
   const [sending, setSending] = useState(false);
 
+  /*
+    Contact details for the order.
+
+    `CustomerOrder` has carried customerName, customerPhone and notes from the
+    start, `createOrder` validates all three, and the admin Orders table has a
+    CUSTOMER column for them — but nothing ever collected them, so every order
+    saved with those fields null and the admin saw an anonymous row reading
+    only "Via WhatsApp chat". That is fine while the customer goes on to send
+    the prepared WhatsApp message, and useless the moment they don't: the
+    record exists with no way to follow it up.
+
+    Asking here, before the handoff, means a saved order is actionable on its
+    own. The phone number is the one genuinely required field — it is how the
+    showroom calls back — and it is also what identifies the customer if the
+    WhatsApp message is never sent.
+  */
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  // Mirrors the server's rule in `createOrderSchema` (digits, spaces, + and -),
+  // with a length floor so an obvious typo is caught before the round trip.
+  const phoneValue = phone.trim();
+  const phoneValid = /^[+\d\s-]{7,20}$/.test(phoneValue) && (phoneValue.match(/\d/g)?.length ?? 0) >= 7;
+  const canSend = items.length > 0 && !sending && phoneValid;
+
   const handleSendWhatsApp = async () => {
     if (items.length === 0 || sending) return;
+    if (!phoneValid) {
+      setTouched(true);
+      toast.error("Add a phone number so we can confirm your order.");
+      return;
+    }
     setSending(true);
 
     // Track analytics event asynchronously
@@ -58,7 +90,8 @@ export function EnquiryListDrawer({ isOpen, onClose, whatsappNumber }: EnquiryLi
           productUrl: i.productUrl,
         },
       })),
-      whatsappNumber
+      whatsappNumber,
+      { name, phone, notes }
     );
 
     if (result.error) toast.error(result.error);
@@ -203,9 +236,51 @@ export function EnquiryListDrawer({ isOpen, onClose, whatsappNumber }: EnquiryLi
                   <span className="font-bold text-white">{items.length} Items</span>
                 </div>
 
+                {/* Contact details — see the note on the state above. */}
+                <div className="space-y-2.5 pt-1">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      autoComplete="name"
+                      aria-label="Your name"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition-colors focus:border-gold"
+                    />
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      onBlur={() => setTouched(true)}
+                      placeholder="Phone number"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      required
+                      aria-label="Phone number"
+                      aria-invalid={touched && !phoneValid}
+                      className={`w-full rounded-xl border bg-white/5 px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition-colors focus:border-gold ${
+                        touched && !phoneValid ? "border-red-400/70" : "border-white/10"
+                      }`}
+                    />
+                  </div>
+                  {touched && !phoneValid && (
+                    <p className="text-[11px] text-red-300/90">
+                      Enter a phone number we can reach you on.
+                    </p>
+                  )}
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Delivery area, site requirements or anything else (optional)"
+                    rows={2}
+                    maxLength={1000}
+                    aria-label="Requirements"
+                    className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 text-sm text-white placeholder:text-white/35 outline-none transition-colors focus:border-gold"
+                  />
+                </div>
+
                 <button
                   onClick={handleSendWhatsApp}
-                  disabled={sending}
+                  disabled={!canSend}
                   className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] px-5 py-4 text-sm font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed min-h-[50px]"
                 >
                   {sending ? (
